@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>ArcorRequestNoDryRun</Title>
+      <Shortcut>arcorRequestNoDryRun</Shortcut>
+      <Description>Snippet for ARCOR2 communication library request-response method. Args.</Description>
+      <Author>Michael Janeček</Author>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>NAME</ID>
+          <ToolTip>Model Name</ToolTip>
+          <Default>Model</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp">
+        <![CDATA[public async Task<$NAME$Response> $NAME$($NAME$RequestArgs args) 
+{ 
+    var id = Interlocked.Increment(ref requestId);
+    var response = await SendAndWaitAsync(new $NAME$Request(id, "$NAME$", args), id); 
+    return JsonConvert.DeserializeObject<$NAME$Response>(response)!;
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>ArcorRequest</Title>
+      <Shortcut>arcorRequest</Shortcut>
+      <Description>Snippet for ARCOR2 communication library request-response method. Args and dry run.</Description>
+      <Author>Michael Janeček</Author>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>NAME</ID>
+          <ToolTip>Model Name</ToolTip>
+          <Default>Model</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp">
+        <![CDATA[public async Task<$NAME$Response> $NAME$($NAME$RequestArgs args, bool isDryRun = false) 
+{ 
+    var id = Interlocked.Increment(ref requestId);
+    var response = await SendAndWaitAsync(new $NAME$Request(id, "$NAME$", args, isDryRun), id);
+    return JsonConvert.DeserializeObject<$NAME$Response>(response)!;
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>ArcorRequestNoArgsNoDryRun</Title>
+      <Shortcut>arcorRequestNoArgsNoDryRun</Shortcut>
+      <Description>Snippet for ARCOR2 communication library request-response method.</Description>
+      <Author>Michael Janeček</Author>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>NAME</ID>
+          <ToolTip>Model Name</ToolTip>
+          <Default>Model</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp">
+        <![CDATA[public async Task<$NAME$Response> $NAME$() 
+{ 
+    var id = Interlocked.Increment(ref requestId);
+    var response = await SendAndWaitAsync(new $NAME$Request(id, "$NAME$"), id);
+    return JsonConvert.DeserializeObject<$NAME$Response>(response)!;
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+
+  <CodeSnippet Format="1.0.0">
+    <Header>
+      <Title>ArcorRequestNoArgs</Title>
+      <Shortcut>arcorRequestNoArgs</Shortcut>
+      <Description>Snippet for ARCOR2 communication library request-response method. Dry run.</Description>
+      <Author>Michael Janeček</Author>
+      <SnippetTypes>
+        <SnippetType>Expansion</SnippetType>
+      </SnippetTypes>
+    </Header>
+    <Snippet>
+      <Declarations>
+        <Literal>
+          <ID>NAME</ID>
+          <ToolTip>Model Name</ToolTip>
+          <Default>Model</Default>
+        </Literal>
+      </Declarations>
+      <Code Language="CSharp">
+        <![CDATA[public async Task<$NAME$Response> $NAME$(bool isDryRun = false) 
+{ 
+    var id = Interlocked.Increment(ref requestId);
+    var response = await SendAndWaitAsync(new $NAME$Request(id, "$NAME$", isDryRun), id);
+    return JsonConvert.DeserializeObject<$NAME$Response>(response)!;
+}]]>
+      </Code>
+    </Snippet>
+  </CodeSnippet>
+</CodeSnippets>
