@@ -42,7 +42,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Holds the current available request ID for tracking request-response messages.
         /// </summary>
-        private int requestId = 0;
+        private int requestId;
 
         /// <summary>
         /// The URI of the current server.
@@ -170,63 +170,169 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Raised when new action point joints are added.
         /// </summary>
-        public event EventHandler<RobotJointsEventArgs>? OnJointsAdded;
+        public event EventHandler<JointsEventArgs>? OnJointsAdded;
         /// <summary>
         /// Raised when action point joints are updated.
         /// </summary>
-        public event EventHandler<RobotJointsEventArgs>? OnJointsUpdated;
+        public event EventHandler<JointsEventArgs>? OnJointsUpdated;
         /// <summary>
         /// Raised when action point joints base is updated (e.g. rename).
         /// </summary>
-        public event EventHandler<RobotJointsEventArgs>? OnJointsBaseUpdated;
+        public event EventHandler<JointsEventArgs>? OnJointsBaseUpdated;
         /// <summary>
         /// Raised when action point joints are removed.
         /// </summary>
-        public event EventHandler<RobotJointsEventArgs>? OnJointsRemoved;
+        public event EventHandler<JointsEventArgs>? OnJointsRemoved;
 
-        public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeRemoved;
+        /// <summary>
+        /// Raised when new object type is added.
+        /// </summary>
+        /// <remarks>
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneObjectAdded"/> and related events.
+        /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
+        /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeAdded;
+        /// <summary>
+        /// Raised when new object type is updated.
+        /// </summary>
+        /// <remarks>
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneObjectAdded"/> and related events.
+        /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
+        /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeUpdated;
+        /// <summary>
+        /// Raised when new object type is removed.
+        /// </summary>
+        /// <remarks>
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneObjectAdded"/> and related events.
+        /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
+        /// </remarks>
+        public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeRemoved;
 
-        public event EventHandler<RobotMoveToPoseEventArgs>? OnRobotMoveToPoseEvent;
-        public event EventHandler<RobotMoveToJointsEventArgs>? OnRobotMoveToJointsEvent;
-        public event EventHandler<RobotMoveToActionPointOrientationEventArgs>? OnRobotMoveToActionPointOrientationEvent;
-        public event EventHandler<RobotMoveToActionPointJointsEventArgs>? OnRobotMoveToActionPointJointsEvent;
+        /// <summary>
+        /// Raised when robot moves to a pose (start/end).
+        /// </summary>
+        public event EventHandler<RobotMoveToPoseEventArgs>? OnRobotMoveToPose;
+        /// <summary>
+        /// Raised when robot moves to a joint (start/end).
+        /// </summary>
+        public event EventHandler<RobotMoveToJointsEventArgs>? OnRobotMoveToJoints;
+        /// <summary>
+        /// Raised when robot moves to action point orientation (start/end).
+        /// </summary>
+        public event EventHandler<RobotMoveToActionPointOrientationEventArgs>? OnRobotMoveToActionPointOrientation;
+        /// <summary>
+        /// Raised when robot moves to action point joints (start/end).
+        /// </summary>
+        public event EventHandler<RobotMoveToActionPointJointsEventArgs>? OnRobotMoveToActionPointJoints;
 
+        /// <summary>
+        /// Raised when new end effector poses.
+        /// </summary>
         public event EventHandler<RobotEefUpdatedEventArgs>? OnRobotEefUpdated;
+        /// <summary>
+        /// Raised on new joints values.
+        /// </summary>
         public event EventHandler<RobotJointsUpdatedEventArgs>? OnRobotJointsUpdated;
 
+        /// <summary>
+        /// Raised when project is saved by the server.
+        /// </summary>
         public event EventHandler? OnProjectSaved;
+        /// <summary>
+        /// Raised when server finds open project for the user, and it is requesting the client UI to open it (e.g. such as when the user quickly reconnects).
+        /// </summary>
         public event EventHandler<OpenProjectEventArgs>? OnOpenProject;
+        /// <summary>
+        /// Raised when server closes a project, and it is requesting the client UI to close it.
+        /// </summary>
         public event EventHandler? OnProjectClosed;
-
-        public event EventHandler<ProjectExceptionEventArgs>? OnProjectException;
-        public event EventHandler<BareProjectEventArgs>? OnProjectRemoved;
+        /// <summary>
+        /// Raised when project base is updated (e.g. rename).
+        /// </summary>
         public event EventHandler<BareProjectEventArgs>? OnProjectBaseUpdated;
+        /// <summary>
+        /// Raised when project is removed.
+        /// </summary>
+        public event EventHandler<BareProjectEventArgs>? OnProjectRemoved;
 
+        /// <summary>
+        /// Raised when project parameter is added.
+        /// </summary>
         public event EventHandler<ProjectParameterEventArgs>? OnProjectParameterAdded;
+        /// <summary>
+        /// Raised when project parameter is updated.
+        /// </summary>
         public event EventHandler<ProjectParameterEventArgs>? OnProjectParameterUpdated;
+        /// <summary>
+        /// Raised when project parameter is removed.
+        /// </summary>
         public event EventHandler<ProjectParameterEventArgs>? OnProjectParameterRemoved;
 
+        /// <summary>
+        /// Raised when scene is saved by the server.
+        /// </summary>
         public event EventHandler? OnSceneSaved;
+        /// <summary>
+        /// Raised when server finds open scene for the user, and it is requesting the client UI to open it (e.g. such as when the user quickly reconnects).
+        /// </summary>
         public event EventHandler<OpenSceneEventArgs>? OnOpenScene;
+        /// <summary>
+        /// Raised when server closes a scene, and it is requesting the client UI to close it.
+        /// </summary>
         public event EventHandler? OnSceneClosed;
 
-        public event EventHandler<ActionExecutionEventArgs>? OnActionExecution;
-        public event EventHandler? OnActionCancelled;
-        public event EventHandler<ActionResultEventArgs>? OnActionResult;
-
+        /// <summary>
+        /// Raised when the server is requesting the client UI to show the main screen (e.g. after project/scene is closed).
+        /// </summary>
         public event EventHandler<ShowMainScreenEventArgs>? OnShowMainScreen;
 
+        /// <summary>
+        /// Raised when objects get locked by a user.
+        /// </summary>
         public event EventHandler<ObjectsLockEventArgs>? OnObjectsLocked;
+        /// <summary>
+        /// Raised when objects get unlocked.
+        /// </summary>
         public event EventHandler<ObjectsLockEventArgs>? OnObjectsUnlocked;
 
-        public event EventHandler<ProcessStateEventArgs>? OnProcessState;
+        /// <summary>
+        /// Raised when server notifies beginning of the action execution triggered while editing a project.
+        /// </summary>
+        public event EventHandler<ActionExecutionEventArgs>? OnActionExecution;
+        /// <summary>
+        /// Raised when server notifies that action execution was cancelled.
+        /// </summary>
+        public event EventHandler? OnActionCancelled;
+        /// <summary>
+        /// Raised when server notifies the result of the action execution triggered while editing a project.
+        /// </summary>
+        public event EventHandler<ActionResultEventArgs>? OnActionResult;
 
+        /// <summary>
+        /// Raised when the state of long-running process changes.
+        /// </summary>
+        public event EventHandler<ProcessStateEventArgs>? OnProcessState;
+        
+        /// <summary>
+        /// Raised when package (script) is initialized and ready to execute.
+        /// </summary>
         public event EventHandler<PackageInfoEventArgs>? OnPackageInfo;
-        [Obsolete("Officially deprecated in ARCOR2 version 0.10.0.")]
+        /// <summary>
+        /// Raised when execution status of a package changes.
+        /// </summary>
         public event EventHandler<PackageStateEventArgs>? OnPackageState;
+        /// <summary>
+        /// Raised when error occurs while running a package.
+        /// </summary>
+        public event EventHandler<ProjectExceptionEventArgs>? OnProjectException;
+        /// <summary>
+        /// Raised while running a package before execution of an action (parameters and other information).
+        /// </summary>
         public event EventHandler<ActionStateBeforeEventArgs>? OnActionStateBefore;
+        /// <summary>
+        /// Raised while running a package after execution of an action (returned value and other information).
+        /// </summary>
         public event EventHandler<ActionStateAfterEventArgs>? OnActionStateAfter;
 
         #endregion
@@ -662,16 +768,16 @@ namespace Arcor2.ClientSdk.Communication {
 
             switch(jointsChanged.ChangeType) {
                 case JointsChanged.ChangeTypeEnum.Add:
-                    OnJointsAdded?.Invoke(this, new RobotJointsEventArgs(jointsChanged.Data, jointsChanged.ParentId));
+                    OnJointsAdded?.Invoke(this, new JointsEventArgs(jointsChanged.Data, jointsChanged.ParentId));
                     break;
                 case JointsChanged.ChangeTypeEnum.Remove:
-                    OnJointsRemoved?.Invoke(this, new RobotJointsEventArgs(jointsChanged.Data));
+                    OnJointsRemoved?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
                     break;
                 case JointsChanged.ChangeTypeEnum.Update:
-                    OnJointsUpdated?.Invoke(this, new RobotJointsEventArgs(jointsChanged.Data));
+                    OnJointsUpdated?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
                     break;
                 case JointsChanged.ChangeTypeEnum.UpdateBase:
-                    OnJointsBaseUpdated?.Invoke(this, new RobotJointsEventArgs(jointsChanged.Data));
+                    OnJointsBaseUpdated?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type.");
@@ -700,22 +806,22 @@ namespace Arcor2.ClientSdk.Communication {
 
         private void HandleRobotMoveToActionPointOrientation(string data) {
             var robotMoveToActionPointOrientation = JsonConvert.DeserializeObject<RobotMoveToActionPointOrientation>(data)!;
-            OnRobotMoveToActionPointOrientationEvent?.Invoke(this, new RobotMoveToActionPointOrientationEventArgs(robotMoveToActionPointOrientation.Data));
+            OnRobotMoveToActionPointOrientation?.Invoke(this, new RobotMoveToActionPointOrientationEventArgs(robotMoveToActionPointOrientation.Data));
         }
 
         private void HandleRobotMoveToPoseEvent(string data) {
             var robotMoveToPose = JsonConvert.DeserializeObject<RobotMoveToPose>(data)!;
-            OnRobotMoveToPoseEvent?.Invoke(this, new RobotMoveToPoseEventArgs(robotMoveToPose.Data));
+            OnRobotMoveToPose?.Invoke(this, new RobotMoveToPoseEventArgs(robotMoveToPose.Data));
         }
 
         private void HandleRobotMoveToJointsEvent(string data) {
             var robotMoveToJoints = JsonConvert.DeserializeObject<RobotMoveToJoints>(data)!;
-            OnRobotMoveToJointsEvent?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
+            OnRobotMoveToJoints?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
         }
 
         private void HandleRobotMoveToActionPointJointsEvent(string data) {
             var robotMoveToActionPointJoints = JsonConvert.DeserializeObject<RobotMoveToActionPointJoints>(data)!;
-            OnRobotMoveToActionPointJointsEvent?.Invoke(this, new RobotMoveToActionPointJointsEventArgs(robotMoveToActionPointJoints.Data));
+            OnRobotMoveToActionPointJoints?.Invoke(this, new RobotMoveToActionPointJointsEventArgs(robotMoveToActionPointJoints.Data));
         }
 
         private void HandleActionStateBefore(string data) {

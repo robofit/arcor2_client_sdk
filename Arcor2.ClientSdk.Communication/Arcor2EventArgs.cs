@@ -107,10 +107,10 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class RobotJointsEventArgs : ParentIdEventArgs {
+    public class JointsEventArgs : ParentIdEventArgs {
         public ProjectRobotJoints Data { get; set; }
 
-        public RobotJointsEventArgs(ProjectRobotJoints data, string parentId = "") : base(parentId) {
+        public JointsEventArgs(ProjectRobotJoints data, string parentId = "") : base(parentId) {
             Data = data;
         }
     }
