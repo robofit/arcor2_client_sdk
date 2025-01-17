@@ -18,10 +18,18 @@ namespace Arcor2.ClientSdk.Communication {
     }
 
     public class ProjectExceptionEventArgs : EventArgs {
-        public ProjectExceptionData ProjectException { get; set; }
+        public ProjectExceptionData Data { get; set; }
 
-        public ProjectExceptionEventArgs(ProjectExceptionData projectException) {
-            ProjectException = projectException;
+        public ProjectExceptionEventArgs(ProjectExceptionData data) {
+            Data = data;
+        }
+    }
+
+    public class HandTeachingModeEventArgs : EventArgs {
+        public HandTeachingModeData Data { get; set; }
+
+        public HandTeachingModeEventArgs(HandTeachingModeData data) {
+            Data = data;
         }
     }
 

@@ -225,6 +225,10 @@ namespace Arcor2.ClientSdk.Communication {
         /// Raised when robot moves to action point joints (start/end).
         /// </summary>
         public event EventHandler<RobotMoveToActionPointJointsEventArgs>? OnRobotMoveToActionPointJoints;
+        /// <summary>
+        /// Raised when hand teaching mode is enabled/disabled.
+        /// </summary>
+        public event EventHandler<HandTeachingModeEventArgs>? OnHandTeachingMode;
 
         /// <summary>
         /// Raised when new end effector poses.
@@ -608,6 +612,9 @@ namespace Arcor2.ClientSdk.Communication {
                     case "ProjectParameterChanged":
                         HandleProjectParameterChanged(data);
                         break;
+                    case "HandTeachingMode":
+                        HandleHandTeachingMode(data);
+                        break;
                     default:
                         // We probably do not want this to be fatal, due to the real possibility of some minor version mismatch
                         ConnectionError?.Invoke(this, new NotImplementedException($"Unknown event received: {dispatch.@event}"));
@@ -962,6 +969,11 @@ namespace Arcor2.ClientSdk.Communication {
         private void HandleProcessState(string data) {
             var processState = JsonConvert.DeserializeObject<ProcessState>(data)!;
             OnProcessState?.Invoke(this, new ProcessStateEventArgs(processState.Data));
+        }
+
+        private void HandleHandTeachingMode(string data) {
+            var handTeachingMode = JsonConvert.DeserializeObject<HandTeachingMode>(data)!;
+            OnHandTeachingMode?.Invoke(this, new HandTeachingModeEventArgs(handTeachingMode.Data));
         }
 
         #endregion
