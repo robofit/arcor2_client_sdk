@@ -1,36 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
-using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
 
 namespace Arcor2.ClientSdk.Communication {
     // This file contains EventArgs definition for
     // different callbacks used in Arcor2Client
 
-    public class StringEventArgs : EventArgs {
-        public string Data { get; set; }
+    public abstract class ParentIdEventArgs : EventArgs {
+        public string ParentId { get; set; }
 
-        public StringEventArgs(string data) {
-            Data = data;
+        public bool IsParentIdSet() {
+            return !string.IsNullOrEmpty(ParentId);
+        }
+        protected ParentIdEventArgs(string parentId = "") {
+            ParentId = parentId;
         }
     }
 
-    public class StringListEventArgs : EventArgs {
-        public IList<string> Data { get; set; }
+    public class ProjectExceptionEventArgs : EventArgs {
+        public ProjectExceptionData ProjectException { get; set; }
 
-        public StringListEventArgs(IList<string> data) {
-            Data = data;
+        public ProjectExceptionEventArgs(ProjectExceptionData projectException) {
+            ProjectException = projectException;
         }
     }
 
-    public class FloatEventArgs : EventArgs {
-        public float Data { get; set; }
-
-        public FloatEventArgs(float data) {
-            Data = data;
-        }
-    }
-
+    // TODO
     public class ProjectMetaEventArgs : EventArgs {
         public string Name { get; set; }
         public string Id { get; set; }
@@ -49,7 +44,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class BareSceneEventArgs : EventArgs {
+    public class BareSceneEventArgs {
         public BareScene Scene { get; set; }
 
         public BareSceneEventArgs(BareScene scene) {
@@ -57,18 +52,10 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class BareActionEventArgs : EventArgs {
+    public class BareActionEventArgs : ParentIdEventArgs {
         public BareAction Action { get; set; }
 
-        public BareActionEventArgs(BareAction action) {
-            Action = action;
-        }
-    }
-
-    public class ActionModelEventArgs : EventArgs {
-        public Action Action { get; set; }
-
-        public ActionModelEventArgs(Action action) {
+        public BareActionEventArgs(BareAction action, string parentId = "") : base(parentId) {
             Action = action;
         }
     }
@@ -77,22 +64,6 @@ namespace Arcor2.ClientSdk.Communication {
         public BareActionPoint ActionPoint { get; set; }
 
         public BareActionPointEventArgs(BareActionPoint actionPoint) {
-            ActionPoint = actionPoint;
-        }
-    }
-
-    public class ProjectActionPointEventArgs : EventArgs {
-        public ActionPoint ActionPoint { get; set; }
-
-        public ProjectActionPointEventArgs(ActionPoint actionPoint) {
-            ActionPoint = actionPoint;
-        }
-    }
-
-    public class ActionPointEventArgs : EventArgs {
-        public ActionPoint ActionPoint { get; set; }
-
-        public ActionPointEventArgs(ActionPoint actionPoint) {
             ActionPoint = actionPoint;
         }
     }
@@ -128,110 +99,147 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-
-    public class ActionPointOrientationEventArgs : EventArgs {
+    public class OrientationEventArgs : ParentIdEventArgs {
         public NamedOrientation Data { get; set; }
-        public string ActionPointId { get; set; }
 
-        public ActionPointOrientationEventArgs(NamedOrientation data, string actionPointId) {
+        public OrientationEventArgs(NamedOrientation data, string parentId = "") : base(parentId) {
             Data = data;
-            ActionPointId = actionPointId;
         }
     }
 
-    public class RobotJointsEventArgs : EventArgs {
+    public class RobotJointsEventArgs : ParentIdEventArgs {
         public ProjectRobotJoints Data { get; set; }
-        public string ActionPointId { get; set; }
 
-        public RobotJointsEventArgs(ProjectRobotJoints data, string actionPointId) {
+        public RobotJointsEventArgs(ProjectRobotJoints data, string parentId = "") : base(parentId) {
             Data = data;
-            ActionPointId = actionPointId;
         }
     }
 
-    public class ActionPointOrientationAddedEventArgs : EventArgs {
-        public string ActionPointId { get; set; }
-        public NamedOrientation Orientation { get; set; }
+    public class ObjectsLockEventArgs : EventArgs {
+        public LockData Data { get; set; }
 
-        public ActionPointOrientationAddedEventArgs(string actionPointId, NamedOrientation orientation) {
-            ActionPointId = actionPointId;
-            Orientation = orientation;
+        public ObjectsLockEventArgs(LockData data) {
+            Data = data;
         }
     }
 
-    public class ActionPointJointsAddedEventArgs : EventArgs {
-        public string ActionPointId { get; set; }
-        public ProjectRobotJoints Joints { get; set; }
+    public class ActionStateBeforeEventArgs : EventArgs {
+        public ActionStateBeforeData Data { get; set; }
 
-        public ActionPointJointsAddedEventArgs(string actionPointId, ProjectRobotJoints joints) {
-            ActionPointId = actionPointId;
-            Joints = joints;
+        public ActionStateBeforeEventArgs(ActionStateBeforeData data) {
+            Data = data;
         }
     }
 
-    public class RobotUrdfModelArgs : EventArgs {
-        public string RobotType { get; set; }
+    public class ActionStateAfterEventArgs : EventArgs {
+        public ActionStateAfterData Data { get; set; }
 
-        public RobotUrdfModelArgs(string robotType) {
-            RobotType = robotType;
+        public ActionStateAfterEventArgs(ActionStateAfterData data) {
+            Data = data;
+        }
+    }
+
+    public class PackageStateEventArgs : EventArgs {
+        public PackageStateData Data { get; set; }
+
+        public PackageStateEventArgs(PackageStateData data) {
+            Data = data;
+        }
+    }
+
+    public class PackageInfoEventArgs : EventArgs {
+        public PackageInfoData Data { get; set; }
+
+        public PackageInfoEventArgs(PackageInfoData data) {
+            Data = data;
+        }
+    }
+
+    public class OpenSceneEventArgs : EventArgs {
+        public OpenSceneData Data { get; set; }
+
+        public OpenSceneEventArgs(OpenSceneData data) {
+            Data = data;
+        }
+    }
+
+    public class OpenProjectEventArgs : EventArgs {
+        public OpenProjectData Data { get; set; }
+
+        public OpenProjectEventArgs(OpenProjectData data) {
+            Data = data;
+        }
+    }
+
+    public class ActionExecutionEventArgs : EventArgs {
+        public ActionExecutionData Data { get; set; }
+
+        public ActionExecutionEventArgs(ActionExecutionData data) {
+            Data = data;
+        }
+    }
+
+    public class ActionResultEventArgs : EventArgs {
+        public ActionResultData Data { get; set; }
+
+        public ActionResultEventArgs(ActionResultData data) {
+            Data = data;
         }
     }
 
     public class RobotMoveToPoseEventArgs : EventArgs {
-        public RobotMoveToPose Event { get; set; }
+        public RobotMoveToPoseData Data { get; set; }
 
-        public RobotMoveToPoseEventArgs(RobotMoveToPose @event) {
-            Event = @event;
+        public RobotMoveToPoseEventArgs(RobotMoveToPoseData data) {
+            Data = data;
         }
     }
 
     public class RobotMoveToJointsEventArgs : EventArgs {
 
-        public RobotMoveToJoints Event { get; set; }
+        public RobotMoveToJointsData Data { get; set; }
 
-        public RobotMoveToJointsEventArgs(RobotMoveToJoints @event) {
-            Event = @event;
+        public RobotMoveToJointsEventArgs(RobotMoveToJointsData data) {
+            Data = data;
         }
     }
 
     public class RobotMoveToActionPointJointsEventArgs : EventArgs {
 
-        public RobotMoveToActionPointJoints Event { get; set; }
+        public RobotMoveToActionPointJointsData Data { get; set; }
 
-        public RobotMoveToActionPointJointsEventArgs(RobotMoveToActionPointJoints @event) {
-            Event = @event;
+        public RobotMoveToActionPointJointsEventArgs(RobotMoveToActionPointJointsData data) {
+            Data = data;
         }
     }
 
     public class RobotMoveToActionPointOrientationEventArgs : EventArgs {
 
-        public RobotMoveToActionPointOrientation Event { get; set; }
+        public RobotMoveToActionPointOrientationData Data { get; set; }
 
-        public RobotMoveToActionPointOrientationEventArgs(RobotMoveToActionPointOrientation @event) {
-            Event = @event;
+        public RobotMoveToActionPointOrientationEventArgs(RobotMoveToActionPointOrientationData data) {
+            Data = data;
         }
     }
 
     public class SceneStateEventArgs : EventArgs {
+        public SceneStateData Data { get; set; }
 
-        public SceneStateData Event { get; set; }
-
-        public SceneStateEventArgs(SceneStateData @event) {
-            Event = @event;
+        public SceneStateEventArgs(SceneStateData data) {
+            Data = data;
         }
     }
 
-    public class ParameterEventArgs : EventArgs {
+    public class ParameterEventArgs : ParentIdEventArgs {
 
         public Parameter Parameter { get; set; }
-        public string ObjectId { get; set; }
 
-        public ParameterEventArgs(string objectId, Parameter @event) {
-            Parameter = @event;
-            ObjectId = objectId;
+        public ParameterEventArgs(Parameter parameter, string parentId = "") : base(parentId) {
+            Parameter = parameter;
         }
     }
 
+    // TODO
     public class ObjectTypeEventArgs : EventArgs {
         public ObjectTypeMeta ObjectType { get; set; }
 
@@ -248,18 +256,6 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class ObjectLockingEventArgs : EventArgs {
-        public IList<string> ObjectIds { get; set; }
-        public bool Locked { get; set; }
-        public string Owner { get; set; }
-
-        public ObjectLockingEventArgs(IList<string> objectIds, bool locked, string owner) {
-            ObjectIds = objectIds;
-            Locked = locked;
-            Owner = owner;
-        }
-    }
-
     public class ProcessStateEventArgs : EventArgs {
         public ProcessStateData Data { get; set; }
 
@@ -273,6 +269,14 @@ namespace Arcor2.ClientSdk.Communication {
 
         public ProjectParameterEventArgs(ProjectParameter projectParameter) {
             ProjectParameter = projectParameter;
+        }
+    }
+
+    public class SceneObjectEventArgs : EventArgs {
+        public SceneObject SceneObject { get; set; }
+
+        public SceneObjectEventArgs(SceneObject sceneObject) {
+            SceneObject = sceneObject;
         }
     }
 }

@@ -67,8 +67,6 @@ namespace Arcor2.ClientSdk.Communication.Design
         /// <summary>
         /// <inheritdoc cref="IWebSocket"/>
         /// </summary>
-        /// <exception cref="InvalidOperationException">When invoked more than once.</exception>
-        /// /// <exception cref="InvalidOperationException">When invoked more than once.</exception>
         public async Task ConnectAsync(Uri uri) {
             if(State != WebSocketState.None) {
                 throw new InvalidOperationException("ConnectAsync method can only be invoked once.");
@@ -136,6 +134,9 @@ namespace Arcor2.ClientSdk.Communication.Design
                 OnError?.Invoke(this, new WebSocketErrorEventArgs {
                     Exception = ex
                 });
+                OnClose?.Invoke(this, new WebSocketCloseEventArgs() {
+                    CloseStatus = WebSocketCloseStatus.Empty
+                });
             }
             finally {
                 webSocket.Dispose();
@@ -144,7 +145,7 @@ namespace Arcor2.ClientSdk.Communication.Design
 
         public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string? statusDescription = null) {
             if(State == WebSocketState.Open) {
-                await webSocket.CloseAsync((System.Net.WebSockets.WebSocketCloseStatus) closeStatus, statusDescription, CancellationToken.None);
+                await webSocket.CloseAsync((System.Net.WebSockets.WebSocketCloseStatus) closeStatus, statusDescription ?? string.Empty, CancellationToken.None);
             }
         }
 

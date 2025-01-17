@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Arcor2.ClientSdk.Communication.Design
@@ -9,7 +8,7 @@ namespace Arcor2.ClientSdk.Communication.Design
     /// </summary>
     public interface IWebSocket {
         /// <summary>
-        /// The current state of underlying WebSocket.
+        /// The current state of underlying WebSocket. None by default.
         /// </summary>
         WebSocketState State { get; }
 
@@ -19,7 +18,7 @@ namespace Arcor2.ClientSdk.Communication.Design
         event EventHandler<WebSocketMessageEventArgs> OnMessage;
 
         /// <summary>
-        /// Occurs when the connection is closed by the server. 
+        /// Occurs when the connection is closed. 
         /// </summary>
         event EventHandler<WebSocketCloseEventArgs> OnClose;
 
@@ -34,26 +33,19 @@ namespace Arcor2.ClientSdk.Communication.Design
         event EventHandler OnOpen;
 
         /// <summary>
-        /// Initiates a connection.
+        /// Initiates a connection and starts listening for messages.
         /// </summary>
         /// <param name="url">The WebSocket server.</param>
-        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">When invoked more than once.</exception>
         Task ConnectAsync(Uri url);
         /// <summary>
         /// Closes the connection.
         /// </summary>
         Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string? statusDescription = null);
         /// <summary>
-        /// Sends bytes to the WebSocket connection.
+        /// Sends a string to the WebSocket connection. Supports multiple sends at the same time.
         /// </summary>
-        Task SendAsync(IEnumerable<byte> bytes);
-        /// <summary>
-        /// Sends bytes to the WebSocket connection.
-        /// </summary>
-        Task SendAsync(byte[] bytes);
-        /// <summary>
-        /// Sends a string to the WebSocket connection.
-        /// </summary>
+        /// <exception cref="InvalidOperationException">When invoked in state other than Open.</exception>
         Task SendAsync(string text);
     }
 }
