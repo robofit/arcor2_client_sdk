@@ -10,6 +10,7 @@
         /// <summary>
         /// WebSocket is negotiating a handshake with the server.
         /// </summary>
+        /// <remarks> The use of <see cref="Connecting"/> by <see cref="IWebSocket"/> is implementation dependent. Alternate WebSocket implementations may omit this state.</remarks>
         Connecting,
         /// <summary>
         /// WebSocket has negotiated a handshake and is connected.
@@ -18,6 +19,7 @@
         /// <summary>
         /// WebSocket sent or received a close message.
         /// </summary>
+        /// <remarks> The use of <see cref="Closing"/> by <see cref="IWebSocket"/> is implementation dependent. Alternate WebSocket implementations may omit this state.</remarks>
         Closing,
         /// <summary>
         /// The connection is closed.

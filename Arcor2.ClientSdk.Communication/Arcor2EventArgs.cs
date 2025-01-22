@@ -65,10 +65,10 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class RobotEefUpdatedEventArgs : EventArgs {
+    public class RobotEndEffectorUpdatedEventArgs : EventArgs {
         public RobotEefData Data { get; set; }
 
-        public RobotEefUpdatedEventArgs(RobotEefData data) {
+        public RobotEndEffectorUpdatedEventArgs(RobotEefData data) {
             Data = data;
         }
     }
@@ -260,10 +260,10 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class SceneObjectEventArgs : EventArgs {
+    public class SceneActionObjectEventArgs : EventArgs {
         public SceneObject SceneObject { get; set; }
 
-        public SceneObjectEventArgs(SceneObject sceneObject) {
+        public SceneActionObjectEventArgs(SceneObject sceneObject) {
             SceneObject = sceneObject;
         }
     }

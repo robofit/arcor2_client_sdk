@@ -107,8 +107,29 @@ Related classes can be found in the `Arcor2.ClientSdk.Communication.Design` name
 
 ## Contributing
 
-This library is a simple typed interface for the ARCOR2 protocol and any contributions and changes should reflect that. 
-Convenience features (such as a single method performing multiple RPC exchanges) should be implemented in different projects extending, subtyping, or wrapping the `Arcor2Client` class.
+This library is a simple typed interface for the ARCOR2 protocol and all changes should reflect that. 
+Complex convenience features (such as a single method performing multiple RPC exchanges) should be implemented in different projects extending, subtyping, or wrapping the `Arcor2Client` class.
+
+### Naming
+
+The ARCOR2 protocol currently lacks consistency in naming conventions across its RPCs and models.
+This consistency is particularly important for developers using statically-typed languages like C#, where code-completion is a crucial tool to discover or recall method names by keywords.
+
+While the RPC method names are often identical to their corresponding RPCs, we apply specific rules to improve consistency and usability.
+Note that these adjustments are limited to method and event names only. 
+We deliberately **exclude generated models** from these changes to avoid exponentially increasing maintenance overhead when regenerating OpenAPI models.
+
+Please note that the following rules should not be taken as a dogma. If it makes sense, break them or change them.
+
+- Expand shorthands (e.g. `AddApUsingRobot` => `AddActionPointUsingRobot`, `OnRobotEefUpdated` => `OnRobotEndEffectorUpdated`)
+- Correct non-specific, innacurate, or confusing ARCOR2 terminology (e.g. `OnProjectException` => `OnPackageException`, `GetSceneObjectUsage` => `GetSceneActionObjectUsage`)
+- Prefer `Duplicate` over `Copy` and other synonyms (e.g. `CopyProject` => `DuplicateProject`)
+- Prefer `Remove` over `Delete` and other synonyms (e.g. `DeleteProject` => `RemoveProject`)
+- Use `Get` (or `List` and others if appropriate) prefix for query RPCs missing it (e.g. `ProjectsWithSceneAsync` => `GetProjectsWithScene`)
+- Use `Set` prefix for RPCs setting an option and missing it (e.g. `HandTeachingMode` => `SetHandTeachingMode`)
+- Use `Add` prefix for RPCs creating new entities and missing it (e.g.`NewProject` => `AddNewProject`)
+
+
 
 ### Implementing Protocol Updates
 

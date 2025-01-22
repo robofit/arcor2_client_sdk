@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,22 +56,22 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Raised when any connection-related error occurs.
         /// </summary>
-        public EventHandler<Exception>? ConnectionError;
+        public event EventHandler<Exception>? OnConnectionError;
         /// <summary>
         /// Raised when connection is closed.
         /// </summary>
-        public EventHandler<WebSocketCloseEventArgs>? ConnectionClosed;
+        public event EventHandler<WebSocketCloseEventArgs>? OnConnectionClosed;
         /// <summary>
         /// Raised when connection is successfully opened.
         /// </summary>
-        public EventHandler? ConnectionOpened;
+        public event EventHandler? OnConnectionOpened;
 
         /// <summary>
         /// Raised when scene is removed.
         /// </summary>
         public event EventHandler<BareSceneEventArgs>? OnSceneRemoved;
         /// <summary>
-        /// Raised when scene base is updated (e.g. copy or name/description update).
+        /// Raised when scene base is updated (e.g. duplication or name/description update).
         /// </summary>
         public event EventHandler<BareSceneEventArgs>? OnSceneBaseUpdated;
 
@@ -84,15 +83,15 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Raised when action object is added. 
         /// </summary>
-        public event EventHandler<SceneObjectEventArgs>? OnSceneObjectAdded;
+        public event EventHandler<SceneActionObjectEventArgs>? OnSceneActionObjectAdded;
         /// <summary>
         /// Raised when action object is removed.
         /// </summary>
-        public event EventHandler<SceneObjectEventArgs>? OnSceneObjectRemoved;
+        public event EventHandler<SceneActionObjectEventArgs>? OnSceneActionObjectRemoved;
         /// <summary>
         /// Raised when action object is updated (e.g. translated).
         /// </summary>
-        public event EventHandler<SceneObjectEventArgs>? OnSceneObjectUpdated;
+        public event EventHandler<SceneActionObjectEventArgs>? OnSceneActionObjectUpdated;
 
         /// <summary>
         /// Raised when action point is added.
@@ -192,7 +191,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Raised when new object type is added.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeAdded;
@@ -200,7 +199,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Raised when new object type is updated.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeUpdated;
@@ -208,7 +207,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Raised when new object type is removed.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeRemoved;
@@ -237,7 +236,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Raised when new end effector poses.
         /// </summary>
-        public event EventHandler<RobotEefUpdatedEventArgs>? OnRobotEefUpdated;
+        public event EventHandler<RobotEndEffectorUpdatedEventArgs>? OnRobotEndEffectorUpdated;
         /// <summary>
         /// Raised on new joints values.
         /// </summary>
@@ -346,7 +345,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Raised when error occurs while running a package.
         /// </summary>
-        public event EventHandler<ProjectExceptionEventArgs>? OnProjectException;
+        public event EventHandler<ProjectExceptionEventArgs>? OnPackageException;
         /// <summary>
         /// Raised while running a package before execution of an action (parameters and other information).
         /// </summary>
@@ -363,13 +362,13 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         public Arcor2Client() {
             webSocket.OnError += (_, args) => {
-                ConnectionError?.Invoke(this, args.Exception);
+                OnConnectionError?.Invoke(this, args.Exception);
             };
             webSocket.OnClose += (_, args) => {
-                ConnectionClosed?.Invoke(this, args);
+                OnConnectionClosed?.Invoke(this, args);
             };
             webSocket.OnOpen += (_, __) => {
-                ConnectionOpened?.Invoke(this, EventArgs.Empty);
+                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
             webSocket.OnMessage += (_, args) => {
                 OnMessage(args);
@@ -387,7 +386,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Establishes a connection to ARCOR2 server.
         /// </summary>
-        /// <remarks>The <see cref="ConnectionClosed"/> event is raised even when error occurs while connecting.</remarks>
+        /// <remarks>The <see cref="OnConnectionClosed"/> event is raised even when error occurs while connecting.</remarks>
         /// <param name="domain">Domain of the ARCOR2 server</param>
         /// <param name="port">Port od the ARCOR2 server</param>
         /// <exception cref="UriFormatException" />
@@ -403,7 +402,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Establishes a connection to ARCOR2 server.
         /// </summary>
-        /// <remarks>The <see cref="ConnectionClosed"/> event is raised even when error occurs while connecting.</remarks>
+        /// <remarks>The <see cref="OnConnectionClosed"/> event is raised even when error occurs while connecting.</remarks>
         /// <param name="uri">Full WebSocket URI</param>
         /// <exception cref="UriFormatException" />
         /// <exception cref="InvalidOperationException" />
@@ -670,13 +669,13 @@ namespace Arcor2.ClientSdk.Communication {
             var sceneObjectChanged = JsonConvert.DeserializeObject<SceneObjectChanged>(data)!;
             switch(sceneObjectChanged.ChangeType) {
                 case SceneObjectChanged.ChangeTypeEnum.Add:
-                    OnSceneObjectAdded?.Invoke(this, new SceneObjectEventArgs(sceneObjectChanged.Data));
+                    OnSceneActionObjectAdded?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.Remove:
-                    OnSceneObjectRemoved?.Invoke(this, new SceneObjectEventArgs(sceneObjectChanged.Data));
+                    OnSceneActionObjectRemoved?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.Update:
-                    OnSceneObjectUpdated?.Invoke(this, new SceneObjectEventArgs(sceneObjectChanged.Data));
+                    OnSceneActionObjectUpdated?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("SceneObject base update should never occur.");
@@ -881,7 +880,7 @@ namespace Arcor2.ClientSdk.Communication {
 
         private void HandleProjectException(string data) {
             var projectException = JsonConvert.DeserializeObject<ProjectException>(data)!;
-            OnProjectException?.Invoke(this, new ProjectExceptionEventArgs(projectException.Data));
+            OnPackageException?.Invoke(this, new ProjectExceptionEventArgs(projectException.Data));
         }
 
         private void HandleActionResult(string data) {
@@ -901,7 +900,7 @@ namespace Arcor2.ClientSdk.Communication {
 
         private void HandleRobotEef(string data) {
             var robotEef = JsonConvert.DeserializeObject<RobotEef>(data)!;
-            OnRobotEefUpdated?.Invoke(this, new RobotEefUpdatedEventArgs(robotEef.Data));
+            OnRobotEndEffectorUpdated?.Invoke(this, new RobotEndEffectorUpdatedEventArgs(robotEef.Data));
         }
 
         private void HandleRobotJoints(string data) {
@@ -1021,7 +1020,15 @@ namespace Arcor2.ClientSdk.Communication {
 
         #region Request-Response Methods Without Coressponding Endpoint
 
-        public async Task<DeleteObjectTypesResponse> DeleteObjectTypeAsync(string args, bool isDryRun = false) {
+        /// <summary>
+        /// Sends a request to remove specified object type.
+        /// </summary>
+        /// <remarks>For bulk removal, use <see cref="RemoveObjectTypesAsync" />.</remarks>
+        /// <param name="args">Object Type.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
+
+        public async Task<DeleteObjectTypesResponse> RemoveObjectTypeAsync(string args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteObjectTypesRequest(id, "DeleteObjectTypes", new List<string>() { args }, isDryRun), id);
             return JsonConvert.DeserializeObject<DeleteObjectTypesResponse>(response)!;
@@ -1030,6 +1037,18 @@ namespace Arcor2.ClientSdk.Communication {
         #endregion
 
         #region Request-Response Methods With Direct Endpoint
+
+        /// <summary>
+        /// Sends a request to remove specified object types.
+        /// </summary>
+        /// <param name="args">A list of object types.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
+        public async Task<DeleteObjectTypesResponse> RemoveObjectTypesAsync(List<string> args, bool isDryRun = false) {
+            var id = Interlocked.Increment(ref requestId);
+            var response = await SendAndWaitAsync(new DeleteObjectTypesRequest(id, "DeleteObjectTypes", args, isDryRun), id);
+            return JsonConvert.DeserializeObject<DeleteObjectTypesResponse>(response)!;
+        }
 
         /// <summary>
         /// Sends a request to retrieve object types supported by the server.
@@ -1102,7 +1121,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">The debugging execution parameters.</param>
         /// <returns>The response.</returns>
-        public async Task<TemporaryPackageResponse> TemporaryPackageAsync(TemporaryPackageRequestArgs args) {
+        public async Task<TemporaryPackageResponse> RunTemporaryPackageAsync(TemporaryPackageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new TemporaryPackageRequest(id, "TemporaryPackage", args), id);
             return JsonConvert.DeserializeObject<TemporaryPackageResponse>(response)!;
@@ -1210,7 +1229,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">The object type definition.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<NewObjectTypeResponse> NewObjectTypeAsync(ObjectTypeMeta args, bool isDryRun = false) {
+        public async Task<NewObjectTypeResponse> AddNewObjectTypeAsync(ObjectTypeMeta args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new NewObjectTypeRequest(id, "NewObjectType", args, isDryRun), id);
             return JsonConvert.DeserializeObject<NewObjectTypeResponse>(response)!;
@@ -1324,7 +1343,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">Action object ID, parameter ID, and a list of parent parameters (e.g. to obtain list of available end effectors, robot ID has to be provided) </param>
         /// <returns>List of available options or empty list when request failed</returns>
-        public async Task<ActionParamValuesResponse> ActionParamValuesAsync(ActionParamValuesRequestArgs args) {
+        public async Task<ActionParamValuesResponse> GetActionParameterValuesAsync(ActionParamValuesRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ActionParamValuesRequest(id, "ActionParamValues", args), id);
             return JsonConvert.DeserializeObject<ActionParamValuesResponse>(response)!;
@@ -1355,7 +1374,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Sends a request to retrieve information about the server (server version, API version, supported parameter types and RPCs).
         /// </summary>
         /// <returns>THe response.</returns>
-        public async Task<SystemInfoResponse> SystemInfoAsync() {
+        public async Task<SystemInfoResponse> GetSystemInfoAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SystemInfoRequest(id, "SystemInfo"), id);
             return JsonConvert.DeserializeObject<SystemInfoResponse>(response)!;
@@ -1378,19 +1397,19 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Name and description.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<NewSceneResponse> NewSceneAsync(NewSceneRequestArgs args, bool isDryRun = false) {
+        public async Task<NewSceneResponse> AddNewSceneAsync(NewSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new NewSceneRequest(id, "NewScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<NewSceneResponse>(response)!;
         }
 
         /// <summary>
-        /// Sends a request to delete a scene.
+        /// Sends a request to remove a scene.
         /// </summary>
         /// <param name="args">ID of the scene.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<DeleteSceneResponse> DeleteSceneAsync(IdArgs args, bool isDryRun = false) {
+        public async Task<DeleteSceneResponse> RemoveSceneAsync(IdArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteSceneRequest(id, "DeleteScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<DeleteSceneResponse>(response)!;
@@ -1438,7 +1457,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">Scene ID.</param>
         /// <returns>The response.</returns>
-        public async Task<ProjectsWithSceneResponse> ProjectsWithSceneAsync(IdArgs args) {
+        public async Task<ProjectsWithSceneResponse> GetProjectsWithSceneAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ProjectsWithSceneRequest(id, "ProjectsWithScene", args), id);
             return JsonConvert.DeserializeObject<ProjectsWithSceneResponse>(response)!;
@@ -1450,29 +1469,29 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Parent scene ID, project name, description, and if it should have its own logic.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<NewProjectResponse> NewProjectAsync(NewProjectRequestArgs args, bool isDryRun = false) {
+        public async Task<NewProjectResponse> AddNewProjectAsync(NewProjectRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new NewProjectRequest(id, "NewProject", args, isDryRun), id);
             return JsonConvert.DeserializeObject<NewProjectResponse>(response)!;
         }
 
         /// <summary>
-        /// Sends a request to delete a project.
+        /// Sends a request to remove a project.
         /// </summary>
         /// <param name="args">Project ID.</param>
         /// <returns>The response.</returns>
-        public async Task<DeleteProjectResponse> DeleteProjectAsync(IdArgs args) {
+        public async Task<DeleteProjectResponse> RemoveProjectAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteProjectRequest(id, "DeleteProject", args), id);
             return JsonConvert.DeserializeObject<DeleteProjectResponse>(response)!;
         }
 
         /// <summary>
-        /// Sends a request to delete a package.
+        /// Sends a request to remove a package.
         /// </summary>
         /// <param name="args">Package ID.</param>
         /// <returns>The response.</returns>
-        public async Task<DeletePackageResponse> DeletePackageAsync(IdArgs args) {
+        public async Task<DeletePackageResponse> RemovePackageAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeletePackageRequest(id, "DeletePackage", args), id);
             return JsonConvert.DeserializeObject<DeletePackageResponse>(response)!;
@@ -1496,7 +1515,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Robot (action object) ID, name, end effector ID, and optional arm ID.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<AddApUsingRobotResponse> AddApUsingRobotAsync(AddApUsingRobotRequestArgs args, bool isDryRun = false) {
+        public async Task<AddApUsingRobotResponse> AddActionPointUsingRobotAsync(AddApUsingRobotRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddApUsingRobotRequest(id, "AddApUsingRobot", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddApUsingRobotResponse>(response)!;
@@ -1928,7 +1947,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Action object ID and the parameter override.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<DeleteOverrideResponse> DeleteOverrideAsync(DeleteOverrideRequestArgs args, bool isDryRun = false) {
+        public async Task<DeleteOverrideResponse> RemoveOverrideAsync(DeleteOverrideRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteOverrideRequest(id, "DeleteOverride", args, isDryRun), id);
             return JsonConvert.DeserializeObject<DeleteOverrideResponse>(response)!;
@@ -1988,7 +2007,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </remarks>
         /// <param name="args">Camera ID.</param>
         /// <returns>The response.</returns>
-        public async Task<CameraColorImageResponse> CameraColorImageAsync(CameraColorImageRequestArgs args) {
+        public async Task<CameraColorImageResponse> GetCameraColorImageAsync(CameraColorImageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CameraColorImageRequest(id, "CameraColorImage", args), id);
             return JsonConvert.DeserializeObject<CameraColorImageResponse>(response)!;
@@ -2010,7 +2029,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">Camera parameters, image (latin-1 encoded).</param>
         /// <returns>The response.</returns>
-        public async Task<MarkersCornersResponse> MarkersCornersAsync(MarkersCornersRequestArgs args) {
+        public async Task<MarkersCornersResponse> GetMarkersCornersAsync(MarkersCornersRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new MarkersCornersRequest(id, "MarkersCorners", args), id);
             return JsonConvert.DeserializeObject<MarkersCornersResponse>(response)!;
@@ -2079,7 +2098,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Robot ID, toggle.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<HandTeachingModeResponse> HandTeachingModeAsync(HandTeachingModeRequestArgs args, bool isDryRun = false) {
+        public async Task<HandTeachingModeResponse> SetHandTeachingModeAsync(HandTeachingModeRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new HandTeachingModeRequest(id, "HandTeachingMode", args, isDryRun), id);
             return JsonConvert.DeserializeObject<HandTeachingModeResponse>(response)!;
@@ -2091,7 +2110,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Object ID and boolean if the object tree should be locked.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<CopyActionPointResponse> CopyActionPointAsync(CopyActionPointRequestArgs args, bool isDryRun = false) {
+        public async Task<CopyActionPointResponse> DuplicateActionPointAsync(CopyActionPointRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CopyActionPointRequest(id, "CopyActionPoint", args, isDryRun), id);
             return JsonConvert.DeserializeObject<CopyActionPointResponse>(response)!;
@@ -2108,7 +2127,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
-        public async Task<StepRobotEefResponse> StepRobotEefAsync(StepRobotEefRequestArgs args, bool isDryRun = false) {
+        public async Task<StepRobotEefResponse> StepRobotEndEffectorAsync(StepRobotEefRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StepRobotEefRequest(id, "StepRobotEef", args, isDryRun), id);
             return JsonConvert.DeserializeObject<StepRobotEefResponse>(response)!;
@@ -2121,7 +2140,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="args">Robot ID, end effector ID, safety flag, speed, linear movement flag, and optional arm ID.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The result.</returns>
-        public async Task<SetEefPerpendicularToWorldResponse> SetEefPerpendicularToWorldAsync(SetEefPerpendicularToWorldRequestArgs args, bool isDryRun = false) {
+        public async Task<SetEefPerpendicularToWorldResponse> SetEndEffectorPerpendicularToWorldAsync(SetEefPerpendicularToWorldRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SetEefPerpendicularToWorldRequest(id, "SetEefPerpendicularToWorld", args, isDryRun), id);
             return JsonConvert.DeserializeObject<SetEefPerpendicularToWorldResponse>(response)!;
@@ -2237,7 +2256,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">Camera ID.</param>
         /// <returns>The response.</returns>
-        public async Task<CameraColorParametersResponse> CameraColorParametersAsync(CameraColorParametersRequestArgs args) {
+        public async Task<CameraColorParametersResponse> GetCameraColorParametersAsync(CameraColorParametersRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CameraColorParametersRequest(id, "CameraColorParameters", args), id);
             return JsonConvert.DeserializeObject<CameraColorParametersResponse>(response)!;
@@ -2289,7 +2308,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to get a list of robot's gripper IDs.
+        /// Sends a request to get a list of robot's suctions IDs.
         /// </summary>
         /// <param name="args">Robot ID and optional arm ID.</param>
         /// <returns>The response.</returns>
@@ -2315,7 +2334,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">Object type ID.</param>
         /// <returns>The response.</returns>
-        public async Task<ObjectTypeUsageResponse> ObjectTypeUsageAsync(IdArgs args) {
+        public async Task<ObjectTypeUsageResponse> GetObjectTypeUsageAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ObjectTypeUsageRequest(id, "ObjectTypeUsage", args), id);
             return JsonConvert.DeserializeObject<ObjectTypeUsageResponse>(response)!;
@@ -2326,7 +2345,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args">Action object ID.</param>
         /// <returns>The response.</returns>
-        public async Task<SceneObjectUsageResponse> SceneObjectUsageAsync(IdArgs args) {
+        public async Task<SceneObjectUsageResponse> GetSceneActionObjectUsageAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SceneObjectUsageRequest(id, "SceneObjectUsage", args), id);
             return JsonConvert.DeserializeObject<SceneObjectUsageResponse>(response)!;
