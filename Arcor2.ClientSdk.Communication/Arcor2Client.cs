@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -635,7 +636,7 @@ namespace Arcor2.ClientSdk.Communication {
                         HandlePackageChanged(data);
                         break;
                     default:
-                       throw new NotImplementedException($"Unknown event received: {dispatch.@event}");
+                        throw new NotImplementedException($"Unknown event received: {dispatch.@event}");
                 }
             }
         }
@@ -1097,6 +1098,7 @@ namespace Arcor2.ClientSdk.Communication {
 
         /// <summary>
         /// Sends a request to build the current project into temporary package and run it.
+        /// This package is not saved on execution unit and is removed immediately after package execution.
         /// </summary>
         /// <param name="args">The debugging execution parameters.</param>
         /// <returns>The response.</returns>
@@ -1169,7 +1171,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to update pose of action point using the robot's end effector.
+        /// Sends a request to update pose of action point to the robot's end effector.
         /// </summary>
         /// <param name="args">Action point ID and a robot.</param>
         /// <returns>The response.</returns>
@@ -1180,7 +1182,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to update pose of action object.
+        /// Sends a request to update pose (position and orientation) of an action object.
         /// </summary>
         /// <param name="args">Action object ID and a new pose.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
@@ -1192,7 +1194,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to update pose of action object using the robot's end effector.
+        /// Sends a request to update pose of action object to the robot's end effector.
         /// </summary>
         /// <param name="args">Robot and pivot option.</param>
         /// <returns>The response.</returns>
@@ -1214,24 +1216,48 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<NewObjectTypeResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to start an object aiming process for a robot.
+        /// </summary>
+        /// <remarks>Only possible when the scene is online and all write locks for object and robot are acquired in advance.</remarks>
+        /// <param name="args">Action object ID and a robot.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<ObjectAimingStartResponse> ObjectAimingStartAsync(ObjectAimingStartRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ObjectAimingStartRequest(id, "ObjectAimingStart", args, isDryRun), id);
             return JsonConvert.DeserializeObject<ObjectAimingStartResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to save current position of selected robot's end effector during the object aiming process as the specified index.
+        /// </summary>
+        /// <param name="args">ID of currently selected focus point.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<ObjectAimingAddPointResponse> ObjectAimingAddPointAsync(ObjectAimingAddPointRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ObjectAimingAddPointRequest(id, "ObjectAimingAddPoint", args, isDryRun), id);
             return JsonConvert.DeserializeObject<ObjectAimingAddPointResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to finish object aiming process and compute a new pose of the object.
+        /// </summary>
+        /// <remarks>On failure, you can do another attempt or invoke <see cref="ObjectAimingCancelAsync"/>.</remarks>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<ObjectAimingDoneResponse> ObjectAimingDoneAsync(bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ObjectAimingDoneRequest(id, "ObjectAimingDone", isDryRun), id);
             return JsonConvert.DeserializeObject<ObjectAimingDoneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to cancel current object aiming process.
+        /// </summary>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<ObjectAimingCancelResponse> ObjectAimingCancelAsync(bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ObjectAimingCancelRequest(id, "ObjectAimingCancel", isDryRun), id);
@@ -1286,25 +1312,39 @@ namespace Arcor2.ClientSdk.Communication {
         /// Sends a request to open a scene.
         /// </summary>
         /// <param name="args">Scene ID.</param>
-        /// <returns>THe response.</returns>
+        /// <returns>The response.</returns>
         public async Task<OpenSceneResponse> OpenSceneAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new OpenSceneRequest(id, "OpenScene", args), id);
             return JsonConvert.DeserializeObject<OpenSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get all available values for selected parameter.
+        /// </summary>
+        /// <param name="args">Action object ID, parameter ID, and a list of parent parameters (e.g. to obtain list of available end effectors, robot ID has to be provided) </param>
+        /// <returns>List of available options or empty list when request failed</returns>
         public async Task<ActionParamValuesResponse> ActionParamValuesAsync(ActionParamValuesRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ActionParamValuesRequest(id, "ActionParamValues", args), id);
             return JsonConvert.DeserializeObject<ActionParamValuesResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to execute selected action.
+        /// </summary>
+        /// <param name="args">Action ID.</param>
+        /// <returns>The response.</returns>
         public async Task<ExecuteActionResponse> ExecuteActionAsync(ExecuteActionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ExecuteActionRequest(id, "ExecuteAction", args, isDryRun), id);
             return JsonConvert.DeserializeObject<ExecuteActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to cancel an execution of currently running action.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<CancelActionResponse> CancelActionAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CancelActionRequest(id, "CancelAction"), id);
@@ -1312,7 +1352,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to retrieve information about the server (version, supported parameter types, and RPCs).
+        /// Sends a request to retrieve information about the server (server version, API version, supported parameter types and RPCs).
         /// </summary>
         /// <returns>THe response.</returns>
         public async Task<SystemInfoResponse> SystemInfoAsync() {
@@ -1322,7 +1362,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to build a project into a package and upload it.
+        /// Sends a request to build a project into a package.
         /// </summary>
         /// <param name="args">The project ID and resulting package name.</param>
         /// <returns>The response.</returns>
@@ -1371,6 +1411,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Sends a request to rename an action object.
         /// </summary>
+        /// <remarks>This RPC automatically releases write lock.</remarks>
         /// <param name="args">The action object ID and new name.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
@@ -1476,6 +1517,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Sends a request to change the parent of an action point.
         /// </summary>
+        /// <remarks>Only the child has to be locked manually. The parent is locked automatically and then both child and parent are unlocked automatically.</remarks>
         /// <param name="args">Action point ID and the ID of the new parent.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
@@ -1613,6 +1655,11 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<RenameActionPointOrientationResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to move selected robot to an action point.
+        /// </summary>
+        /// <param name="args">Robot ID, speed (0-1f), optional end effector ID, either an orientation or joints ID, safe flag (collision checks), linear flag, and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<MoveToActionPointResponse> MoveToActionPointAsync(MoveToActionPointRequestArgs args) {
             // TODO: Joints x Orientation
             var id = Interlocked.Increment(ref requestId);
@@ -1620,6 +1667,11 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<MoveToActionPointResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to move selected robot to a pose.
+        /// </summary>
+        /// <param name="args">Robot ID, end effector ID, speed (0-1f), optional position or orientation, safe flag (collision checks), linear flag, and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<MoveToPoseResponse> MoveToPoseAsync(MoveToPoseRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new MoveToPoseRequest(id, "MoveToPose", args), id);
@@ -1686,9 +1738,10 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to add a logic item to the project.
+        /// Sends a request to add a new logic item (a connection between two actions) to the project.
         /// </summary>
-        /// <param name="args">Start, end, and an optional condition for the logic item.</param>
+        /// <remarks>Only the first action has to be locked manually. The second action is locked automatically by the server and then both are also unlocked automatically.</remarks>
+        /// <param name="args">Start (ID of first action), end (ID of second action), and an optional condition for the logic item.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
         public async Task<AddLogicItemResponse> AddLogicItemAsync(AddLogicItemRequestArgs args, bool isDryRun = false) {
@@ -1698,9 +1751,9 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to update a logic item.
+        /// Sends a request to update a logic item (a connection between two actions).
         /// </summary>
-        /// <param name="args">Logic item ID, start, end, and an optional condition for the logic item.</param>
+        /// <param name="args">Logic item ID, start (ID of first action), end (ID of second action), and an optional condition for the logic item.</param>
         /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
         public async Task<UpdateLogicItemResponse> UpdateLogicItemAsync(UpdateLogicItemRequestArgs args, bool isDryRun = false) {
@@ -1710,7 +1763,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
 
         /// <summary>
-        /// Sends a request to remove a logic item.
+        /// Sends a request to remove a logic item (a connection between two actions).
         /// </summary>
         /// <param name="args">Logic item ID.</param>
         /// <returns>The response.</returns>
@@ -1903,31 +1956,61 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<ForwardKinematicsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to calibrate a robot.
+        /// </summary>
+        /// <remarks>Robot with a model and calibrated camera is required.</remarks>
+        /// <param name="args">Robot ID, camera ID, and if the robot should move into the calibration pose flag.</param>
+        /// <returns>The response.</returns>
         public async Task<CalibrateRobotResponse> CalibrateRobotAsync(CalibrateRobotRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CalibrateRobotRequest(id, "CalibrateRobot", args), id);
             return JsonConvert.DeserializeObject<CalibrateRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to calibrate a camera action object.
+        /// </summary>
+        /// <param name="args">Camera ID.</param>
+        /// <returns>The response.</returns>
         public async Task<CalibrateCameraResponse> CalibrateCameraAsync(CalibrateCameraRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CalibrateCameraRequest(id, "CalibrateCamera", args), id);
             return JsonConvert.DeserializeObject<CalibrateCameraResponse>(response)!;
         }
 
-        public async Task<CameraColorImageResponse> GetCameraColorImageAsync(CameraColorImageRequestArgs args) {
+        /// <summary>
+        /// Sends a request to get a color image from camera.
+        /// </summary>
+        /// <remarks>
+        ///  The image is encoded as a Latin-1 string representation of JPEG image data,
+        /// where each byte of the JPEG is mapped directly to its corresponding Latin-1 character
+        /// </remarks>
+        /// <param name="args">Camera ID.</param>
+        /// <returns>The response.</returns>
+        public async Task<CameraColorImageResponse> CameraColorImageAsync(CameraColorImageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CameraColorImageRequest(id, "CameraColorImage", args), id);
             return JsonConvert.DeserializeObject<CameraColorImageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to estimate the pose of a camera.
+        /// </summary>
+        /// <param name="args">Camera parameters, image (latin-1 encoded), and inverse flag.</param>
+        /// <returns>The response.</returns>
         public async Task<GetCameraPoseResponse> GetCameraPoseAsync(GetCameraPoseRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetCameraPoseRequest(id, "GetCameraPose", args), id);
             return JsonConvert.DeserializeObject<GetCameraPoseResponse>(response)!;
         }
 
-        public async Task<MarkersCornersResponse> GetMarkersCornersAsync(MarkersCornersRequestArgs args) {
+        /// <summary>
+        /// Sends a request to estimate markers corners.
+        /// </summary>
+        /// <param name="args">Camera parameters, image (latin-1 encoded).</param>
+        /// <returns>The response.</returns>
+        public async Task<MarkersCornersResponse> MarkersCornersAsync(MarkersCornersRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new MarkersCornersRequest(id, "MarkersCorners", args), id);
             return JsonConvert.DeserializeObject<MarkersCornersResponse>(response)!;
@@ -2015,6 +2098,16 @@ namespace Arcor2.ClientSdk.Communication {
 
         }
 
+        /// <summary>
+        /// Sends a request to step robot's end effector.
+        /// </summary>
+        /// <remarks>Mode.User is not yet supported as of ARCOR2 server v1.5.0.</remarks>
+        /// <param name="args">
+        /// Robot ID, end effector ID, axis, what (position/orientation), mode, step size, safe flag,
+        /// optional pose (e.g. if relative), speed (0-1f), linear movement flag, and optional arm ID.
+        /// </param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<StepRobotEefResponse> StepRobotEefAsync(StepRobotEefRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StepRobotEefRequest(id, "StepRobotEef", args, isDryRun), id);
@@ -2128,18 +2221,34 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<CopyProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to step currently executing package by actions.
+        /// </summary>
+        /// <remarks>The execution must be paused before calling.</remarks>
+        /// <returns>The response.</returns>
         public async Task<StepActionResponse> StepActionAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StepActionRequest(id, "StepAction"));
             return JsonConvert.DeserializeObject<StepActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get camera's color parameters.
+        /// </summary>
+        /// <param name="args">Camera ID.</param>
+        /// <returns>The response.</returns>
         public async Task<CameraColorParametersResponse> CameraColorParametersAsync(CameraColorParametersRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CameraColorParametersRequest(id, "CameraColorParameters", args), id);
             return JsonConvert.DeserializeObject<CameraColorParametersResponse>(response)!;
         }
 
+
+        /// <summary>
+        /// Sends a request to get a list of robot's gripper IDs.
+        /// </summary>
+        /// <param name="args">Robot ID and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetGrippersResponse> GetGrippersAsync(GetGrippersRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetGrippersRequest(id, "GetGrippers", args), id);
@@ -2179,12 +2288,22 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<GetSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get a list of robot's gripper IDs.
+        /// </summary>
+        /// <param name="args">Robot ID and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetSuctionsResponse> GetSuctionsAsync(GetSuctionsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetSuctionsRequest(id, "GetSuctions", args), id);
             return JsonConvert.DeserializeObject<GetSuctionsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to move robot joints.
+        /// </summary>
+        /// <param name="args">Robot ID, speed (0-1f), list of joints, safe flag, and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<MoveToJointsResponse> MoveToJointsAsync(MoveToJointsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new MoveToJointsRequest(id, "MoveToJoints", args), id);
@@ -2202,12 +2321,22 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<ObjectTypeUsageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get project IDs that use specified action object from a scene.
+        /// </summary>
+        /// <param name="args">Action object ID.</param>
+        /// <returns>The response.</returns>
         public async Task<SceneObjectUsageResponse> SceneObjectUsageAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SceneObjectUsageRequest(id, "SceneObjectUsage", args), id);
             return JsonConvert.DeserializeObject<SceneObjectUsageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to stop a robot.
+        /// </summary>
+        /// <param name="args">Robot ID.</param>
+        /// <returns>The response.</returns>
         public async Task<StopRobotResponse> StopRobotAsync(StopRobotRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StopRobotRequest(id, "StopRobot", args), id);
