@@ -17,10 +17,10 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class ProjectExceptionEventArgs : EventArgs {
+    public class PackageExceptionEventArgs : EventArgs {
         public ProjectExceptionData Data { get; set; }
 
-        public ProjectExceptionEventArgs(ProjectExceptionData data) {
+        public PackageExceptionEventArgs(ProjectExceptionData data) {
             Data = data;
         }
     }

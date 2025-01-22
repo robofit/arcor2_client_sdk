@@ -49,7 +49,10 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         public Uri? Uri { get; private set; }
 
-        public WebSocketState State { get; }
+        /// <summary>
+        /// Represents the state of a connection to server.
+        /// </summary>
+        public WebSocketState ConnectionState => webSocket.State;
 
         #region Public Event Definitions
 
@@ -345,7 +348,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Raised when error occurs while running a package.
         /// </summary>
-        public event EventHandler<ProjectExceptionEventArgs>? OnPackageException;
+        public event EventHandler<PackageExceptionEventArgs>? OnPackageException;
         /// <summary>
         /// Raised while running a package before execution of an action (parameters and other information).
         /// </summary>
@@ -880,7 +883,7 @@ namespace Arcor2.ClientSdk.Communication {
 
         private void HandleProjectException(string data) {
             var projectException = JsonConvert.DeserializeObject<ProjectException>(data)!;
-            OnPackageException?.Invoke(this, new ProjectExceptionEventArgs(projectException.Data));
+            OnPackageException?.Invoke(this, new PackageExceptionEventArgs(projectException.Data));
         }
 
         private void HandleActionResult(string data) {
@@ -1008,7 +1011,6 @@ namespace Arcor2.ClientSdk.Communication {
                     break;
                 case PackageChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("Package base update should never occur.");
-                    break;
                 default:
                     throw new NotImplementedException("Unknown change type.");
             }
@@ -1353,6 +1355,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Sends a request to execute selected action.
         /// </summary>
         /// <param name="args">Action ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
         public async Task<ExecuteActionResponse> ExecuteActionAsync(ExecuteActionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
@@ -2133,7 +2136,6 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<StepRobotEefResponse>(response)!;
         }
 
-
         /// <summary>
         /// Sends a request to set the end effector perpendicular to the world frame.
         /// </summary>
@@ -2261,7 +2263,6 @@ namespace Arcor2.ClientSdk.Communication {
             var response = await SendAndWaitAsync(new CameraColorParametersRequest(id, "CameraColorParameters", args), id);
             return JsonConvert.DeserializeObject<CameraColorParametersResponse>(response)!;
         }
-
 
         /// <summary>
         /// Sends a request to get a list of robot's gripper IDs.
