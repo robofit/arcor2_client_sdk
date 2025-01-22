@@ -49,7 +49,10 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         public Uri? Uri { get; private set; }
 
-        public WebSocketState State { get; }
+        /// <summary>
+        /// Represents the state of a connection to server.
+        /// </summary>
+        public WebSocketState ConnectionState => webSocket.State;
 
         #region Public Event Definitions
 
@@ -1008,7 +1011,6 @@ namespace Arcor2.ClientSdk.Communication {
                     break;
                 case PackageChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("Package base update should never occur.");
-                    break;
                 default:
                     throw new NotImplementedException("Unknown change type.");
             }
@@ -1353,6 +1355,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Sends a request to execute selected action.
         /// </summary>
         /// <param name="args">Action ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
         /// <returns>The response.</returns>
         public async Task<ExecuteActionResponse> ExecuteActionAsync(ExecuteActionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
