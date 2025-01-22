@@ -49,7 +49,10 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         public Uri? Uri { get; private set; }
 
-        #region Callback Event Definitions
+        public WebSocketState State { get; }
+
+        #region Public Event Definitions
+
         /// <summary>
         /// Raised when any connection-related error occurs.
         /// </summary>
@@ -317,7 +320,20 @@ namespace Arcor2.ClientSdk.Communication {
         /// Raised when the state of long-running process changes.
         /// </summary>
         public event EventHandler<ProcessStateEventArgs>? OnProcessState;
-        
+
+        /// <summary>
+        /// Raised when new package is added.
+        /// </summary>
+        public event EventHandler<PackageChangedEventArgs>? OnPackageAdded;
+        /// <summary>
+        /// Raised when package is updated (e.g. renamed)
+        /// </summary>
+        public event EventHandler<PackageChangedEventArgs>? OnPackageUpdated;
+        /// <summary>
+        /// Raised when package is removed.
+        /// </summary>
+        public event EventHandler<PackageChangedEventArgs>? OnPackageRemoved;
+
         /// <summary>
         /// Raised when package (script) is initialized and ready to execute.
         /// </summary>
@@ -532,19 +548,19 @@ namespace Arcor2.ClientSdk.Communication {
                         HandleJointsChanged(data);
                         break;
                     case "ChangedObjectTypes":
-                        HandleChangedObjectTypesEvent(data);
+                        HandleChangedObjectTypes(data);
                         break;
                     case "RobotMoveToActionPointOrientation":
                         HandleRobotMoveToActionPointOrientation(data);
                         break;
                     case "RobotMoveToPose":
-                        HandleRobotMoveToPoseEvent(data);
+                        HandleRobotMoveToPose(data);
                         break;
                     case "RobotMoveToJoints":
-                        HandleRobotMoveToJointsEvent(data);
+                        HandleRobotMoveToJoints(data);
                         break;
                     case "RobotMoveToActionPointJoints":
-                        HandleRobotMoveToActionPointJointsEvent(data);
+                        HandleRobotMoveToActionPointJoints(data);
                         break;
                     case "ActionStateBefore":
                         HandleActionStateBefore(data);
@@ -615,15 +631,16 @@ namespace Arcor2.ClientSdk.Communication {
                     case "HandTeachingMode":
                         HandleHandTeachingMode(data);
                         break;
-                    default:
-                        // We probably do not want this to be fatal, due to the real possibility of some minor version mismatch
-                        ConnectionError?.Invoke(this, new NotImplementedException($"Unknown event received: {dispatch.@event}"));
+                    case "PackageChanged":
+                        HandlePackageChanged(data);
                         break;
+                    default:
+                       throw new NotImplementedException($"Unknown event received: {dispatch.@event}");
                 }
             }
         }
 
-        #region Server Event Handlers
+        #region Event Handlers
 
         private void HandleSceneChanged(string data) {
             var sceneChangedEvent = JsonConvert.DeserializeObject<SceneChanged>(data)!;
@@ -791,7 +808,7 @@ namespace Arcor2.ClientSdk.Communication {
             }
         }
 
-        private void HandleChangedObjectTypesEvent(string data) {
+        private void HandleChangedObjectTypes(string data) {
             var objectTypesChangedEvent = JsonConvert.DeserializeObject<ChangedObjectTypes>(data)!;
 
             switch(objectTypesChangedEvent.ChangeType) {
@@ -816,17 +833,17 @@ namespace Arcor2.ClientSdk.Communication {
             OnRobotMoveToActionPointOrientation?.Invoke(this, new RobotMoveToActionPointOrientationEventArgs(robotMoveToActionPointOrientation.Data));
         }
 
-        private void HandleRobotMoveToPoseEvent(string data) {
+        private void HandleRobotMoveToPose(string data) {
             var robotMoveToPose = JsonConvert.DeserializeObject<RobotMoveToPose>(data)!;
             OnRobotMoveToPose?.Invoke(this, new RobotMoveToPoseEventArgs(robotMoveToPose.Data));
         }
 
-        private void HandleRobotMoveToJointsEvent(string data) {
+        private void HandleRobotMoveToJoints(string data) {
             var robotMoveToJoints = JsonConvert.DeserializeObject<RobotMoveToJoints>(data)!;
             OnRobotMoveToJoints?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
         }
 
-        private void HandleRobotMoveToActionPointJointsEvent(string data) {
+        private void HandleRobotMoveToActionPointJoints(string data) {
             var robotMoveToActionPointJoints = JsonConvert.DeserializeObject<RobotMoveToActionPointJoints>(data)!;
             OnRobotMoveToActionPointJoints?.Invoke(this, new RobotMoveToActionPointJointsEventArgs(robotMoveToActionPointJoints.Data));
         }
@@ -976,6 +993,27 @@ namespace Arcor2.ClientSdk.Communication {
             OnHandTeachingMode?.Invoke(this, new HandTeachingModeEventArgs(handTeachingMode.Data));
         }
 
+        private void HandlePackageChanged(string data) {
+            var packageChanged = JsonConvert.DeserializeObject<PackageChanged>(data)!;
+
+            switch(packageChanged.ChangeType) {
+                case PackageChanged.ChangeTypeEnum.Add:
+                    OnPackageAdded?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    break;
+                case PackageChanged.ChangeTypeEnum.Update:
+                    OnPackageUpdated?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    break;
+                case PackageChanged.ChangeTypeEnum.Remove:
+                    OnPackageRemoved?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    break;
+                case PackageChanged.ChangeTypeEnum.UpdateBase:
+                    throw new NotImplementedException("Package base update should never occur.");
+                    break;
+                default:
+                    throw new NotImplementedException("Unknown change type.");
+            }
+        }
+
         #endregion
 
         #region Request-Response Methods
@@ -992,85 +1030,184 @@ namespace Arcor2.ClientSdk.Communication {
 
         #region Request-Response Methods With Direct Endpoint
 
+        /// <summary>
+        /// Sends a request to retrieve object types supported by the server.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<GetObjectTypesResponse> GetObjectTypesAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetObjectTypesRequest(id, "GetObjectTypes"), id);
             return JsonConvert.DeserializeObject<GetObjectTypesResponse>(response)!;
         }
 
-
+        /// <summary>
+        /// Sends a request to retrieve list of available actions for an object type.
+        /// </summary>
+        /// <param name="args">The object type.</param>
+        /// <returns>The response.</returns>
         public async Task<GetActionsResponse> GetActionsAsync(TypeArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetActionsRequest(id, "GetActions", args), id);
             return JsonConvert.DeserializeObject<GetActionsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to save the current scene.
+        /// </summary>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<SaveSceneResponse> SaveSceneAsync(bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SaveSceneRequest(id, "SaveScene", isDryRun), id);
             return JsonConvert.DeserializeObject<SaveSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to save the current project.
+        /// </summary>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<SaveProjectResponse> SaveProjectAsync(bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SaveProjectRequest(id, "SaveProject", isDryRun), id);
             return JsonConvert.DeserializeObject<SaveProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to open a project.
+        /// </summary>
+        /// <param name="args">The project ID.</param>
+        /// <returns>The response.</returns>
         public async Task<OpenProjectResponse> OpenProjectAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new OpenProjectRequest(id, "OpenProject", args), id);
             return JsonConvert.DeserializeObject<OpenProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to run a package.
+        /// </summary>
+        /// <param name="args">The run parameters.</param>
+        /// <returns>The response.</returns>
         public async Task<RunPackageResponse> RunPackageAsync(RunPackageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RunPackageRequest(id, "RunPackage", args), id);
             return JsonConvert.DeserializeObject<RunPackageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to build the current project into temporary package and run it.
+        /// </summary>
+        /// <param name="args">The debugging execution parameters.</param>
+        /// <returns>The response.</returns>
         public async Task<TemporaryPackageResponse> TemporaryPackageAsync(TemporaryPackageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new TemporaryPackageRequest(id, "TemporaryPackage", args), id);
             return JsonConvert.DeserializeObject<TemporaryPackageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to terminate a running package.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<StopPackageResponse> StopPackageAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StopPackageRequest(id, "StopPackage"), id);
             return JsonConvert.DeserializeObject<StopPackageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to pause a running package.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<PausePackageResponse> PausePackageAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new PausePackageRequest(id, "PausePackage"), id);
             return JsonConvert.DeserializeObject<PausePackageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to resume a pause package.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<ResumePackageResponse> ResumePackageAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ResumePackageRequest(id, "ResumePackage"), id);
             return JsonConvert.DeserializeObject<ResumePackageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to upload a package.
+        /// </summary>
+        /// <param name="args">The package ID and its data.</param>
+        /// <returns>The response.</returns>
+        public async Task<UploadPackageResponse> UploadPackageAsync(UploadPackageRequestArgs args) {
+            var id = Interlocked.Increment(ref requestId);
+            var response = await SendAndWaitAsync(new UploadPackageRequest(id, "UploadPackage", args), id);
+            return JsonConvert.DeserializeObject<UploadPackageResponse>(response)!;
+        }
+
+        /// <summary>
+        /// Sends a request to rename a package.
+        /// </summary>
+        /// <param name="args">The package ID and new name.</param>
+        /// <returns>The response.</returns>
+        public async Task<RenamePackageResponse> RenamePackageAsync(RenamePackageRequestArgs args) {
+            var id = Interlocked.Increment(ref requestId);
+            var response = await SendAndWaitAsync(new RenamePackageRequest(id, "RenamePackage", args), id);
+            return JsonConvert.DeserializeObject<RenamePackageResponse>(response)!;
+        }
+
+        /// <summary>
+        /// Sends a request to retrieve a list of available packages.
+        /// </summary>
+        /// <returns>The response.</returns>
+        public async Task<ListPackagesResponse> ListPackagesAsync() {
+            var id = Interlocked.Increment(ref requestId);
+            var response = await SendAndWaitAsync(new ListPackagesRequest(id, "ListPackages"), id);
+            return JsonConvert.DeserializeObject<ListPackagesResponse>(response)!;
+        }
+
+        /// <summary>
+        /// Sends a request to update pose of action point using the robot's end effector.
+        /// </summary>
+        /// <param name="args">Action point ID and a robot.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointUsingRobotResponse> UpdateActionPointUsingRobotAsync(UpdateActionPointUsingRobotRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointUsingRobotRequest(id, "UpdateActionPointUsingRobot", args), id);
             return JsonConvert.DeserializeObject<UpdateActionPointUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update pose of action object.
+        /// </summary>
+        /// <param name="args">Action object ID and a new pose.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateObjectPoseResponse> UpdateObjectPoseAsync(UpdateObjectPoseRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectPoseRequest(id, "UpdateObjectPose", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateObjectPoseResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update pose of action object using the robot's end effector.
+        /// </summary>
+        /// <param name="args">Robot and pivot option.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateObjectPoseUsingRobotResponse> UpdateObjectPoseUsingRobotAsync(UpdateObjectPoseUsingRobotRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectPoseUsingRobotRequest(id, "UpdateObjectPoseUsingRobot", args), id);
             return JsonConvert.DeserializeObject<UpdateObjectPoseUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to define a new object type.
+        /// </summary>
+        /// <param name="args">The object type definition.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<NewObjectTypeResponse> NewObjectTypeAsync(ObjectTypeMeta args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new NewObjectTypeRequest(id, "NewObjectType", args, isDryRun), id);
@@ -1101,36 +1238,55 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<ObjectAimingCancelResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to retrieve a list of available scenes.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<ListScenesResponse> ListScenesAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ListScenesRequest(id, "ListScenes"), id);
             return JsonConvert.DeserializeObject<ListScenesResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to retrieve a list of available projects.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<ListProjectsResponse> ListProjectsAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ListProjectsRequest(id, "ListProjects"), id);
             return JsonConvert.DeserializeObject<ListProjectsResponse>(response)!;
         }
 
-        public async Task<ListPackagesResponse> ListPackagesAsync() {
-            var id = Interlocked.Increment(ref requestId);
-            var response = await SendAndWaitAsync(new ListPackagesRequest(id, "ListPackages"), id);
-            return JsonConvert.DeserializeObject<ListPackagesResponse>(response)!;
-        }
-
+        /// <summary>
+        /// Sends a request to add a new action object to a scene.
+        /// </summary>
+        /// <param name="args">The name, type, pose and parameters of the action object.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddObjectToSceneResponse> AddObjectToSceneAsync(AddObjectToSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddObjectToSceneRequest(id, "AddObjectToScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddObjectToSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove an action object from scene.
+        /// </summary>
+        /// <param name="args">Action Object ID and if the removal should be forced.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveFromSceneResponse> RemoveFromSceneAsync(RemoveFromSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveFromSceneRequest(id, "RemoveFromScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RemoveFromSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to open a scene.
+        /// </summary>
+        /// <param name="args">Scene ID.</param>
+        /// <returns>THe response.</returns>
         public async Task<OpenSceneResponse> OpenSceneAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new OpenSceneRequest(id, "OpenScene", args), id);
@@ -1155,155 +1311,302 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<CancelActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to retrieve information about the server (version, supported parameter types, and RPCs).
+        /// </summary>
+        /// <returns>THe response.</returns>
         public async Task<SystemInfoResponse> SystemInfoAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SystemInfoRequest(id, "SystemInfo"), id);
             return JsonConvert.DeserializeObject<SystemInfoResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to build a project into a package and upload it.
+        /// </summary>
+        /// <param name="args">The project ID and resulting package name.</param>
+        /// <returns>The response.</returns>
         public async Task<BuildProjectResponse> BuildProjectAsync(BuildProjectRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new BuildProjectRequest(id, "BuildProject", args), id);
             return JsonConvert.DeserializeObject<BuildProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create a new scene.
+        /// </summary>
+        /// <param name="args">Name and description.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<NewSceneResponse> NewSceneAsync(NewSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new NewSceneRequest(id, "NewScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<NewSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to delete a scene.
+        /// </summary>
+        /// <param name="args">ID of the scene.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<DeleteSceneResponse> DeleteSceneAsync(IdArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteSceneRequest(id, "DeleteScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<DeleteSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename a scene.
+        /// </summary>
+        /// <param name="args">ID and a new name of the scene.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameSceneResponse> RenameSceneAsync(RenameArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameSceneRequest(id, "RenameScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RenameSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename an action object.
+        /// </summary>
+        /// <param name="args">The action object ID and new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameObjectResponse> RenameObjectAsync(RenameArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameObjectRequest(id, "RenameObject", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RenameObjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to close a scene.
+        /// </summary>
+        /// <param name="args">Should the action be forced (e.g. in case of unsaved changes).</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<CloseSceneResponse> CloseSceneAsync(CloseSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CloseSceneRequest(id, "CloseScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<CloseSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to retrieve existing project of a scene.
+        /// </summary>
+        /// <param name="args">Scene ID.</param>
+        /// <returns>The response.</returns>
         public async Task<ProjectsWithSceneResponse> ProjectsWithSceneAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ProjectsWithSceneRequest(id, "ProjectsWithScene", args), id);
             return JsonConvert.DeserializeObject<ProjectsWithSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create a new project.
+        /// </summary>
+        /// <param name="args">Parent scene ID, project name, description, and if it should have its own logic.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<NewProjectResponse> NewProjectAsync(NewProjectRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new NewProjectRequest(id, "NewProject", args, isDryRun), id);
             return JsonConvert.DeserializeObject<NewProjectResponse>(response)!;
         }
+
+        /// <summary>
+        /// Sends a request to delete a project.
+        /// </summary>
+        /// <param name="args">Project ID.</param>
+        /// <returns>The response.</returns>
         public async Task<DeleteProjectResponse> DeleteProjectAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteProjectRequest(id, "DeleteProject", args), id);
             return JsonConvert.DeserializeObject<DeleteProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to delete a package.
+        /// </summary>
+        /// <param name="args">Package ID.</param>
+        /// <returns>The response.</returns>
         public async Task<DeletePackageResponse> DeletePackageAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeletePackageRequest(id, "DeletePackage", args), id);
             return JsonConvert.DeserializeObject<DeletePackageResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create a new action point.
+        /// </summary>
+        /// <param name="args">Name, position, and optional parent.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddActionPointResponse> AddActionPointAsync(AddActionPointRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddActionPointRequest(id, "AddActionPoint", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddActionPointResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create a new action point for robot's end effector.
+        /// </summary>
+        /// <param name="args">Robot (action object) ID, name, end effector ID, and optional arm ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddApUsingRobotResponse> AddApUsingRobotAsync(AddApUsingRobotRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddApUsingRobotRequest(id, "AddApUsingRobot", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddApUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update position of an action point.
+        /// </summary>
+        /// <param name="args">Action point ID and a new position.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointPositionResponse> UpdateActionPointPositionAsync(UpdateActionPointPositionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointPositionRequest(id, "UpdateActionPointPosition", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateActionPointPositionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to change the parent of an action point.
+        /// </summary>
+        /// <param name="args">Action point ID and the ID of the new parent.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointParentResponse> UpdateActionPointParentAsync(UpdateActionPointParentRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointParentRequest(id, "UpdateActionPointParent", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateActionPointParentResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create a new orientation of an action point.
+        /// </summary>
+        /// <param name="args">Action point ID, orientation and a name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddActionPointOrientationResponse> AddActionPointOrientationAsync(AddActionPointOrientationRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddActionPointOrientationRequest(id, "AddActionPointOrientation", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddActionPointOrientationResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove orientation from an action point.
+        /// </summary>
+        /// <param name="args">Orientation ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveActionPointOrientationResponse> RemoveActionPointOrientationAsync(RemoveActionPointOrientationRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveActionPointOrientationRequest(id, "RemoveActionPointOrientation", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RemoveActionPointOrientationResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update orientation of an action point.
+        /// </summary>
+        /// <param name="args">Orientation ID and a new orientation data.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointOrientationResponse> UpdateActionPointOrientationAsync(UpdateActionPointOrientationRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointOrientationRequest(id, "UpdateActionPointOrientation", args), id);
             return JsonConvert.DeserializeObject<UpdateActionPointOrientationResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create a new orientation of robot end effector's action point.
+        /// </summary>
+        /// <param name="args">Action point ID, robot information, and a name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddActionPointOrientationUsingRobotResponse> AddActionPointOrientationUsingRobotAsync(AddActionPointOrientationUsingRobotRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddActionPointOrientationUsingRobotRequest(id, "AddActionPointOrientationUsingRobot", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddActionPointOrientationUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update orientation of robot end effector's action point.
+        /// </summary>
+        /// <param name="args">Orientation ID and robot information.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointOrientationUsingRobotResponse> UpdateActionPointOrientationUsingRobotAsync(UpdateActionPointOrientationUsingRobotRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointOrientationUsingRobotRequest(id, "UpdateActionPointOrientationUsingRobot", args), id);
             return JsonConvert.DeserializeObject<UpdateActionPointOrientationUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to create new joints of robot's (end effector) action point.
+        /// </summary>
+        /// <param name="args">Action point ID, robot/arm/end effector ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddActionPointJointsUsingRobotResponse> AddActionPointJointsUsingRobotAsync(AddActionPointJointsUsingRobotRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddActionPointJointsUsingRobotRequest(id, "AddActionPointJointsUsingRobot", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddActionPointJointsUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update joints of an action point.
+        /// </summary>
+        /// <param name="args">Joints ID and a list of joint names and values.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointJointsResponse> UpdateActionPointJointsAsync(UpdateActionPointJointsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointJointsRequest(id, "UpdateActionPointJoints", args), id);
             return JsonConvert.DeserializeObject<UpdateActionPointJointsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update joints of robot's (end effector) action point.
+        /// </summary>
+        /// <param name="args">Joints ID.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionPointJointsUsingRobotResponse> UpdateActionPointJointsUsingRobotAsync(UpdateActionPointJointsUsingRobotRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionPointJointsUsingRobotRequest(id, "UpdateActionPointJointsUsingRobot", args), id);
             return JsonConvert.DeserializeObject<UpdateActionPointJointsUsingRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename an action point.
+        /// </summary>
+        /// <param name="args">Action point ID and a new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameActionPointResponse> RenameActionPointAsync(RenameActionPointRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameActionPointRequest(id, "RenameActionPoint", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RenameActionPointResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename joints of an action point.
+        /// </summary>
+        /// <param name="args">Joints ID and a new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameActionPointJointsResponse> RenameActionPointJointsAsync(RenameActionPointJointsRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameActionPointJointsRequest(id, "RenameActionPointJoints", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RenameActionPointJointsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename orientation of an action point.
+        /// </summary>
+        /// <param name="args">Orientation ID and a new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameActionPointOrientationResponse> RenameActionPointOrientationAsync(RenameActionPointOrientationRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameActionPointOrientationRequest(id, "RenameActionPointOrientation", args, isDryRun), id);
@@ -1323,150 +1626,277 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<MoveToPoseResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove joints of an action point.
+        /// </summary>
+        /// <param name="args">Joints ID.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveActionPointJointsResponse> RemoveActionPointJointsAsync(RemoveActionPointJointsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveActionPointJointsRequest(id, "RemoveActionPointJoints", args), id);
             return JsonConvert.DeserializeObject<RemoveActionPointJointsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to add an action to action point.
+        /// </summary>
+        /// <param name="args">Action point ID, name, action type, parameters, and flows.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddActionResponse> AddActionAsync(AddActionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddActionRequest(id, "AddAction", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update an action.
+        /// </summary>
+        /// <param name="args">Action ID and updated parameters and flows.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateActionResponse> UpdateActionAsync(UpdateActionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateActionRequest(id, "UpdateAction", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove an action.
+        /// </summary>
+        /// <param name="args">Action ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveActionResponse> RemoveActionAsync(IdArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveActionRequest(id, "RemoveAction", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RemoveActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename an action.
+        /// </summary>
+        /// <param name="args">Action ID and a new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameActionResponse> RenameActionAsync(RenameActionRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameActionRequest(id, "RenameAction", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RenameActionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to add a logic item to the project.
+        /// </summary>
+        /// <param name="args">Start, end, and an optional condition for the logic item.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddLogicItemResponse> AddLogicItemAsync(AddLogicItemRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddLogicItemRequest(id, "AddLogicItem", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddLogicItemResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update a logic item.
+        /// </summary>
+        /// <param name="args">Logic item ID, start, end, and an optional condition for the logic item.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateLogicItemResponse> UpdateLogicItemAsync(UpdateLogicItemRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateLogicItemRequest(id, "UpdateLogicItem", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateLogicItemResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove a logic item.
+        /// </summary>
+        /// <param name="args">Logic item ID.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveLogicItemResponse> RemoveLogicItemAsync(RemoveLogicItemRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveLogicItemRequest(id, "RemoveLogicItem", args), id);
             return JsonConvert.DeserializeObject<RemoveLogicItemResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to rename a project.
+        /// </summary>
+        /// <param name="args">Project ID and a new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RenameProjectResponse> RenameProjectAsync(RenameProjectRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameProjectRequest(id, "RenameProject", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RenameProjectResponse>(response)!;
         }
 
-        public async Task<RenamePackageResponse> RenamePackageAsync(RenamePackageRequestArgs args) {
-            var id = Interlocked.Increment(ref requestId);
-            var response = await SendAndWaitAsync(new RenamePackageRequest(id, "RenamePackage", args), id);
-            return JsonConvert.DeserializeObject<RenamePackageResponse>(response)!;
-        }
-
+        /// <summary>
+        /// Sends a request to remove an action point.
+        /// </summary>
+        /// <param name="args">Action point ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveActionPointResponse> RemoveActionPointAsync(IdArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveActionPointRequest(id, "RemoveActionPoint", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RemoveActionPointResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to close a project.
+        /// </summary>
+        /// <param name="args">Should the action be forced (e.g. in case of unsaved changes).</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<CloseProjectResponse> CloseProjectAsync(CloseProjectRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CloseProjectRequest(id, "CloseProject", args, isDryRun), id);
             return JsonConvert.DeserializeObject<CloseProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get a pose of robot's end effector.
+        /// </summary>
+        /// <param name="args">Robot, end effector (and arm) ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetEndEffectorPoseResponse> GetEndEffectorPoseAsync(GetEndEffectorPoseRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetEndEffectorPoseRequest(id, "GetEndEffectorPose", args), id);
             return JsonConvert.DeserializeObject<GetEndEffectorPoseResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to register/unregister itself for robot's end effector/joints update events.
+        /// </summary>
+        /// <param name="args">Robot ID, type (eef/joints), and if the request is registering or unregistering.</param>
+        /// <returns>The response.</returns>
         public async Task<RegisterForRobotEventResponse> RegisterForRobotEventAsync(RegisterForRobotEventRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RegisterForRobotEventRequest(id, "RegisterForRobotEvent", args), id);
             return JsonConvert.DeserializeObject<RegisterForRobotEventResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get information about a robot.
+        /// </summary>
+        /// <returns>The response.</returns>
         public async Task<GetRobotMetaResponse> GetRobotMetaAsync() {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetRobotMetaRequest(id, "GetRobotMeta"), id);
             return JsonConvert.DeserializeObject<GetRobotMetaResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get a list of end effectors of a robot.
+        /// </summary>
+        /// <param name="args">Robot (and arm) ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetEndEffectorsResponse> GetEndEffectorsAsync(GetEndEffectorsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetEndEffectorsRequest(id, "GetEndEffectors", args), id);
             return JsonConvert.DeserializeObject<GetEndEffectorsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get a list of arms of a robot.
+        /// </summary>
+        /// <param name="args">Robot ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetRobotArmsResponse> GetRobotArmsAsync(GetRobotArmsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetRobotArmsRequest(id, "GetRobotArms", args), id);
             return JsonConvert.DeserializeObject<GetRobotArmsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to start an offline scene.
+        /// </summary>
+        /// <remarks>All locks must be freed before starting a scene.</remarks>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<StartSceneResponse> StartSceneAsync(bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StartSceneRequest(id, "StartScene", isDryRun), id);
             return JsonConvert.DeserializeObject<StartSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to stop an online scene.
+        /// </summary>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<StopSceneResponse> StopSceneAsync(bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StopSceneRequest(id, "StopScene", isDryRun), id);
             return JsonConvert.DeserializeObject<StopSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update action object's parameters.
+        /// </summary>
+        /// <param name="args">Action object ID and a list of Name-Type-Value parameters.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateObjectParametersResponse> UpdateObjectParametersAsync(UpdateObjectParametersRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectParametersRequest(id, "UpdateObjectParameters", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateObjectParametersResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to add an override to project's action object.
+        /// </summary>
+        /// <param name="args">Action object ID and a new parameter override.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddOverrideResponse> AddOverrideAsync(AddOverrideRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddOverrideRequest(id, "AddOverride", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddOverrideResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update an override of project's action object.
+        /// </summary>
+        /// <param name="args">Action object ID and the parameter override.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateOverrideResponse> UpdateOverrideAsync(UpdateOverrideRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateOverrideRequest(id, "UpdateOverride", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateOverrideResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove an override of project's action object.
+        /// </summary>
+        /// <param name="args">Action object ID and the parameter override.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<DeleteOverrideResponse> DeleteOverrideAsync(DeleteOverrideRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new DeleteOverrideRequest(id, "DeleteOverride", args, isDryRun), id);
             return JsonConvert.DeserializeObject<DeleteOverrideResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to calculate the inverse kinematics for a robot's end-effector and update it.
+        /// </summary>
+        /// <param name="args">Robot ID, end effector ID, target pose, optional start joints, collision avoidance flag, and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<InverseKinematicsResponse> InverseKinematicsAsync(InverseKinematicsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new InverseKinematicsRequest(id, "InverseKinematics", args), id);
             return JsonConvert.DeserializeObject<InverseKinematicsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to calculate the forward kinematics for a robot's joints and update it.
+        /// </summary>
+        /// <param name="args">Robot ID, end effector ID, joint positions, and optional arm ID.</param>
+        /// <returns>The response.</returns>
         public async Task<ForwardKinematicsResponse> ForwardKinematicsAsync(ForwardKinematicsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ForwardKinematicsRequest(id, "ForwardKinematics", args), id);
@@ -1503,102 +1933,195 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<MarkersCornersResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to lock an object for writing.
+        /// </summary>
+        /// <param name="args">Object ID and if the whole object subtree should be locked.</param>
+        /// <returns>The response.</returns>
         public async Task<WriteLockResponse> WriteLockAsync(WriteLockRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new WriteLockRequest(id, "WriteLock", args), id);
             return JsonConvert.DeserializeObject<WriteLockResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to unlock an object for writing.
+        /// </summary>
+        /// <param name="args">Object ID.</param>
+        /// <returns>The response.</returns>
         public async Task<WriteUnlockResponse> WriteUnlockAsync(WriteUnlockRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new WriteUnlockRequest(id, "WriteUnlock", args), id);
             return JsonConvert.DeserializeObject<WriteUnlockResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to lock an object for reading.
+        /// </summary>
+        /// <param name="args">Object ID.</param>
+        /// <returns>The response.</returns>
+        [Obsolete("Current ARCOR2 implementation (1.5.0) does not have a real use for client read-locking.")]
         public async Task<ReadLockResponse> ReadLockAsync(ReadLockRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ReadLockRequest(id, "ReadLock", args), id);
             return JsonConvert.DeserializeObject<ReadLockResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to unlock an object for reading.
+        /// </summary>
+        /// <param name="args">Object ID.</param>
+        /// <returns>The response.</returns>
+        [Obsolete("Current ARCOR2 implementation (1.5.0) does not have a real use for client read-locking.")]
         public async Task<ReadUnlockResponse> ReadUnlockAsync(ReadUnlockRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ReadUnlockRequest(id, "ReadUnlock", args), id);
             return JsonConvert.DeserializeObject<ReadUnlockResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update lock type (object/tree).
+        /// </summary>
+        /// <param name="args">Object ID and new lock type.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateLockResponse> UpdateLockAsync(UpdateLockRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateLockRequest(id, "UpdateLock", args), id);
             return JsonConvert.DeserializeObject<UpdateLockResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to toggle hand teaching mode.
+        /// </summary>
+        /// <param name="args">Robot ID, toggle.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<HandTeachingModeResponse> HandTeachingModeAsync(HandTeachingModeRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new HandTeachingModeRequest(id, "HandTeachingMode", args, isDryRun), id);
             return JsonConvert.DeserializeObject<HandTeachingModeResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to duplicate an action point.
+        /// </summary>
+        /// <param name="args">Object ID and boolean if the object tree should be locked.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<CopyActionPointResponse> CopyActionPointAsync(CopyActionPointRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CopyActionPointRequest(id, "CopyActionPoint", args, isDryRun), id);
             return JsonConvert.DeserializeObject<CopyActionPointResponse>(response)!;
 
         }
+
         public async Task<StepRobotEefResponse> StepRobotEefAsync(StepRobotEefRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new StepRobotEefRequest(id, "StepRobotEef", args, isDryRun), id);
             return JsonConvert.DeserializeObject<StepRobotEefResponse>(response)!;
         }
 
+
+        /// <summary>
+        /// Sends a request to set the end effector perpendicular to the world frame.
+        /// </summary>
+        /// <param name="args">Robot ID, end effector ID, safety flag, speed, linear movement flag, and optional arm ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The result.</returns>
         public async Task<SetEefPerpendicularToWorldResponse> SetEefPerpendicularToWorldAsync(SetEefPerpendicularToWorldRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new SetEefPerpendicularToWorldRequest(id, "SetEefPerpendicularToWorld", args, isDryRun), id);
             return JsonConvert.DeserializeObject<SetEefPerpendicularToWorldResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to register user for this session.
+        /// </summary>
+        /// <param name="args">Username.</param>
+        /// <returns>The response.</returns>
         public async Task<RegisterUserResponse> RegisterUserAsync(RegisterUserRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RegisterUserRequest(id, "RegisterUser", args), id);
             return JsonConvert.DeserializeObject<RegisterUserResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to add a project parameter.
+        /// </summary>
+        /// <param name="args">Parameter in Name-Type-Value format.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddProjectParameterResponse> AddProjectParameterAsync(AddProjectParameterRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddProjectParameterRequest(id, "AddProjectParameter", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddProjectParameterResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update a value of project parameter.
+        /// </summary>
+        /// <param name="args">Project parameter ID and a new value.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateProjectParameterResponse> UpdateProjectParameterAsync(UpdateProjectParameterRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateProjectParameterRequest(id, "UpdateProjectParameter", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateProjectParameterResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to remove project parameter.
+        /// </summary>
+        /// <param name="args">Project parameter ID.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<RemoveProjectParameterResponse> RemoveProjectParameterAsync(RemoveProjectParameterRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveProjectParameterRequest(id, "RemoveProjectParameter", args, isDryRun), id);
             return JsonConvert.DeserializeObject<RemoveProjectParameterResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update object model of an object type.
+        /// </summary>
+        /// <param name="args">Object type ID and the object model.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateObjectModelResponse> UpdateObjectModelAsync(UpdateObjectModelRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectModelRequest(id, "UpdateObjectModel", args, isDryRun), id);
             return JsonConvert.DeserializeObject<UpdateObjectModelResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to add a virtual collision object to a scene.
+        /// </summary>
+        /// <param name="args">Name, pose, and the object.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<AddVirtualCollisionObjectToSceneResponse> AddVirtualCollisionObjectToSceneAsync(AddVirtualCollisionObjectToSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddVirtualCollisionObjectToSceneRequest(id, "AddVirtualCollisionObjectToScene", args, isDryRun), id);
             return JsonConvert.DeserializeObject<AddVirtualCollisionObjectToSceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to duplicate a scene.
+        /// </summary>
+        /// <param name="args">Scene ID and a new name.</param>
+        /// <returns>The response.</returns>
         public async Task<CopySceneResponse> DuplicateSceneAsync(CopySceneRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CopySceneRequest(id, "CopyScene", args), id);
             return JsonConvert.DeserializeObject<CopySceneResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to duplicate a scene.
+        /// </summary>
+        /// <param name="args">Project ID and a new name.</param>
+        /// <param name="isDryRun">If true, the request will be a dry run and have no persistent effect.</param>
+        /// <returns>The response.</returns>
         public async Task<CopyProjectResponse> DuplicateProjectAsync(CopyProjectRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CopyProjectRequest(id, "CopyProject", args, isDryRun), id);
@@ -1623,18 +2146,33 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<GetGrippersResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get a project using ID.
+        /// </summary>
+        /// <param name="args">Project ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetProjectResponse> GetProjectAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetProjectRequest(id, "GetProject", args), id);
             return JsonConvert.DeserializeObject<GetProjectResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get joints of a robot.
+        /// </summary>
+        /// <param name="args">Robot (and arm) ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetRobotJointsResponse> GetRobotJointsAsync(GetRobotJointsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetRobotJointsRequest(id, "GetRobotJoints", args), id);
             return JsonConvert.DeserializeObject<GetRobotJointsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get a scene using ID.
+        /// </summary>
+        /// <param name="args">Scene ID.</param>
+        /// <returns>The response.</returns>
         public async Task<GetSceneResponse> GetSceneAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetSceneRequest(id, "GetScene", args), id);
@@ -1653,6 +2191,11 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<MoveToJointsResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to get scene IDs that use specified object type.
+        /// </summary>
+        /// <param name="args">Object type ID.</param>
+        /// <returns>The response.</returns>
         public async Task<ObjectTypeUsageResponse> ObjectTypeUsageAsync(IdArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new ObjectTypeUsageRequest(id, "ObjectTypeUsage", args), id);
@@ -1671,28 +2214,37 @@ namespace Arcor2.ClientSdk.Communication {
             return JsonConvert.DeserializeObject<StopRobotResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update project's description.
+        /// </summary>
+        /// <param name="args">Project ID and new description.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateProjectDescriptionResponse> UpdateProjectDescriptionAsync(UpdateProjectDescriptionRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateProjectDescriptionRequest(id, "UpdateProjectDescription", args), id);
             return JsonConvert.DeserializeObject<UpdateProjectDescriptionResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update if project contains logic.
+        /// </summary>
+        /// <param name="args">Project ID and boolean value indicating if project should have logic.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateProjectHasLogicResponse> UpdateProjectHasLogicAsync(UpdateProjectHasLogicRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateProjectHasLogicRequest(id, "UpdateProjectHasLogic", args), id);
             return JsonConvert.DeserializeObject<UpdateProjectHasLogicResponse>(response)!;
         }
 
+        /// <summary>
+        /// Sends a request to update scene's description.
+        /// </summary>
+        /// <param name="args">Scene ID and new description.</param>
+        /// <returns>The response.</returns>
         public async Task<UpdateSceneDescriptionResponse> UpdateSceneDescriptionAsync(UpdateSceneDescriptionRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateSceneDescriptionRequest(id, "UpdateSceneDescription", args), id);
             return JsonConvert.DeserializeObject<UpdateSceneDescriptionResponse>(response)!;
-        }
-
-        public async Task<UploadPackageResponse> UploadPackageAsync(UploadPackageRequestArgs args) {
-            var id = Interlocked.Increment(ref requestId);
-            var response = await SendAndWaitAsync(new UploadPackageRequest(id, "UploadPackage", args), id);
-            return JsonConvert.DeserializeObject<UploadPackageResponse>(response)!;
         }
 
         #endregion

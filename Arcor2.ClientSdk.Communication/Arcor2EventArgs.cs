@@ -33,17 +33,6 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    // TODO
-    public class ProjectMetaEventArgs : EventArgs {
-        public string Name { get; set; }
-        public string Id { get; set; }
-
-        public ProjectMetaEventArgs(string id, string name) {
-            Id = id;
-            Name = name;
-        }
-    }
-
     public class BareProjectEventArgs : EventArgs {
         public BareProject Project { get; set; }
 
@@ -52,7 +41,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class BareSceneEventArgs {
+    public class BareSceneEventArgs : EventArgs {
         public BareScene Scene { get; set; }
 
         public BareSceneEventArgs(BareScene scene) {
@@ -247,15 +236,6 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    // TODO
-    public class ObjectTypeEventArgs : EventArgs {
-        public ObjectTypeMeta ObjectType { get; set; }
-
-        public ObjectTypeEventArgs(ObjectTypeMeta objectType) {
-            ObjectType = objectType;
-        }
-    }
-
     public class ObjectTypesEventArgs : EventArgs {
         public List<ObjectTypeMeta> ObjectTypes { get; set; }
 
@@ -285,6 +265,14 @@ namespace Arcor2.ClientSdk.Communication {
 
         public SceneObjectEventArgs(SceneObject sceneObject) {
             SceneObject = sceneObject;
+        }
+    }
+
+    public class PackageChangedEventArgs : EventArgs {
+        public PackageSummary Data { get; set; }
+
+        public PackageChangedEventArgs(PackageSummary data) {
+            Data = data;
         }
     }
 }

@@ -146,6 +146,8 @@ namespace Arcor2.ClientSdk.Communication.Design
         public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string? statusDescription = null) {
             if(State == WebSocketState.Open) {
                 await webSocket.CloseAsync((System.Net.WebSockets.WebSocketCloseStatus) closeStatus, statusDescription ?? string.Empty, CancellationToken.None);
+                webSocket.Dispose();
+                OnClose?.Invoke(this, new WebSocketCloseEventArgs { CloseStatus = closeStatus, CloseStatusDescription = statusDescription });
             }
         }
 
