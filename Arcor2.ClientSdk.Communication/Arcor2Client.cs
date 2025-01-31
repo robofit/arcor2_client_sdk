@@ -382,6 +382,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// Creates an instance of <see cref="Arcor2Client"/>.
         /// </summary>
         /// <param name="settings">The client settings.</param>
+        /// <param name="logger">An instance of <see cref="IArcor2ClientLogger"/>.</param>
         public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2ClientLogger? logger = null) {
             clientSettings = settings ?? new Arcor2ClientSettings();
             jsonSettings = clientSettings.ParseJsonSerializerSettings();

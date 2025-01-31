@@ -12,7 +12,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : Arcor2ClientFixture {
         ], "John")
     );
 
-    private SceneChanged sampleSceneRemovedEvent => new("SceneChanged", SceneChanged.ChangeTypeEnum.Remove, null, 
+    private SceneChanged sampleSceneRemovedEvent => new("SceneChanged", SceneChanged.ChangeTypeEnum.Remove, null!, 
         new BareScene("SampleScene", "Description", DateTime.Parse("2020-01-01"), DateTime.Parse("2020-02-01"), DateTime.Parse("2020-02-01"), "sceneId1")
     );
 
