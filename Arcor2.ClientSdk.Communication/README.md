@@ -34,7 +34,7 @@ The `CloseAsync()` method can only be in `WebSocketState.Open` state. The invoca
 
 `ConnectionError` event is raised for any connection-related issues, with the relevant exception as an argument. Unrecoverable errors also trigger the ConnectionClosed event.
 
-The `GetUnderlyingWebSocket()` method can be used to retrieve the used WebSocket instance for advanaced usegcases.
+The `GetUnderlyingWebSocket()` method can be used to retrieve the used WebSocket instance for advanaced use cases.
 
 ### RPC methods
 
@@ -104,6 +104,94 @@ public class Arcor2Client<TWebSocket> where TWebSocket : class, IWebSocket, new(
 The requirements for each method are listed in the interface's XAML comments. Most importantly, the implementation should fully support concurrency and hava parameterless constructor.
 Related classes can be found in the `Arcor2.ClientSdk.Communication.Design` namespace.
 
+### Unity Support and Usage
+
+The library is designed for .NET Standard 2.1, which means it is fully compatible with Unity 2021.2 and later.
+
+For earlier Unity versions (2018+), the library will not work out of the box unless it is retargeted to .NET Standard 2.0.
+If needed, the retargeting process is practically feasible and will involve removing or refactoring certain C# features that rely on .NET Standard 2.1, 
+such as nullable reference types or readonly members.
+
+The library leverages .NET's Task Parallel Library (TPL) for asynchronous programming, which is supported in Unity with some important caveats discussed below.
+
+Unity APIs (e.g. GameObject, Transform, Debug.Log) are not thread-safe and must be accessed only from the main thread. 
+Consider the following method, which results in a `InvalidOperationException`. Exception handling logic is omitted for conciseness.
+
+```
+private void RegisterUser() {
+    var registrationTask = arcor2Client.RegisterUserAsync(new RegisterUserRequestArgs("john"));
+
+    registrationTask.ContinueWith(task => 
+    {
+        if(task.Result.Result) {
+           NavigateToMenu();
+        }
+        else {
+           Debug.Log($"Error while registering a user. {task.Result.Messages.First()}");
+        }
+    });
+
+    Task.Run(registrationTask);
+}
+```
+
+The issue is that the continuation `Task` accesses Unity APIs from a background thread. This can be generally fixed using any of the following approaches:
+- The best approach is to convert the synchronous methosd to asynchronous methods. The `await` automatically resumes on the main thread after the `Task` completes. Note that this may not be always be a feasible approach, especially in large legacy code bases.
+```
+private async void RegisterUser() {
+    var registrationTask = await arcor2Client.RegisterUserAsync(new RegisterUserRequestArgs("john"));
+
+    // This will run on the main thread
+    if(registrationTask.Result) {
+        NavigateToMenu();
+    }
+    else {
+        Debug.Log($"Error while registering a user. {task.Result.Messages.First()}");
+    }
+}
+```
+- Scheduling the continuation `Task` to run on the main thread using `TaskScheduler`.
+```
+private void RegisterUser() {
+    var registrationTask = arcor2Client.RegisterUserAsync(new RegisterUserRequestArgs("john"));
+
+    // This will run on the main thread
+    registrationTask.ContinueWith(task => 
+    {
+        if(task.Result.Result) {
+           NavigateToMenu();
+        }
+        else {
+           Debug.Log($"Error while registering a user. {task.Result.Messages.First()}");
+        }
+    }, TaskScheduler.FromCurrentSynchronizationContext());
+
+    Task.Run(registrationTask);
+}
+```
+- Using a main thread dispatcher, such as the popular `UnityMainThreadDispatcher` library.
+
+```
+private void RegisterUser() {
+    var registrationTask = arcor2Client.RegisterUserAsync(new RegisterUserRequestArgs("john"));
+
+    registrationTask.ContinueWith(task => 
+    {   
+        UnityMainThreadDispatcher.Instance.Enqueue(() => 
+         {
+            // This will run on the main thread
+            if(task.Result.Result) {
+               NavigateToMenu();
+            }
+            else {
+               Debug.Log($"Error while registering a user. {task.Result.Messages.First()}");
+            }
+        });
+    });
+
+    Task.Run(registrationTask);
+}
+```
 
 ## Contributing
 

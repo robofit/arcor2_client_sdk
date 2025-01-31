@@ -95,7 +95,6 @@ declare -A modifications=(
 
 echo "Applying model modifications..."
 
-# Process each file and its properties
 for file in "${!modifications[@]}"; do
     file_path="$OUTPUT_DIR/$MODELS_DIR/$file"
     if [ -f "$file_path" ]; then

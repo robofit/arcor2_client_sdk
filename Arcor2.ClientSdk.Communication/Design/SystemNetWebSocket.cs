@@ -6,8 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Arcor2.ClientSdk.Communication.Design
-{
+namespace Arcor2.ClientSdk.Communication.Design {
     public class SystemNetWebSocket : IWebSocket {
         /// <summary>
         /// <inheritdoc cref="IWebSocket"/>
@@ -45,11 +44,9 @@ namespace Arcor2.ClientSdk.Communication.Design
         public event EventHandler? OnOpen;
 
         private readonly ClientWebSocket webSocket = new ClientWebSocket();
-        private Uri? uri;
 
         private readonly object sendMessageLock = new object();
         private bool sendingMessage;
-
 
         // Used to store byte and type pair in send queue
         private class QueueMessage {
@@ -62,7 +59,7 @@ namespace Arcor2.ClientSdk.Communication.Design
             }
         }
 
-        private Queue<QueueMessage> messageQueue = new Queue<QueueMessage>();
+        private readonly Queue<QueueMessage> messageQueue = new Queue<QueueMessage>();
 
         /// <summary>
         /// <inheritdoc cref="IWebSocket"/>
@@ -72,19 +69,15 @@ namespace Arcor2.ClientSdk.Communication.Design
                 throw new InvalidOperationException("ConnectAsync method can only be invoked once.");
             }
 
-            this.uri = uri;
-
             try {
                 await webSocket.ConnectAsync(uri, CancellationToken.None);
                 OnOpen?.Invoke(this, EventArgs.Empty);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 Task.Run(ReceiveAsync);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             }
-            catch (Exception ex) {
-                OnError?.Invoke(this, new WebSocketErrorEventArgs {
-                    Exception = ex
-                });
-                OnClose?.Invoke(this, new WebSocketCloseEventArgs());
-                webSocket.Dispose();
+            catch(Exception ex) {
+                throw new Arcor2ConnectionException(ex.Message, ex);
             }
         }
 
@@ -96,27 +89,37 @@ namespace Arcor2.ClientSdk.Communication.Design
             var messageBuffer = new List<byte>();
 
             try {
-                while (State == WebSocketState.Open) {
+                while(State == WebSocketState.Open) {
                     WebSocketReceiveResult result;
                     do {
                         // No lock needed, as this method can't be called directly.
                         result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
                         messageBuffer.AddRange(buffer.Array!.Take(result.Count));
                     }
-                    while (!result.EndOfMessage);
+                    while(!result.EndOfMessage);
 
-                    switch (result.MessageType) {
+                    switch(result.MessageType) {
                         case System.Net.WebSockets.WebSocketMessageType.Text:
-                            OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
-                                Data = messageBuffer.ToArray(),
-                                MessageType = WebSocketMessageType.Text
-                            });
+                            try {
+                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
+                                    Data = messageBuffer.ToArray(),
+                                    MessageType = WebSocketMessageType.Text
+                                });
+                            }
+                            catch {
+                                // Badly handled exception from client code. Swallow it to keep connection alive.
+                            }
                             break;
                         case System.Net.WebSockets.WebSocketMessageType.Binary:
-                            OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
-                                Data = messageBuffer.ToArray(),
-                                MessageType = WebSocketMessageType.Text
-                            });
+                            try {
+                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
+                                    Data = messageBuffer.ToArray(),
+                                    MessageType = WebSocketMessageType.Text
+                                });
+                            }
+                            catch {
+                                // Badly handled exception from client code. Swallow it to keep connection alive.
+                            }
                             break;
                         case System.Net.WebSockets.WebSocketMessageType.Close:
                             await CloseAsync();
@@ -130,7 +133,7 @@ namespace Arcor2.ClientSdk.Communication.Design
                     messageBuffer.Clear();
                 }
             }
-            catch (Exception ex) {
+            catch(Exception ex) {
                 OnError?.Invoke(this, new WebSocketErrorEventArgs {
                     Exception = ex
                 });
@@ -177,7 +180,7 @@ namespace Arcor2.ClientSdk.Communication.Design
         }
 
         public async Task SendAsync(ArraySegment<byte> bytes, System.Net.WebSockets.WebSocketMessageType messageType) {
-            if (State != WebSocketState.Open) {
+            if(State != WebSocketState.Open) {
                 throw new InvalidOperationException("SendAsync can only be invoked in Open state.");
             }
 
