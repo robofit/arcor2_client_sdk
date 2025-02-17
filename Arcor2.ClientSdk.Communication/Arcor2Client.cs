@@ -9,11 +9,15 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Newtonsoft.Json;
 using WebSocketState = Arcor2.ClientSdk.Communication.Design.WebSocketState;
 
-namespace Arcor2.ClientSdk.Communication {
+namespace Arcor2.ClientSdk.Communication
+{
     /// <summary>
     /// Client for communication with ARCOR2 server. Default implementation using the System.Net.WebSockets.ClientWebSocket.
     /// </summary>
-    public class Arcor2Client : Arcor2Client<SystemNetWebSocket> { };
+    public class Arcor2Client : Arcor2Client<SystemNetWebSocket> {
+        /// <inheritdoc/>
+        public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) : base(settings, logger) {}
+    };
 
     /// <summary>
     /// Client for communication with ARCOR2 server using custom WebSocket implementation.
@@ -55,7 +59,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         /// Injected logger.
         /// </summary>
-        private IArcor2ClientLogger? logger;
+        private IArcor2Logger? logger;
 
         /// <summary>
         /// JSON deserialization options.
@@ -382,15 +386,15 @@ namespace Arcor2.ClientSdk.Communication {
         /// Creates an instance of <see cref="Arcor2Client"/>.
         /// </summary>
         /// <param name="settings">The client settings.</param>
-        /// <param name="logger">An instance of <see cref="IArcor2ClientLogger"/>.</param>
-        public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2ClientLogger? logger = null) {
+        /// <param name="logger">An instance of <see cref="IArcor2Logger"/>.</param>
+        public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) {
             clientSettings = settings ?? new Arcor2ClientSettings();
             jsonSettings = clientSettings.ParseJsonSerializerSettings();
             this.logger = logger ?? null;
 
             webSocket.OnError += (_, args) => {
                 OnConnectionError?.Invoke(this, args.Exception);
-                logger?.LogError($"A connection-related exception occured.\n{args.Exception}");
+                logger?.LogError($"A connection-related exception occured.\n{args}");
             };
             webSocket.OnClose += (_, args) => {
                 OnConnectionClosed?.Invoke(this, args);

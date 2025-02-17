@@ -2,10 +2,10 @@
 
 namespace Arcor2.ClientSdk.Communication.Design
 {
-    public class Arcor2ConnectionException : Exception
+    public class WebSocketConnectionException : Exception
     {
-        public Arcor2ConnectionException() : base() { }
-        public Arcor2ConnectionException(string message) : base(message) { }
-        public Arcor2ConnectionException(string message, Exception innerException) : base(message, innerException) { }
+        public WebSocketConnectionException() : base() { }
+        public WebSocketConnectionException(string message) : base(message) { }
+        public WebSocketConnectionException(string message, Exception innerException) : base(message, innerException) { }
     }
 }

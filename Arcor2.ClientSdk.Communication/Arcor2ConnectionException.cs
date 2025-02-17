@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace Arcor2.ClientSdk.Communication {
-    public class WebSocketConnectionException : Exception {
-        public WebSocketConnectionException() : base() { }
-        public WebSocketConnectionException(string message) : base(message) { }
-        public WebSocketConnectionException(string message, Exception innerException) : base(message, innerException) { }
+namespace Arcor2.ClientSdk.Communication
+{
+    public class Arcor2ConnectionException : Exception
+    {
+        public Arcor2ConnectionException() : base() { }
+        public Arcor2ConnectionException(string message) : base(message) { }
+        public Arcor2ConnectionException(string message, Exception innerException) : base(message, innerException) { }
     }
 }

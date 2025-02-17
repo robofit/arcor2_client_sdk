@@ -6,7 +6,7 @@ namespace Arcor2.ClientSdk.Communication {
     /// There is currently no public implementation.
     /// You should implement your own or create an adapter for logger of your choice.
     /// </remarks>
-    public interface IArcor2ClientLogger {
+    public interface IArcor2Logger {
         /// <summary>
         /// Used for logging informational and debug messages.
         /// </summary>

@@ -1,43 +1,124 @@
-﻿namespace Ignore.Test;
+﻿using Arcor2.ClientSdk.ClientServices;
+using Ignore.Test.Models;
+using Ignore.Test.Output;
+
+namespace Ignore.Test;
 
 internal class Program {
+    public static Arcor2Session session = null!;
+
+    private static int _isTerminating;
+
     static async Task Main(string[] args) {
-        Console.WriteLine("Enter values (one per line). Type 'END' to finish:");
-        List<string> values = new();
-        string input;
-
-        while((input = Console.ReadLine()) != "END") {
-            values.Add(input);
+        ConfigureGracefulTermination();
+        // Startup I/O
+        var options = StartUp();
+        if(options == null) {
+            return;
         }
 
-        // Get multiline text from the user
-        Console.WriteLine("Enter the text to search (type 'END' on a new line to finish):");
-        List<string> textLines = new();
+        // Init connection, init messages, login..
+        var logger = options.EnableConsoleLogger ? new ConsoleLogger() : null;
+        session = new Arcor2Session(logger);
+        await InitSession();
 
+        // The command loop
         while(true) {
-            string line = Console.ReadLine();
-            if(line == "END") {
-                break; // End on a line with 'END'
+            var command = ConsoleEx.ReadLinePrefix();
+            if(command == null) {
+                break;
             }
 
-            textLines.Add(line);
+            #if DEBUG
+                await ParseCommand(command);
+            #else
+                try {
+                    await ParseCommand(command);
+                }
+                catch(Exception ex) {
+                    ConsoleEx.WriteLineColor($"> {ex.Message}", ConsoleColor.Red);
+                }
+            #endif
         }
 
-        // Combine the lines into a single string
-        string text = string.Join(Environment.NewLine, textLines);
+        // Gracefully Terminate
+        await session.CloseAsync();
+    }
 
-        // Find and output values not found in the text
-        List<string> notFoundValues = new();
+    private static void ConfigureGracefulTermination() {
+        // SIGINT
+        Console.CancelKeyPress += (_, args) => {
+            args.Cancel = true;
+            CloseSession();
+        };
+        // SIGTERM
+        AppDomain.CurrentDomain.ProcessExit += (_, args) => {
+            CloseSession();
 
-        foreach(string value in values) {
-            if(!text.Contains("<" + value + ">")) {
-                notFoundValues.Add(value);
+        };
+        return;
+        // Termination function
+        void CloseSession() {
+            if(Interlocked.CompareExchange(ref _isTerminating, 1, 0) == 0) {
+                ConsoleEx.WriteLinePrefix("Closing the session...");
+                if(session != null! && session.State == Arcor2SessionState.Open) {
+                    session.CloseAsync().GetAwaiter().GetResult();
+                }
             }
         }
+    }
 
-        Console.WriteLine("Values not found in the text:");
-        foreach(string notFound in notFoundValues) {
-            Console.WriteLine(notFound);
+    private static Options? StartUp() {
+        ConsoleEx.WriteLinePrefix("This is a simple showcase client for the Arcor2.ClientSdk.ClientServices library.");
+        ConsoleEx.WriteLinePrefix("See the source code for insight on usage.");
+        ConsoleEx.WriteLinePrefix("Enable debug logger? (Y/N)");
+        var enableLoggerResponse = ConsoleEx.ReadLinePrefix();
+        if(enableLoggerResponse == null) {
+            return null;
         }
+        var enableLogger = enableLoggerResponse.ToLower().First() is 'y';
+        ConsoleEx.WriteLinePrefix($"Proceeding with logger {(enableLogger ? "enabled" : "disabled")}.");
+
+        return new Options {
+            EnableConsoleLogger = enableLogger
+        };
+    }
+
+    private static async Task ParseCommand(string text) {
+        var parts = text.Split(" ");
+        var command = parts[0];
+        var args = parts[1..];
+        switch(command) {
+            case "!object_types":
+                foreach(var type in session.ObjectTypes) {
+                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(type));
+                }
+                break;
+            case "!scenes":
+                await session.LoadScenes();
+                foreach(var type in session.Scenes) {
+                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(type));
+                }
+                break;
+            case "!rename_scene":
+                await session.RenameScene(args[0], args[1]);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Initializes a session (connection, gets username, registers needed handlers).
+    /// </summary>
+    public static async Task InitSession() {
+        await session.ConnectAsync("127.0.0.1", 6789);
+        ConsoleEx.WriteLinePrefix("Connected to localhost:6789. Input your username:");
+        var name = ConsoleEx.ReadLinePrefix();
+        var info = await session.InitializeAsync(name!);
+        ConsoleEx.WriteLinePrefix($"Registered successfully. Server v{info.VarVersion}, API v{info.ApiVersion}.");
+
+        session.OnConnectionClosed += (sender, args) => {
+            ConsoleEx.WriteLinePrefix("Session closed.");
+            Environment.Exit(0);
+        };
     }
 }
