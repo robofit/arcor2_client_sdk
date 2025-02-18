@@ -2,10 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+
+// Some information about architecture of this package:
+// 1. The Arcor2Session class serves as the main object or entrypoint and generally provides method similar to things you would find in a menu including connection management.
+// 2. It also holds a collection of different Arcor2ObjectManagers, which represent another functional entities (Scene, ActionPoint, etc...), which then manage themselves through their lifetime.
+//  2.1 The Arcor2Session class should only care about events and RPCs not delegable to other, more specific, Manager.
+//      For example, server creating new instances of Scene or ObjectType is not delegable to any other Manager.
+//      But an existing Manager is capable of updating its data, updating its own "sub-Managers" (e.g. SceneManager adding ActionObjectManager to its collection),
+//      or even removing itself from the parent collection, and disposing itself. Imagine this whole structure as a tree, where parents add nodes, and the nodes modify and delete themselves.
+//      This is not a dogma though, for example, if we can't statically deduct if event is addition or update to our internal DB
+//      (this is the case for OpenScene and such [Handled here], as it can be sent before or after Scenes are loaded). Similarly, SceneBaseUpdate may be both rename (update) or for some reason
+//      the result of duplication (addition) [Handled in both SceneManager and here].
+//  2.2 The Arcor2Session instance is injected into those Managers. It provides them with the ability to use the client, logger, or verify some global state.
+//  2.3 Always make sure Manager instances are properly disposed, they will otherwise at best leak a lot of memory (exponentially). At worst, they will cause unwanted behavior.
 
 namespace Arcor2.ClientSdk.ClientServices
 {
@@ -14,39 +28,24 @@ namespace Arcor2.ClientSdk.ClientServices
     /// Class used for session management and communication with ARCOR2 server.
     /// This class mostly offers actions you could do from the main screen.
     /// </summary>
-    public class Arcor2Session : Arcor2Session<SystemNetWebSocket> {
-        /// <inheritdoc/>
-        public Arcor2Session(IArcor2Logger? logger = null) : base(logger) { }
-    };
-
-    /// <summary>
-    /// Class used for session management and communication with ARCOR2 server using custom WebSocket implementation.
-    /// This class mostly offers actions you could do from the main screen.
-    /// </summary>
-    /// <typeparam name="TWebSocket">WebSocket implementation</typeparam>
-    public class Arcor2Session<TWebSocket> where TWebSocket : class, IWebSocket, new() {
-        internal readonly Arcor2Client<TWebSocket> client;
+    public class Arcor2Session {
+        internal readonly Arcor2Client client;
         internal readonly IArcor2Logger? logger;
+
+        public NavigationState NavigationState { get; set; } = NavigationState.None;
+        public string? NavigationId = null;
 
         /// <summary>
         /// Collection of available object types.
         /// </summary>
-        public IList<ObjectType> ObjectTypes { get; } = new List<ObjectType>();
-        /// <summary>
-        /// Raised when <see cref="ObjectTypes"/> collection or any of its members is modified by the server.
-        /// </summary>
-        public event EventHandler? OnObjectTypesChanged;
+        public IList<ObjectTypeManager> ObjectTypes { get; } = new List<ObjectTypeManager>();
 
         /// <summary>
         /// Collection of available scene metadata.
         /// </summary>
-        public IList<BareScene> Scenes { get; private set; } = new List<BareScene>();
-        /// <summary>
-        /// Raised when <see cref="Scenes"/> collection or any of its members is modified by the server.
-        /// </summary>
-        public event EventHandler? OnScenesChanged;
+        public IList<SceneManager> Scenes { get; private set; } = new List<SceneManager>();
 
-        #region Connection-related Memberss
+        #region Connection-related Members
 
         /// <summary>
         /// Initializes a new instance of <see cref="Arcor2Session"/> class.
@@ -54,14 +53,41 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <param name="logger">A logger instance.</param>
         public Arcor2Session(IArcor2Logger? logger = null) {
             this.logger = logger;
-            client = new Arcor2Client<TWebSocket>(new Arcor2ClientSettings(), this.logger);
+            client = new Arcor2Client(new Arcor2ClientSettings(), this.logger);
 
             client.OnConnectionOpened += (sender, args) => {
-                State = Arcor2SessionState.Open;
+                ConnectionState = Arcor2SessionState.Open;
                 OnConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
             client.OnConnectionClosed += (sender, args) => {
-                State = Arcor2SessionState.Closed;
+                ConnectionState = Arcor2SessionState.Closed;
+                OnConnectionClosed?.Invoke(this, EventArgs.Empty);
+            };
+            client.OnConnectionError += OnConnectionError;
+            RegisterHandlers();
+        }
+
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="Arcor2Session"/> class.
+        /// </summary>
+        /// <param name="websocket">A WebSocket object implementing the <see cref="IWebSocket"/> interface.</param>
+        /// <param name="logger">A logger instance.</param>
+        /// <exception cref="InvalidOperationException">If the provided WebSocket instance is not in the <see cref="WebSocketState.None"/> state.</exception>
+        public Arcor2Session(IWebSocket websocket,IArcor2Logger? logger = null) {
+            if(websocket.State != WebSocketState.None) {
+                throw new InvalidOperationException("The socket instance must be in the 'None' state.");
+            }
+
+            this.logger = logger;
+            client = new Arcor2Client(websocket, new Arcor2ClientSettings(), this.logger);
+
+            client.OnConnectionOpened += (sender, args) => {
+                ConnectionState = Arcor2SessionState.Open;
+                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
+            };
+            client.OnConnectionClosed += (sender, args) => {
+                ConnectionState = Arcor2SessionState.Closed;
                 OnConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
             client.OnConnectionError += OnConnectionError;
@@ -71,12 +97,12 @@ namespace Arcor2.ClientSdk.ClientServices
         /// Retrieves the underlying <see cref="Arcor2Client"/> instance.
         /// </summary>
         /// <returns></returns>
-        public Arcor2Client<TWebSocket> GetUnderlyingArcor2Client() => client;
+        public Arcor2Client GetUnderlyingArcor2Client() => client;
 
         /// <summary>
         /// The state of the session.
         /// </summary>
-        public Arcor2SessionState State { get; private set; } = Arcor2SessionState.None;
+        public Arcor2SessionState ConnectionState { get; private set; } = Arcor2SessionState.None;
 
         /// <summary>
         /// Raised when any connection-related error occurs.
@@ -133,7 +159,7 @@ namespace Arcor2.ClientSdk.ClientServices
         public async Task<SystemInfoResponseData> InitializeAsync(string username) {
             var taskRegistration = client.RegisterUserAsync(new RegisterUserRequestArgs(username));
             var taskSystemInfo = client.GetSystemInfoAsync();
-            var taskLoadObjectTypes = LoadObjectTypes();
+            var taskLoadObjectTypes = LoadObjectTypesAsync();
 
             await Task.WhenAll(taskRegistration, taskSystemInfo, taskLoadObjectTypes);
 
@@ -146,11 +172,7 @@ namespace Arcor2.ClientSdk.ClientServices
                 throw new Arcor2Exception("Getting server information failed.", systemInfoResult.Messages);
             }
 
-            State = Arcor2SessionState.Initialized;
-            // Notify object type change
-            OnObjectTypesChanged?.Invoke(this, EventArgs.Empty);
-
-            RegisterObjectTypeHandlers();
+            ConnectionState = Arcor2SessionState.Initialized;
 
             return systemInfoResult.Data;
         }
@@ -158,56 +180,40 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <summary>
         /// Updates <see cref="Scenes"/> list.
         /// </summary>
-        public async Task LoadScenes() {
+        /// <exception cref="Arcor2Exception" />
+        public async Task ReloadScenesAsync() {
             var sceneResponse = await client.ListScenesAsync();
             if (!sceneResponse.Result) {
                 throw new Arcor2Exception("Loading scenes failed.", sceneResponse.Messages);
             }
 
-            Scenes = new List<BareScene>();
-            foreach (var scene in sceneResponse.Data) {
-                Scenes.Add(new BareScene(scene.Name, scene.Description, scene.Created, scene.Modified, scene.Modified, scene.Id));
-            }
-        }
+            var oldScenes = Scenes;
 
-        public async Task RenameScene(string id, string newName) {
-            var @lock = await client.WriteLockAsync(new WriteLockRequestArgs(id));
-            if (!@lock.Result) {
-                throw new Arcor2Exception("Renaming scene failed.", @lock.Messages);
+            var newScenes = new List<SceneManager>();
+            foreach(var scene in sceneResponse.Data) {
+                newScenes.Add(new SceneManager(this, new BareScene(scene.Name, scene.Description, scene.Created, scene.Modified, scene.Modified, scene.Id)));
             }
 
-            var response = await client.RenameSceneAsync(new RenameArgs(id, newName));
-            if (!response.Result) {
-                throw new Arcor2Exception("Renaming scene failed.", response.Messages);
+            Scenes = newScenes;
+            foreach (var scene in oldScenes) {
+                scene.Dispose();
             }
-        }
-
-        /*
-        /// <summary>
-        /// Gets a list of available projects.
-        /// </summary>
-        /// <returns>List of project metadata.</returns>
-        public async Task<IList<ListProjectsResponseData>> ListProjects() {
-            var projectResponse = await client.ListProjectsAsync();
-            if(!projectResponse.Result) {
-                throw new Arcor2Exception("Listing projects failed", projectResponse.Messages);
-            }
-            return projectResponse.Data;
         }
 
         /// <summary>
-        /// Gets a list of available packages.
+        /// Adds a new scene.
         /// </summary>
-        /// <returns>List of package metadata.</returns>
-        public async Task<IList<PackageSummary>> ListPackages() {
-            var packageResponse = await client.ListPackagesAsync();
-            if(!packageResponse.Result) {
-                throw new Arcor2Exception("Listing projects failed", packageResponse.Messages);
+        /// <param name="name">The name for the scene.</param>
+        /// <param name="description">The description for the scene.</param>
+        /// <exception cref="Arcor2Exception" />
+        public async Task AddNewSceneAsync(string name, string description = "") {
+            var response = await client.AddNewSceneAsync(new NewSceneRequestArgs(name, description));
+            if(!response.Result) {
+                throw new Arcor2Exception("Adding a new scene failed.", response.Messages);
             }
-            return packageResponse.Data;
-        }*/
+        }
 
-        private async Task LoadObjectTypes() {
+        private async Task LoadObjectTypesAsync() {
             var objectTypesResponse = await client.GetObjectTypesAsync();
             if(!objectTypesResponse.Result) {
                 throw new Arcor2Exception("Failed to fetch object types.", objectTypesResponse.Messages);
@@ -216,11 +222,11 @@ namespace Arcor2.ClientSdk.ClientServices
             // Start tasks to fetch actions for non-built-in object types
             var actionTasks = new List<Task>();
             foreach(var objectTypeMeta in objectTypesResponse.Data) {
-                var objectType = new ObjectType(objectTypeMeta);
+                var objectType = new ObjectTypeManager(this, objectTypeMeta);
                 ObjectTypes.Add(objectType);
 
                 if(!objectTypeMeta.BuiltIn) {
-                    var actionTask = LoadActions(objectType);
+                    var actionTask = LoadActionsAsync(objectType);
                     actionTasks.Add(actionTask);
                 }
             }
@@ -228,52 +234,95 @@ namespace Arcor2.ClientSdk.ClientServices
             await Task.WhenAll(actionTasks);
         }
 
-        private async Task LoadActions(ObjectType objectType) {
-            var actions = await client.GetActionsAsync(new TypeArgs(objectType.Meta.Type));
+        private async Task LoadActionsAsync(ObjectTypeManager objectTypeManager) {
+            var actions = await client.GetActionsAsync(new TypeArgs(objectTypeManager.Meta.Type));
             if(actions.Result) {
-                objectType.Actions = actions.Data;
+                objectTypeManager.Actions = actions.Data;
             }
             else {
                 logger?.LogWarning(
-                    $"The server returned an error when fetching actions for {objectType.Meta.Type} object type. Leaving it blank. Error messages: " +
+                    $"The server returned an error when fetching actions for {objectTypeManager.Meta.Type} object type. Leaving it blank. Error messages: " +
                     string.Join(",", actions.Messages));
             }
         }
 
-        private void RegisterObjectTypeHandlers() {
-            client.OnObjectTypeAdded += async (sender, args) => {
-                foreach (var objectTypeMeta in args.ObjectTypes) {
-                    var objectType = new ObjectType(objectTypeMeta);
-                    await LoadActions(objectType);
-                    OnObjectTypesChanged?.Invoke(this, EventArgs.Empty);
-                }
-            };
-            client.OnObjectTypeUpdated += (sender, args) => {
-                foreach (var objectTypeMeta in args.ObjectTypes) {
-                    var objectTypeToChange = ObjectTypes.FirstOrDefault(o => o.Meta.Type == objectTypeMeta.Type);
-                    if (objectTypeToChange == null) {
-                        logger?.LogWarning(
-                            $"The server requested an update for {objectTypeMeta.Type} object type, which is not in internal list.");
-                        continue;
-                    }
+        private void RegisterHandlers() {
+            // Navigation
+            client.OnShowMainScreen += OnShowMainScreen;
+            client.OnOpenScene += OnOpenScene;
+            client.OnSceneClosed += OnSceneClosed;
+            client.OnOpenProject += OnOpenProject;
+            client.OnProjectClosed += OnProjectClosed;
 
-                    objectTypeToChange.Meta = objectTypeMeta;
-                    OnObjectTypesChanged?.Invoke(this, EventArgs.Empty);
-                }
-            };
-            client.OnObjectTypeRemoved += (sender, args) => {
-                foreach (var objectTypeMeta in args.ObjectTypes) {
-                    var objectTypeToRemove = ObjectTypes.FirstOrDefault(o => o.Meta.Type == objectTypeMeta.Type);
-                    if (objectTypeToRemove == null) {
-                        logger?.LogWarning(
-                            $"The server requested a remove for {objectTypeMeta.Type} object type, which is not in internal list.");
-                        continue;
-                    }
+            // Addition of sub-entities
+            client.OnObjectTypeAdded += OnObjectTypeAdded;
+            client.OnSceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
+        }
 
-                    ObjectTypes.Remove(objectTypeToRemove);
-                    OnObjectTypesChanged?.Invoke(this, EventArgs.Empty);
-                }
+        private void OnProjectClosed(object sender, EventArgs e) {
+            // In the rare case the order is weird
+            if(NavigationState == NavigationState.Project) {
+                NavigationState = NavigationState.ProjectClosed;
+            }
+        }
+
+        private void OnOpenProject(object sender, OpenProjectEventArgs e) {
+            // Ad-Hoc create a manager
+            var scene = Scenes.FirstOrDefault(s => s.Meta.Id == e.Data.Scene.Id);
+            if(scene == null) {
+                Scenes.Add(new SceneManager(this, e.Data.Scene));
+            }
+            else {
+                scene.UpdateAccordingToNewObject(e.Data.Scene);
+            }
+            // TODO: Ad-Hoc create a project
+
+            NavigationState = NavigationState.Project;
+            NavigationId = e.Data.Project.Id;
+        }
+
+        private void OnSceneClosed(object sender, EventArgs e) {
+            // In the rare case the order is weird
+            if (NavigationState == NavigationState.Scene) {
+                NavigationState = NavigationState.SceneClosed;
+            }
+        }
+
+        private void OnOpenScene(object sender, OpenSceneEventArgs e) {
+            // Ad-Hoc create a manager
+            var scene = Scenes.FirstOrDefault(s => s.Meta.Id == e.Data.Scene.Id);
+            if (scene == null) {
+                Scenes.Add(new SceneManager(this, e.Data.Scene));
+            }
+            else {
+                scene.UpdateAccordingToNewObject(e.Data.Scene);
+            }
+
+            NavigationState = NavigationState.Scene;
+            NavigationId = e.Data.Scene.Id;
+        }
+
+        private void OnShowMainScreen(object sender, ShowMainScreenEventArgs e) {
+            NavigationState = e.Data.What switch {
+                ShowMainScreenData.WhatEnum.ScenesList => NavigationState.MenuListOfScenes,
+                ShowMainScreenData.WhatEnum.ProjectsList => NavigationState.MenuListOfProjects,
+                ShowMainScreenData.WhatEnum.PackagesList => NavigationState.MenuListOfPackages,
+                _ => NavigationState
             };
+            NavigationId = null;
+        }
+
+        private void OnObjectTypeAdded(object sender, ObjectTypesEventArgs args) {
+            foreach(var objectTypeMeta in args.ObjectTypes) {
+                var objectType = new ObjectTypeManager(this, objectTypeMeta);
+                ObjectTypes.Add(objectType);
+            }
+        }
+
+        private void OnSceneBaseUpdated(object sender, BareSceneEventArgs e) {
+            if (Scenes.All(s => s.Meta.Id != e.Scene.Id)) {
+                Scenes.Add(new SceneManager(this, e.Scene));
+            }
         }
     }
 }

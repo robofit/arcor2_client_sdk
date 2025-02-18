@@ -12,19 +12,10 @@ using WebSocketState = Arcor2.ClientSdk.Communication.Design.WebSocketState;
 namespace Arcor2.ClientSdk.Communication
 {
     /// <summary>
-    /// Client for communication with ARCOR2 server. Default implementation using the System.Net.WebSockets.ClientWebSocket.
+    /// Client for communication with ARCOR2 servers.
     /// </summary>
-    public class Arcor2Client : Arcor2Client<SystemNetWebSocket> {
-        /// <inheritdoc/>
-        public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) : base(settings, logger) {}
-    };
-
-    /// <summary>
-    /// Client for communication with ARCOR2 server using custom WebSocket implementation.
-    /// </summary>
-    /// <typeparam name="TWebSocket">WebSocket implementation</typeparam>
-    public class Arcor2Client<TWebSocket> where TWebSocket : class, IWebSocket, new() {
-        private readonly TWebSocket webSocket = new TWebSocket();
+    public class Arcor2Client {
+        private readonly IWebSocket webSocket;
 
         /// <summary>
         /// Represents a request waiting for corresponding response.
@@ -388,6 +379,41 @@ namespace Arcor2.ClientSdk.Communication
         /// <param name="settings">The client settings.</param>
         /// <param name="logger">An instance of <see cref="IArcor2Logger"/>.</param>
         public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) {
+            webSocket = new SystemNetWebSocket();
+            clientSettings = settings ?? new Arcor2ClientSettings();
+            jsonSettings = clientSettings.ParseJsonSerializerSettings();
+            this.logger = logger ?? null;
+
+            webSocket.OnError += (_, args) => {
+                OnConnectionError?.Invoke(this, args.Exception);
+                logger?.LogError($"A connection-related exception occured.\n{args}");
+            };
+            webSocket.OnClose += (_, args) => {
+                OnConnectionClosed?.Invoke(this, args);
+                logger?.LogInfo("A connection with the ARCOR2 server was closed.");
+            };
+            webSocket.OnOpen += (_, __) => {
+                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
+                logger?.LogInfo("A connection with the ARCOR2 server was opened.");
+            };
+            webSocket.OnMessage += (_, args) => {
+                OnMessage(args);
+            };
+        }
+
+        /// <summary>
+        /// Creates an instance of <see cref="Arcor2Client"/> with the provided websocket instance.
+        /// </summary>
+        /// <param name="websocket">A WebSocket object implementing the <see cref="IWebSocket"/> interface.</param>
+        /// <param name="settings">The client settings.</param>
+        /// <param name="logger">An instance of <see cref="IArcor2Logger"/>.</param>
+        /// <exception cref="InvalidOperationException">If the provided WebSocket instance is not in the <see cref="WebSocketState.None"/> state.</exception>
+        public Arcor2Client(IWebSocket websocket, Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) {
+            if (websocket.State != WebSocketState.None) {
+                throw new InvalidOperationException("The socket instance must be in the 'None' state.");
+            }
+
+            webSocket = websocket;
             clientSettings = settings ?? new Arcor2ClientSettings();
             jsonSettings = clientSettings.ParseJsonSerializerSettings();
             this.logger = logger ?? null;
@@ -413,7 +439,7 @@ namespace Arcor2.ClientSdk.Communication
         /// Gets the WebSocket used by the client.
         /// </summary>
         /// <returns>The WebSocket used by the client.</returns>
-        public TWebSocket GetUnderlyingWebSocket() => webSocket;
+        public IWebSocket GetUnderlyingWebSocket() => webSocket;
 
         #region Connection Management Methods
 

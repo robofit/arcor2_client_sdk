@@ -13,6 +13,13 @@ public static class ReflectionHelper {
         "\x1b[38;5;12m" // Blue
     };
 
+    /// <summary>
+    /// Recursively pretty-prints the object properties.
+    /// </summary>
+    /// <param name="obj">The object to be printed.</param>
+    /// <param name="indentLevel">The base level of indentation.</param>
+    /// <param name="objectName">Custom object name to be prefixed.</param>
+    /// <returns></returns>
     public static string FormatObjectProperties(object? obj, int indentLevel = 0, string? objectName = null) {
         if(obj == null) {
             return "[null]";
@@ -24,16 +31,16 @@ public static class ReflectionHelper {
             .Where(property => property.GetIndexParameters().Length == 0) // Skip indexed properties
             .ToList();
 
+
+        var braceColor = BraceColors[indentLevel % BraceColors.Length];
+
         var propertyValues = properties
             .Select(property => {
                 var value = property.GetValue(obj, null); 
                 var formattedValue = FormatValue(value, indentLevel);
-                return $"{new string(' ', (indentLevel + 1) * 2)}{property.Name}: {formattedValue}";
+                return $"{new string(' ', (indentLevel + 1) * 2)}{braceColor}{property.Name}{ResetColor}: {formattedValue}";
             })
             .ToList();
-
-
-        var braceColor = BraceColors[indentLevel % BraceColors.Length];
 
         var prefix = objectName == null ? typeName : $"{objectName}: {typeName}";
 
