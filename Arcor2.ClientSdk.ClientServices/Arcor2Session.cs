@@ -9,7 +9,8 @@ using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 // Some information about architecture of this package:
-// 1. The Arcor2Session class serves as the main object or entrypoint and generally provides method similar to things you would find in a menu including connection management.
+//
+// 1. The class, Arcor2Session, serves as the main object of the session and generally provides method similar to things you would find in an actual menu including connection management.
 // 2. It also holds a collection of different Arcor2ObjectManagers, which represent another functional entities (Scene, ActionPoint, etc...), which then manage themselves through their lifetime.
 //  2.1 The Arcor2Session class should only care about events and RPCs not delegable to other, more specific, Manager.
 //      For example, server creating new instances of Scene or ObjectType is not delegable to any other Manager.
@@ -18,8 +19,9 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 //      This is not a dogma though, for example, if we can't statically deduct if event is addition or update to our internal DB
 //      (this is the case for OpenScene and such [Handled here], as it can be sent before or after Scenes are loaded). Similarly, SceneBaseUpdate may be both rename (update) or for some reason
 //      the result of duplication (addition) [Handled in both SceneManager and here].
-//  2.2 The Arcor2Session instance is injected into those Managers. It provides them with the ability to use the client, logger, or verify some global state.
+//  2.2 The Arcor2Session instance is injected into ALL Managers. It provides them with the ability to use the client, logger, or verify some global state.
 //  2.3 Always make sure Manager instances are properly disposed, they will otherwise at best leak a lot of memory (exponentially). At worst, they will cause unwanted behavior.
+//  2.4 Managers (see abstract type Arcor2ObjectManager) all have a distinct ID, corresponding to the managed ARCOR2 resource, injected during construction. This ID is immutable (= don't reuse instances).
 
 namespace Arcor2.ClientSdk.ClientServices
 {
@@ -32,17 +34,41 @@ namespace Arcor2.ClientSdk.ClientServices
         internal readonly Arcor2Client client;
         internal readonly IArcor2Logger? logger;
 
+        /// <summary>
+        /// Represents a client view that is expected by the server.
+        /// Dynamically updated.
+        ///
+        /// The <see cref="NavigationId"/> contains the ID of the highlighted item, or another related object such as a scene.
+        /// </summary>
+        /// <remarks>
+        /// The ARCOR2 server is written with a specific UI design in mind.
+        /// Some states are purely informational and do not disallow any operations (e.g. there is no functional difference in all the menu states).
+        /// </remarks>
         public NavigationState NavigationState { get; set; } = NavigationState.None;
+
+        /// <summary>
+        /// The ID of a highlighted object or object needed for client view that is expected by the server
+        /// (e.g., a scene or project ID).
+        /// </summary>
+        /// <value>
+        /// The ID of an object, <c>null</c> if not applicable.
+        /// </value>
         public string? NavigationId = null;
 
         /// <summary>
         /// Collection of available object types.
         /// </summary>
+        /// <remarks>Loaded on initialization and automatically maintained.</remarks>
         public IList<ObjectTypeManager> ObjectTypes { get; } = new List<ObjectTypeManager>();
 
         /// <summary>
-        /// Collection of available scene metadata.
+        /// Collection of available scenes.
         /// </summary>
+        /// <remarks>
+        /// If the server opens a scene, that scene will get fully initialized and added automatically (regardless of the current state).
+        /// Users can also call <see cref="ReloadScenesAsync"/> to load (and update) metadata of all scenes.
+        /// Furthermore, users may also invoke <see cref="SceneManager.LoadAsync"/> on the specific instance to load the action objects without opening it.
+        /// </remarks>
         public IList<SceneManager> Scenes { get; private set; } = new List<SceneManager>();
 
         #region Connection-related Members
@@ -66,7 +92,6 @@ namespace Arcor2.ClientSdk.ClientServices
             client.OnConnectionError += OnConnectionError;
             RegisterHandlers();
         }
-
 
         /// <summary>
         /// Initializes a new instance of <see cref="Arcor2Session"/> class.
@@ -150,13 +175,18 @@ namespace Arcor2.ClientSdk.ClientServices
         #endregion
 
         /// <summary>
-        /// Initializes a session by loading all object types nd their actions into <see cref="ObjectTypes"/> dictionary, registering a user, and getting the server information.
+        /// Initializes a session. Internally loads all object types and their actions into <see cref="ObjectTypes"/> dictionary, registers a user, and returns the server information.
         /// </summary>
-        /// <param name="username">Username</param>
-        /// <returns>The server information</returns>
+        /// <param name="username">A username.</param>
+        /// <returns>The server information.</returns>
         /// <exception cref="Arcor2Exception" />
         /// <exception cref="Arcor2ConnectionException" />
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task<SystemInfoResponseData> InitializeAsync(string username) {
+            if (ConnectionState != Arcor2SessionState.Open) {
+                throw new InvalidOperationException("Session can be initialized only once.");
+            }
+
             var taskRegistration = client.RegisterUserAsync(new RegisterUserRequestArgs(username));
             var taskSystemInfo = client.GetSystemInfoAsync();
             var taskLoadObjectTypes = LoadObjectTypesAsync();
@@ -173,12 +203,22 @@ namespace Arcor2.ClientSdk.ClientServices
             }
 
             ConnectionState = Arcor2SessionState.Initialized;
+            
+            // It is possible that scene is waiting for an initialization
+            // to do online setup.
+            if (NavigationState == NavigationState.Scene) {
+                var scene = Scenes.First(s => s.Id == NavigationId);
+                if (scene.State.OnlineState == SceneOnlineState.Started) {
+                    await scene!.RegisterForEndEffectorUpdatesAsync();
+                }
+            }
+            // TODO: Same for project
 
             return systemInfoResult.Data;
         }
 
         /// <summary>
-        /// Updates <see cref="Scenes"/> list.
+        /// Updates the <see cref="Scenes"/> collection and their metadata.
         /// </summary>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadScenesAsync() {
@@ -213,6 +253,18 @@ namespace Arcor2.ClientSdk.ClientServices
             }
         }
 
+        /// <summary>
+        /// Adds a new object type.
+        /// </summary>
+        /// <param name="meta">The metadata of the object type.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddNewObjectTypeAsync(ObjectTypeMeta meta) {
+            var response = await client.AddNewObjectTypeAsync(meta);
+            if(!response.Result) {
+                throw new Arcor2Exception("Adding a new object type failed.", response.Messages);
+            }
+        }
+
         private async Task LoadObjectTypesAsync() {
             var objectTypesResponse = await client.GetObjectTypesAsync();
             if(!objectTypesResponse.Result) {
@@ -226,24 +278,12 @@ namespace Arcor2.ClientSdk.ClientServices
                 ObjectTypes.Add(objectType);
 
                 if(!objectTypeMeta.BuiltIn) {
-                    var actionTask = LoadActionsAsync(objectType);
+                    var actionTask = objectType.ReloadActionsAsync();
                     actionTasks.Add(actionTask);
                 }
             }
 
             await Task.WhenAll(actionTasks);
-        }
-
-        private async Task LoadActionsAsync(ObjectTypeManager objectTypeManager) {
-            var actions = await client.GetActionsAsync(new TypeArgs(objectTypeManager.Meta.Type));
-            if(actions.Result) {
-                objectTypeManager.Actions = actions.Data;
-            }
-            else {
-                logger?.LogWarning(
-                    $"The server returned an error when fetching actions for {objectTypeManager.Meta.Type} object type. Leaving it blank. Error messages: " +
-                    string.Join(",", actions.Messages));
-            }
         }
 
         private void RegisterHandlers() {
@@ -288,7 +328,7 @@ namespace Arcor2.ClientSdk.ClientServices
             }
         }
 
-        private void OnOpenScene(object sender, OpenSceneEventArgs e) {
+        private async void OnOpenScene(object sender, OpenSceneEventArgs e) {
             // Ad-Hoc create a manager
             var scene = Scenes.FirstOrDefault(s => s.Meta.Id == e.Data.Scene.Id);
             if (scene == null) {
@@ -309,7 +349,7 @@ namespace Arcor2.ClientSdk.ClientServices
                 ShowMainScreenData.WhatEnum.PackagesList => NavigationState.MenuListOfPackages,
                 _ => NavigationState
             };
-            NavigationId = null;
+            NavigationId = string.IsNullOrEmpty(e.Data.Highlight) ? null : e.Data.Highlight;
         }
 
         private void OnObjectTypeAdded(object sender, ObjectTypesEventArgs args) {

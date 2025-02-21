@@ -94,7 +94,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Raised when state of scene changes (stopping/stopped/starting/started).
         /// </summary>
-        public event EventHandler<SceneStateEventArgs>? OnSceneStateEvent;
+        public event EventHandler<SceneStateEventArgs>? OnSceneState;
 
         /// <summary>
         /// Raised when action object is added. 
@@ -738,7 +738,7 @@ namespace Arcor2.ClientSdk.Communication
 
         private void HandleSceneState(string data) {
             var sceneState = JsonConvert.DeserializeObject<SceneState>(data, jsonSettings)!;
-            OnSceneStateEvent?.Invoke(this, new SceneStateEventArgs(sceneState.Data));
+            OnSceneState?.Invoke(this, new SceneStateEventArgs(sceneState.Data));
         }
 
         private void HandleSceneObjectChanged(string data) {
@@ -1318,7 +1318,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<UpdateObjectPoseResponse> UpdateObjectPoseAsync(UpdateObjectPoseRequestArgs args, bool isDryRun = false) {
+        public async Task<UpdateObjectPoseResponse> UpdateActionObjectPoseAsync(UpdateObjectPoseRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectPoseRequest(id, "UpdateObjectPose", args, isDryRun), id, "UpdateObjectPose");
             return JsonConvert.DeserializeObject<UpdateObjectPoseResponse>(response, jsonSettings)!;
@@ -1439,7 +1439,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<AddObjectToSceneResponse> AddObjectToSceneAsync(AddObjectToSceneRequestArgs args, bool isDryRun = false) {
+        public async Task<AddObjectToSceneResponse> AddActionObjectToSceneAsync(AddObjectToSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new AddObjectToSceneRequest(id, "AddObjectToScene", args, isDryRun), id, "AddObjectToScene");
             return JsonConvert.DeserializeObject<AddObjectToSceneResponse>(response, jsonSettings)!;
@@ -1453,7 +1453,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<RemoveFromSceneResponse> RemoveFromSceneAsync(RemoveFromSceneRequestArgs args, bool isDryRun = false) {
+        public async Task<RemoveFromSceneResponse> RemoveActionObjectFromSceneAsync(RemoveFromSceneRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RemoveFromSceneRequest(id, "RemoveFromScene", args, isDryRun), id, "RemoveFromScene");
             return JsonConvert.DeserializeObject<RemoveFromSceneResponse>(response, jsonSettings)!;
@@ -1587,7 +1587,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<RenameObjectResponse> RenameObjectAsync(RenameArgs args, bool isDryRun = false) {
+        public async Task<RenameObjectResponse> RenameActionObjectAsync(RenameArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new RenameObjectRequest(id, "RenameObject", args, isDryRun), id, "RenameObject");
             return JsonConvert.DeserializeObject<RenameObjectResponse>(response, jsonSettings)!;
@@ -2146,7 +2146,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<UpdateObjectParametersResponse> UpdateObjectParametersAsync(UpdateObjectParametersRequestArgs args, bool isDryRun = false) {
+        public async Task<UpdateObjectParametersResponse> UpdateActionObjectParametersAsync(UpdateObjectParametersRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectParametersRequest(id, "UpdateObjectParameters", args, isDryRun), id, "UpdateObjectParameters");
             return JsonConvert.DeserializeObject<UpdateObjectParametersResponse>(response, jsonSettings)!;
@@ -2481,7 +2481,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<UpdateObjectModelResponse> UpdateObjectModelAsync(UpdateObjectModelRequestArgs args, bool isDryRun = false) {
+        public async Task<UpdateObjectModelResponse> UpdateObjectTypeModelAsync(UpdateObjectModelRequestArgs args, bool isDryRun = false) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new UpdateObjectModelRequest(id, "UpdateObjectModel", args, isDryRun), id, "UpdateObjectModel");
             return JsonConvert.DeserializeObject<UpdateObjectModelResponse>(response, jsonSettings)!;

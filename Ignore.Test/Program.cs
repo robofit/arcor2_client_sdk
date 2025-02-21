@@ -1,6 +1,9 @@
 ﻿using Arcor2.ClientSdk.ClientServices;
+using Arcor2.ClientSdk.ClientServices.Models.Extras;
+using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Ignore.Test.Models;
 using Ignore.Test.Output;
+using Newtonsoft.Json;
 
 namespace Ignore.Test;
 
@@ -41,11 +44,15 @@ internal class Program {
                         await cts.CancelAsync();
                         break;
                     }
+
                     try {
                         await ParseCommand(command);
                     }
-                    catch(Arcor2Exception ex) {
-                        ConsoleEx.WriteLineColor($"> {ex.Message}", ConsoleColor.Red);
+                    catch (Arcor2Exception ex) {
+                        ConsoleEx.WriteLineColor($"> SERVER ERROR: {ex.Message}", ConsoleColor.Red);
+                    }
+                    catch (Exception ex) {
+                        ConsoleEx.WriteLineColor($"> INTERNAL ERROR: {ex.Message}", ConsoleColor.Red);
                     }
                 }
                 await Task.Delay(50, cts.Token); // Small delay to prevent CPU spinning
@@ -67,12 +74,12 @@ internal class Program {
         ConsoleEx.WriteLinePrefix("Enable debug logger? (Y/N)");
 
         // Use a timeout for the initial setup question
-        var response = await Task.Run(() => ConsoleEx.ReadLinePrefix());
+        var response = await Task.Run(ConsoleEx.ReadLinePrefix);
         if(response == null) {
             return null;
         }
 
-        var enableLogger = response.ToLower().First() is 'y';
+        var enableLogger = response.ToLower().FirstOrDefault() is 'y';
         ConsoleEx.WriteLinePrefix($"Proceeding with logger {(enableLogger ? "enabled" : "disabled")}.");
 
         return new Options {
@@ -104,7 +111,24 @@ internal class Program {
                     Console.WriteLine(ReflectionHelper.FormatObjectProperties(sceneData, objectName: sceneData.Meta.Name));
                 }
                 break;
-            // RPC commands
+            // Object Type RPC commands
+            case "!aot" or "!add_object_type":
+                await session.AddNewObjectTypeAsync(JsonConvert.DeserializeObject<ObjectTypeMeta>(string.Join(' ', args))!);
+                break;
+            case "!rot" or "!remove_object_type":
+                await session.ObjectTypes.FirstOrDefault(s => s.Meta.Type == args[0])!.DeleteAsync();
+                break;
+            case "!update_object_model_box":
+                await session.ObjectTypes.FirstOrDefault(s => s.Meta.Type == args[0])!.UpdateObjectModel(
+                    new BoxCollisionModel(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                        Convert.ToDecimal(args[3])));
+                break;
+            // Scene RPC commands
+            case "!action_objects":
+                foreach(var actionObject in session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!) {
+                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(actionObject, objectName: actionObject.Data.Type));
+                }
+                break;
             case "!rs" or "!reload_scenes":
                 await session.ReloadScenesAsync();
                 break;
@@ -141,7 +165,73 @@ internal class Program {
             case "!stop_scene":
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StopAsync();
                 break;
-
+            // Action Object RPCs
+            case "!aac" or "!add_action_object":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddNewActionObjectAsync(
+                    args[0],
+                    args[1],
+                    new Pose(
+                        new Position(Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3]), Convert.ToDecimal(args[4])), 
+                        new Orientation(Convert.ToDecimal(args[5]), Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]), Convert.ToDecimal(args[8]))),
+                    JsonConvert.DeserializeObject<List<Parameter>>(args[9])!);
+                break;
+            case "!remove_action_object":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.RemoveAsync(args.Length > 1 && args[1] == "force");
+                break;
+            case "!add_virtual_box":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    .AddVirtualCollisionBoxAsync(
+                        args[0],
+                        new Pose(
+                            new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                                Convert.ToDecimal(args[3])),
+                            new Orientation(Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5]),
+                                Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))),
+                        new BoxCollisionModel(Convert.ToDecimal(args[8]), Convert.ToDecimal(args[9]), Convert.ToDecimal(args[10])));
+                break;
+            case "!add_virtual_cylinder":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    .AddVirtualCollisionCylinderAsync(
+                        args[0],
+                        new Pose(
+                            new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                                Convert.ToDecimal(args[3])),
+                            new Orientation(Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5]),
+                                Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))),
+                        new CylinderCollisionModel(Convert.ToDecimal(args[8]), Convert.ToDecimal(args[9])));
+                break;
+            case "!add_virtual_sphere":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    .AddVirtualCollisionSphereAsync(
+                        args[0],
+                        new Pose(
+                            new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                                Convert.ToDecimal(args[3])),
+                            new Orientation(Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5]),
+                                Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))),
+                        new SphereCollisionModel(Convert.ToDecimal(args[8])));
+                break;
+                break;
+            case "!add_virtual_mesh":
+                //...
+                break;
+            case "!update_action_object_pose" or "!uaop":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.UpdatePoseAsync(new Pose(
+                        new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                            Convert.ToDecimal(args[3])),
+                        new Orientation(Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5]),
+                            Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))));
+                break;
+            case "!rename_action_object":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.RenameAsync(args[1]);
+                break;
+            case "!update_action_object_parameters":
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<Parameter>>(string.Join(' ', args.Skip(1)))!);
+                break;
         }
     }
 
@@ -149,10 +239,19 @@ internal class Program {
         ConsoleEx.WriteLinePrefix(
             """
             The following commands are available:
+            - Base -
             !help - Prints this message.
             !navigation_state - Gets the current navigation object (menu/scene/etc...)
             !object_types - List all object types and their actions.
             !scenes - Lists all in-memory scenes.
+            
+            - Object Type -
+            !add_object_type <META_AS_JSON> - Adds a new object type.
+            !remove_object_type <TYPE> - Removes an object type.
+            !update_object_model_box <TYPE> <X> <Y> <Z> - Updates objects model to a box.
+            
+            - Scene -
+            !action_objects - Lists scene objects.
             !reload_scenes - Loads scenes.
             !rename_scene <ID> <NEW_NAME> - Renames a scene.
             !new_scene <NAME> [DESCRIPTION] - Creates a new scene.
@@ -165,19 +264,41 @@ internal class Program {
             !save_scene - Saves the currently opened scene.
             !start_scene - Starts the currently opened scene.
             !stop_scene - Stops the currently opened scene.
+            
+            - Action Object  -
+            !add_action_object <TYPE> <NAME> 
+                               <POSX> <POSY> <POSZ> 
+                               <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
+                               <PARAM_LIST_AS_JSON>
+                               - Adds a new action object.
+            !add_virtual_box <NAME> 
+                             <POSX> <POSY> <POSZ> 
+                             <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
+                             <SIZEX> <SIZEY> <SIZEZ>
+                             - Adds a box collision object.
+            !add_virtual_cylinder   <NAME> 
+                                    <POSX> <POSY> <POSZ> 
+                                    <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
+                                    <RADIUS> <LEN>
+                                     - Adds a cylinder collision object.
+            !add_virtual_sphere     <NAME> 
+                                    <POSX> <POSY> <POSZ> 
+                                    <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
+                                    <RADIUS>
+                                     - Adds a sphere collision object.
+            !remove_action_object <ID> ["force"] - Removes an action object from scene.
+            !update_action_object_pose <ID> <POSX> <POSY> <POSZ> 
+                                       <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
+                                       - Updates a pose of an action object.
+            !update_action_object_parameters <ID> <PARAM_LIST_AS_JSON>
+                                        - Updates a list of parameters of an action object.
+            !rename_action_object <ID> <NEW_NAME> - Renames an action object.
             """);
     }
 
     private static void ConfigureGracefulTermination() {
-        // SIGINT
-        Console.CancelKeyPress += async (_, args) => {
-            args.Cancel = true;
-            await CloseSessionAsync();
-        };
-
-        // SIGTERM
         AppDomain.CurrentDomain.ProcessExit += (_, args) => {
-            // For ProcessExit we need to block since the process is shutting down
+            // For ProcessExit we can block since the process is shutting down
             CloseSessionAsync().GetAwaiter().GetResult();
         };
         return;
@@ -185,8 +306,8 @@ internal class Program {
         // Termination function
         async Task CloseSessionAsync() {
             if(Interlocked.CompareExchange(ref _isTerminating, 1, 0) == 0) {
-                ConsoleEx.WriteLinePrefix("Closing the session...");
                 if(session != null! && session.ConnectionState == Arcor2SessionState.Open) {
+                    ConsoleEx.WriteLinePrefix("Closing the session...");
                     await session.CloseAsync();
                 }
             }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
@@ -6,19 +8,26 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// The corresponding <see cref="Arcor2Session"/> instance should be always injected, providing access for communication with the server.
     /// </summary>
     public abstract class Arcor2ObjectManager : IDisposable {
-        private bool disposed = false;
+
+        /// <summary>
+        /// Unique identifier for the object.
+        /// </summary>
+        public string Id { get; }
 
         /// <summary>
         /// The session used for communication with the server.
         /// </summary>
         protected readonly Arcor2Session Session;
 
+        private bool disposed;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Arcor2ObjectManager"/> class.
         /// </summary>
         /// <param name="session">The session used for communication with the server. Should generally inject only itself.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="session"/> is null.</exception>
-        protected Arcor2ObjectManager(Arcor2Session session) {
+        protected Arcor2ObjectManager(Arcor2Session session, string id) {
+            Id = id ?? throw new ArgumentNullException(nameof(id));
             Session = session ?? throw new ArgumentNullException(nameof(session));
             // This is fine, we are just registering handlers. The construction order will not change anything
             // ...unless someone does anything more than registering handlers in the override
@@ -60,5 +69,26 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Unregisters event handlers from session/client. Derived classes should override this method to unregister their specific handlers.
         /// </summary>
         protected virtual void UnregisterHandlers() { }
+
+        /// <summary>
+        /// Locks the resource represented by this instance.
+        /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
+        protected internal async Task LockAsync() {
+            var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(Id));
+            if(!@lock.Result) {
+                throw new Arcor2Exception($"Locking action object {Id} failed.", @lock.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Unlocks the resource represented by this instance.
+        /// </summary>
+        protected internal async Task UnlockAsync() {
+            var @lock = await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+            if(!@lock.Result) {
+                throw new Arcor2Exception($"Unlocking action object {Id} failed.", @lock.Messages);
+            }
+        }
     }
 }
