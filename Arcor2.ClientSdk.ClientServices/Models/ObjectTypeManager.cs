@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
@@ -13,19 +14,27 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Information about the object type.
         /// </summary>
-        public ObjectTypeMeta Meta { get; internal set; }
+        public ObjectTypeMeta Meta { get; private set; }
+
+        /// <summary>
+        /// Information about robot capabilities (if the object type is a robot type).
+        /// </summary>
+        public RobotMeta? RobotMeta { get; private set; }
+
         /// <summary>
         /// The available actions.
         /// </summary>
-        public IList<ObjectAction> Actions { get; internal set; } = new List<ObjectAction>();
+        public IList<ObjectAction> Actions { get; private set; } = new List<ObjectAction>();
 
         /// <summary>
         /// Initializes a new instance of <see cref="ObjectTypeManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="meta">Object type meta object.</param>
-        public ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta) : base(session, meta.Type) {
+        /// <param name="robotMeta">If the object type is a robot, the robot metadata.</param>
+        public ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta, RobotMeta? robotMeta = null) : base(session, meta.Type) {
             Meta = meta;
+            RobotMeta = robotMeta;
         }
 
         /// <summary>
@@ -91,6 +100,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Updates the <see cref="Actions"/> collection.
         /// </summary>
+        /// <remarks>
+        /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task ReloadActionsAsync() {
             var actions = await Session.client.GetActionsAsync(new TypeArgs(Id));
@@ -104,9 +116,30 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             }
         }
 
+        /// <summary>
+        /// Updates the object type according to the <paramref name="meta"/> and optional <paramref name="robotMeta"/> instances.
+        /// </summary>
+        /// <param name="project">Newer version of the project.</param>
+        /// <exception cref="InvalidOperationException"></exception>>
+        internal void UpdateAccordingToNewObject(ObjectTypeMeta meta, RobotMeta? robotMeta = null) {
+            if(Id != meta.Type) {
+                throw new InvalidOperationException($"Can't update a ObjectTypeManager ({Id}) using a object type data object ({meta.Type}) with different type.");
+            }
+
+            Meta = meta;
+            RobotMeta = robotMeta;
+        }
+
         protected override void RegisterHandlers() {
+            base.RegisterHandlers();
             Session.client.OnObjectTypeUpdated += OnObjectTypeUpdated;
             Session.client.OnObjectTypeRemoved += OnObjectTypeRemoved;
+        }
+
+        protected override void UnregisterHandlers() {
+            base.UnregisterHandlers();
+            Session.client.OnObjectTypeUpdated -= OnObjectTypeUpdated;
+            Session.client.OnObjectTypeRemoved -= OnObjectTypeRemoved;
         }
 
         private void OnObjectTypeRemoved(object sender, ObjectTypesEventArgs args) {
@@ -124,11 +157,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     Meta = objectTypeMeta;
                 }
             }
-        }
-
-        protected override void UnregisterHandlers() {
-            Session.client.OnObjectTypeUpdated -= OnObjectTypeUpdated;
-            Session.client.OnObjectTypeRemoved -= OnObjectTypeRemoved;
         }
     }
 }

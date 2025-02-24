@@ -1,4 +1,5 @@
 ﻿using Arcor2.ClientSdk.ClientServices;
+using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Ignore.Test.Models;
@@ -67,7 +68,6 @@ internal class Program {
         }
     }
 
-    // Make StartUp async as well
     private static async Task<Options?> StartUpAsync() {
         ConsoleEx.WriteLinePrefix("This is a simple showcase client for the Arcor2.ClientSdk.ClientServices library.");
         ConsoleEx.WriteLinePrefix("See the source code for insight on usage.");
@@ -87,33 +87,71 @@ internal class Program {
         };
     }
 
+    /// <summary>
+    /// Initializes a session (connection, gets username, registers needed handlers).
+    /// </summary>
+    public static async Task<bool> InitSession() {
+        await session.ConnectAsync("127.0.0.1", 6789);
+        ConsoleEx.WriteLinePrefix("Connected to localhost:6789.");
+        var info = await session.InitializeAsync();
+        ConsoleEx.WriteLinePrefix($"Session initialized. Server v{info.VarVersion}, API v{info.ApiVersion}.");
+
+        ConsoleEx.WriteLinePrefix("Username?");
+        string? name = await Task.Run(ConsoleEx.ReadLinePrefix);
+        ArgumentNullException.ThrowIfNull(name);
+        await session.RegisterAsync(name);
+        ConsoleEx.WriteLinePrefix($"Registered as '{name}'");
+
+        var shutdownTcs = new TaskCompletionSource<bool>();
+
+        session.OnConnectionClosed += (sender, args) => {
+            ConsoleEx.WriteLinePrefix("Session closed.");
+            shutdownTcs.TrySetResult(true);
+            Environment.Exit(0);
+        };
+
+        return true;
+    }
+
     private static async Task ParseCommand(string text) {
         var parts = text.Split(" ");
         var command = parts[0];
         var args = parts[1..];
 
-        switch(command) {
+        switch (command) {
             // Util commands
             case "!help":
                 PrintHelp();
                 break;
             // Read commands
             case "!ns" or "!navigation_state":
-                Console.WriteLine($"{Enum.GetName(session.NavigationState)} {(session.NavigationId is null ? "" : "(" + session.NavigationId + ")")}");
+                Console.WriteLine(
+                    $"{Enum.GetName(session.NavigationState)} {(session.NavigationId is null ? "" : "(" + session.NavigationId + ")")}");
                 break;
             case "!ot" or "!object_types":
-                foreach(var type in session.ObjectTypes) {
+                foreach (var type in session.ObjectTypes) {
                     Console.WriteLine(ReflectionHelper.FormatObjectProperties(type, objectName: type.Meta.Type));
                 }
+
                 break;
             case "!s" or "!scenes":
-                foreach(var sceneData in session.Scenes) {
-                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(sceneData, objectName: sceneData.Meta.Name));
+                foreach (var sceneData in session.Scenes) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(sceneData, objectName: sceneData.Meta.Name));
                 }
+
+                break;
+            case "!p" or "!projects":
+                foreach (var projectData in session.Projects) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(projectData, objectName: projectData.Meta.Name));
+                }
+
                 break;
             // Object Type RPC commands
             case "!aot" or "!add_object_type":
-                await session.AddNewObjectTypeAsync(JsonConvert.DeserializeObject<ObjectTypeMeta>(string.Join(' ', args))!);
+                await session.CreateObjectTypeAsync(
+                    JsonConvert.DeserializeObject<ObjectTypeMeta>(string.Join(' ', args))!);
                 break;
             case "!rot" or "!remove_object_type":
                 await session.ObjectTypes.FirstOrDefault(s => s.Meta.Type == args[0])!.DeleteAsync();
@@ -125,9 +163,17 @@ internal class Program {
                 break;
             // Scene RPC commands
             case "!action_objects":
-                foreach(var actionObject in session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!) {
-                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(actionObject, objectName: actionObject.Data.Type));
+                var actionObjects = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ParentScene.ActionObjects;
+
+                foreach (var actionObject in actionObjects!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(actionObject, objectName: actionObject.Data.Type));
                 }
+
                 break;
             case "!rs" or "!reload_scenes":
                 await session.ReloadScenesAsync();
@@ -142,7 +188,7 @@ internal class Program {
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.DuplicateAsync(args[1]);
                 break;
             case "!new_scene":
-                await session.AddNewSceneAsync(args[0], args.Length > 1 ? args[1] : string.Empty);
+                await session.CreateSceneAsync(args[0], args.Length > 1 ? args[1] : string.Empty);
                 break;
             case "!remove_scene":
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.RemoveAsync();
@@ -154,7 +200,8 @@ internal class Program {
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.LoadAsync();
                 break;
             case "!cs" or "!close_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.CloseAsync(args.Length > 0  && args[0] == "force");
+                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.CloseAsync(
+                    args.Length > 0 && args[0] == "force");
                 break;
             case "!ss" or "!save_scene":
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.SaveAsync();
@@ -167,13 +214,23 @@ internal class Program {
                 break;
             // Action Object RPCs
             case "!aac" or "!add_action_object":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddNewActionObjectAsync(
-                    args[0],
-                    args[1],
-                    new Pose(
-                        new Position(Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3]), Convert.ToDecimal(args[4])), 
-                        new Orientation(Convert.ToDecimal(args[5]), Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]), Convert.ToDecimal(args[8]))),
-                    JsonConvert.DeserializeObject<List<Parameter>>(args[9])!);
+                if (args.Length > 9) {
+                    await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionObjectAsync(
+                        args[0],
+                        args[1],
+                        new Pose(
+                            new Position(Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3]), Convert.ToDecimal(args[4])),
+                            new Orientation(Convert.ToDecimal(args[5]), Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]), Convert.ToDecimal(args[8]))),
+                        JsonConvert.DeserializeObject<List<Parameter>>(args[9])!);
+                }
+                else {
+                    await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionObjectAsync(
+                        args[0],
+                        args[1],
+                        new Pose(
+                            new Position(Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3]), Convert.ToDecimal(args[4])),
+                            new Orientation(Convert.ToDecimal(args[5]), Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]), Convert.ToDecimal(args[8]))));
+                }
                 break;
             case "!remove_action_object":
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
@@ -212,7 +269,6 @@ internal class Program {
                                 Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))),
                         new SphereCollisionModel(Convert.ToDecimal(args[8])));
                 break;
-                break;
             case "!add_virtual_mesh":
                 //...
                 break;
@@ -232,6 +288,50 @@ internal class Program {
                 await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
                     .FirstOrDefault(o => o.Data.Id == args[0])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<Parameter>>(string.Join(' ', args.Skip(1)))!);
                 break;
+
+            // Project RPC commands
+            case "!rp" or "!reload_projects":
+                await session.ReloadProjectsAsync();
+                break;
+            case "!new_project":
+                await session.CreateProjectAsync(args[0], args[1], args.Length > 3 ? args[3] : string.Empty, Convert.ToBoolean(args[2]));
+                break;
+            case "!upd" or "!update_project_desc":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.UpdateDescriptionAsync(args[1]);
+                break;
+            case "!rename_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.RenameAsync(args[1]);
+                break;
+            case "!duplicate_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.DuplicateAsync(args[1]);
+                break;
+            case "!remove_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.RemoveAsync();
+                break;
+            case "!op" or "!open_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.OpenAsync();
+                break;
+            case "!lp" or "!load_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.LoadAsync();
+                break;
+            case "!cp" or "!close_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.CloseAsync(args.Length > 0 && args[0] == "force");
+                break;
+            case "!sp" or "!save_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.SaveAsync();
+                break;
+            case "!start_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StartAsync();
+                break;
+            case "!stop_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StopAsync();
+                break;
+            case "!set_project_has_logic":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.SetHasLogic(Convert.ToBoolean(args[1]));
+                break;
+            case "!build_project":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.BuildIntoPackage(args[1]);
+                break;
         }
     }
 
@@ -244,6 +344,7 @@ internal class Program {
             !navigation_state - Gets the current navigation object (menu/scene/etc...)
             !object_types - List all object types and their actions.
             !scenes - Lists all in-memory scenes.
+            !projects - Lists all in-memory projects.
             
             - Object Type -
             !add_object_type <META_AS_JSON> - Adds a new object type.
@@ -255,7 +356,7 @@ internal class Program {
             !reload_scenes - Loads scenes.
             !rename_scene <ID> <NEW_NAME> - Renames a scene.
             !new_scene <NAME> [DESCRIPTION] - Creates a new scene.
-            !update_scene_desc <ID> <NEW_DESCRIPTION> - Updates a description of the scene.
+            !update_scene_desc <ID> <NEW_DESCRIPTION> - Updates a description of a scene.
             !duplicate_scene <ID> <NEW_NAME> - Duplicates a scene.
             !remove_scene <ID> - Deletes a scene.
             !open_scene <ID> - Opens a scene.
@@ -269,8 +370,8 @@ internal class Program {
             !add_action_object <TYPE> <NAME> 
                                <POSX> <POSY> <POSZ> 
                                <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
-                               <PARAM_LIST_AS_JSON>
-                               - Adds a new action object.
+                               [PARAM_LIST_AS_JSON]
+                               - Adds a new action object. Will use default parameters if not supplied.
             !add_virtual_box <NAME> 
                              <POSX> <POSY> <POSZ> 
                              <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
@@ -293,6 +394,22 @@ internal class Program {
             !update_action_object_parameters <ID> <PARAM_LIST_AS_JSON>
                                         - Updates a list of parameters of an action object.
             !rename_action_object <ID> <NEW_NAME> - Renames an action object.
+            
+            - Project -
+            !reload_projects - Loads projects.
+            !new_project <SCENE_ID> <NAME> <HAS_LOGIC> [DESCRIPTION]
+            !rename_project <ID> <NEW_NAME> - Renames a project.
+            !update_project_desc <ID> <NEW_DESCRIPTION> - Updates a description of a project.
+            !duplicate_project <ID> <NEW_NAME> - Duplicates a project.
+            !remove_project <ID> - Deletes a project.
+            !open_project <ID> - Opens a project.
+            !load_project <ID> - Loads all information about a project.
+            !close_project ["force"] - Closes a project.
+            !save_project - Saves the currently opened project.
+            !start_project - Starts the currently opened project.
+            !stop_project - Stops the currently opened project.
+            !set_project_has_logic <ID> <"true"/"false"> - Sets if the project should have logic.
+            !build_project <ID> <PACKAGE_NAME> - Builds a project into package.
             """);
     }
 
@@ -312,29 +429,5 @@ internal class Program {
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// Initializes a session (connection, gets username, registers needed handlers).
-    /// </summary>
-    public static async Task<bool> InitSession() {
-        await session.ConnectAsync("127.0.0.1", 6789);
-        ConsoleEx.WriteLinePrefix("Connected to localhost:6789. Input your username:");
-
-        string? name = await Task.Run(() => ConsoleEx.ReadLinePrefix());
-        ArgumentNullException.ThrowIfNull(name);
-
-        var info = await session.InitializeAsync(name);
-        ConsoleEx.WriteLinePrefix($"Registered successfully. Server v{info.VarVersion}, API v{info.ApiVersion}.");
-
-        var shutdownTcs = new TaskCompletionSource<bool>();
-
-        session.OnConnectionClosed += (sender, args) => {
-            ConsoleEx.WriteLinePrefix("Session closed.");
-            shutdownTcs.TrySetResult(true);
-            Environment.Exit(0);
-        };
-
-        return true;
     }
 }

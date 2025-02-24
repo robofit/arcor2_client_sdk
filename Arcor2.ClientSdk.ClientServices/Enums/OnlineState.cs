@@ -1,5 +1,5 @@
 ﻿namespace Arcor2.ClientSdk.ClientServices.Enums {
-    public enum SceneOnlineState {
+    public enum OnlineState {
         Starting,
         Started,
         Stopping,

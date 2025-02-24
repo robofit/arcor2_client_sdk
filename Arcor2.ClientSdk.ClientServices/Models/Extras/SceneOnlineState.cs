@@ -3,14 +3,14 @@
 namespace Arcor2.ClientSdk.ClientServices.Models.Extras
 {
     /// <summary>
-    /// Represents the current state of the scene.
+    /// Represents the current state of a scene or a project.
     /// </summary>
-    public struct SceneState
+    public class SceneOnlineState
     {
         /// <summary>
-        /// The online/start state of the scene.
+        /// The online/start state of a scene or a project.
         /// </summary>
-        public SceneOnlineState OnlineState { get; }
+        public OnlineState State { get; }
         /// <summary>
         /// A message included with the state change.
         /// </summary>
@@ -20,13 +20,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models.Extras
         public string? Message { get; }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="SceneState"/> class.
+        /// Creates a new instance of the <see cref="SceneOnlineState"/> class.
         /// </summary>
         /// <param name="state">The state.</param>
         /// <param name="message">The optional message.</param>
-        public SceneState(SceneOnlineState state, string? message = null)
+        public SceneOnlineState(OnlineState state, string? message = null)
         {
-            OnlineState = state;
+            State = state;
             Message = message;
         }
     }

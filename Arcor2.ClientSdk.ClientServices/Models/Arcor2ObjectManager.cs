@@ -63,12 +63,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Registers event handlers from session/client. Derived classes should override this method to register their specific handlers.
         /// </summary>
-        protected virtual void RegisterHandlers() { }
+        protected virtual void RegisterHandlers() {
+
+        }
 
         /// <summary>
         /// Unregisters event handlers from session/client. Derived classes should override this method to unregister their specific handlers.
         /// </summary>
-        protected virtual void UnregisterHandlers() { }
+        protected virtual void UnregisterHandlers() {
+
+        }
 
         /// <summary>
         /// Locks the resource represented by this instance.
@@ -84,6 +88,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Unlocks the resource represented by this instance.
         /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
         protected internal async Task UnlockAsync() {
             var @lock = await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
             if(!@lock.Result) {

@@ -2092,7 +2092,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        public async Task<GetEndEffectorsResponse> GetEndEffectorsAsync(GetEndEffectorsRequestArgs args) {
+        public async Task<GetEndEffectorsResponse> GetRobotEndEffectorsAsync(GetEndEffectorsRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new GetEndEffectorsRequest(id, "GetEndEffectors", args), id, "GetEndEffectors");
             return JsonConvert.DeserializeObject<GetEndEffectorsResponse>(response, jsonSettings)!;
