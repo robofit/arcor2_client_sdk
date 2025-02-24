@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
@@ -13,6 +14,20 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Unique identifier for the object.
         /// </summary>
         public string Id { get; }
+
+        /// <summary>
+        /// Is the object write-locked?
+        /// </summary>
+        /// <seealso cref="LockOwner"/>
+        public bool Locked { get; private set; }
+
+        /// <summary>
+        /// The owner of a write-lock on this object.
+        /// </summary>
+        /// <value>
+        /// The owner username, <c>null</c> if unlocked.
+        /// </value>
+        public string? LockOwner { get; private set; }
 
         /// <summary>
         /// The session used for communication with the server.
@@ -61,17 +76,19 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
-        /// Registers event handlers from session/client. Derived classes should override this method to register their specific handlers.
+        /// Registers event handlers from session/client. Derived classes should override this method to register their specific handlers and invoke the base method.
         /// </summary>
         protected virtual void RegisterHandlers() {
-
+            Session.client.OnObjectsLocked += OnObjectsLocked;
+            Session.client.OnObjectsUnlocked += OnObjectsUnlocked;
         }
 
         /// <summary>
-        /// Unregisters event handlers from session/client. Derived classes should override this method to unregister their specific handlers.
+        /// Unregisters event handlers from session/client. Derived classes should override this method to unregister their specific handlers and invoke the base method.
         /// </summary>
         protected virtual void UnregisterHandlers() {
-
+            Session.client.OnObjectsLocked -= OnObjectsLocked;
+            Session.client.OnObjectsUnlocked += OnObjectsUnlocked;
         }
 
         /// <summary>
@@ -81,7 +98,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         protected internal async Task LockAsync() {
             var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(Id));
             if(!@lock.Result) {
-                throw new Arcor2Exception($"Locking action object {Id} failed.", @lock.Messages);
+                throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
             }
         }
 
@@ -92,7 +109,27 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         protected internal async Task UnlockAsync() {
             var @lock = await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
             if(!@lock.Result) {
-                throw new Arcor2Exception($"Unlocking action object {Id} failed.", @lock.Messages);
+                throw new Arcor2Exception($"Unlocking object {Id} failed.", @lock.Messages);
+            }
+        }
+
+        private void OnObjectsLocked(object sender, ObjectsLockEventArgs e) {
+            if (e.Data.ObjectIds.Contains(Id)) {
+                if (Locked) {
+                    Session.logger?.LogWarning($"The object {Id} received lock event message while already locked.");
+                }
+                Locked = true;
+                LockOwner = e.Data.Owner;
+            }
+        }
+
+        private void OnObjectsUnlocked(object sender, ObjectsLockEventArgs e) {
+            if(e.Data.ObjectIds.Contains(Id)) {
+                if(Locked) {
+                    Session.logger?.LogWarning($"The object {Id} received unlock event message while already unlocked.");
+                }
+                Locked = false;
+                LockOwner = null;
             }
         }
     }
