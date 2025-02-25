@@ -49,7 +49,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="meta">Scene meta object.</param>
-        public SceneManager(Arcor2Session session, BareScene meta) : base(session, meta.Id) {
+        internal SceneManager(Arcor2Session session, BareScene meta) : base(session, meta.Id) {
             Meta = meta;
         }
 
@@ -58,7 +58,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="scene">Scene object.</param>
-        public SceneManager(Arcor2Session session, Scene scene) : base(session, scene.Id) {
+        internal SceneManager(Arcor2Session session, Scene scene) : base(session, scene.Id) {
             Meta = scene.MapToBareScene();
             ActionObjects = scene.Objects.Select(o => new ActionObjectManager(session, this, o)).ToList();
         }
@@ -302,8 +302,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         }
 
         /// <summary>
-        /// Loads the scene fully without opening it (including action objects).
+        /// Fully loads a scene
         /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
         public async Task LoadAsync() {
             var response = await Session.client.GetSceneAsync(new IdArgs(Id));
             if(!response.Result) {
@@ -331,14 +332,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             if (Id != scene.Id) {
                 throw new InvalidOperationException($"Can't update a SceneManager ({Id}) using a scene data object ({scene.Id}) with different ID.");
             }
-
             Meta = scene.MapToBareScene();
-            if (ActionObjects != null) {
-                foreach(var actionObject in ActionObjects) {
-                    actionObject.Dispose();
-                }
-            }
-            ActionObjects = scene.Objects.Select(o => new ActionObjectManager(Session, this, o)).ToList();
+
+            ActionObjects = ActionObjects.UpdateListOfArcor2Objects(scene.Objects,
+                o => o.Id,
+                (manager, o) => manager.UpdateAccordingToNewObject(o),
+                o => new ActionObjectManager(Session, this, o));
         }
 
         /// <summary>

@@ -327,10 +327,35 @@ internal class Program {
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StopAsync();
                 break;
             case "!set_project_has_logic":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.SetHasLogic(Convert.ToBoolean(args[1]));
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.SetHasLogicAsync(Convert.ToBoolean(args[1]));
                 break;
             case "!build_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.BuildIntoPackage(args[1]);
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.BuildIntoPackageAsync(args[1]);
+                break;
+            // Project parameter
+            case "!parameters":
+                var @params = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters;
+                foreach(var param in @params!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(param, objectName: param.Name));
+                }
+
+                break;
+            case "!add_project_parameter":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddProjectParameter(args[0], args[1],
+                    args[2]);
+                break;
+            case "!update_project_parameter_value":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
+                    s.Id == args[0])!.UpdateValueAsync(args[1]);
+                break;
+            case "!update_project_parameter_name":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
+                    s.Id == args[0])!.UpdateNameAsync(args[1]);
+                break;
+            case "!remove_project_parameter":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
+                    s.Id == args[0])!.RemoveAsync();
                 break;
         }
     }
@@ -410,6 +435,13 @@ internal class Program {
             !stop_project - Stops the currently opened project.
             !set_project_has_logic <ID> <"true"/"false"> - Sets if the project should have logic.
             !build_project <ID> <PACKAGE_NAME> - Builds a project into package.
+            
+            - Project Parameters -
+            !parameters - Lists project parameters for a project.
+            !add_project_parameter <NAME> <TYPE> <VALUE> - Adds a new project parameter.
+            !update_project_parameter_value <ID> <VALUE> - Changes the value of project parameter.
+            !update_project_parameter_name <ID> <Name> - Changes the name of project parameter.
+            !remove_project_parameter <ID> - Removes a project parameter.
             """);
     }
 

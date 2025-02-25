@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
@@ -16,6 +17,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The metadata of the project.
         /// </summary>
         public BareProject Meta { get; set; }
+
+        /// <summary>
+        /// The project parameters.
+        /// </summary>
+        public IList<ProjectParameterManager>? Parameters { get; set; }
 
         /// <summary>
         /// Gets if the project is open.
@@ -38,7 +44,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="meta">Project meta object.</param>
-        public ProjectManager(Arcor2Session session, BareProject meta) : base(session, meta.Id) {
+        internal ProjectManager(Arcor2Session session, BareProject meta) : base(session, meta.Id) {
             Meta = meta;
         }
 
@@ -47,8 +53,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="project">Project object.</param>
-        public ProjectManager(Arcor2Session session, Project project) : base(session, project.Id) {
+        internal ProjectManager(Arcor2Session session, Project project) : base(session, project.Id) {
             Meta = project.MapToBareProject();
+            Parameters = project.Parameters
+                .Select(p => new ProjectParameterManager(Session, this, p)).ToList();
             // TODO: Rest
         }
 
@@ -190,7 +198,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Sets if the project should contain logic.
         /// </summary>
-        public async Task SetHasLogic(bool hasLogic) {
+        public async Task SetHasLogicAsync(bool hasLogic) {
             var response = await Session.client.UpdateProjectHasLogicAsync(new UpdateProjectHasLogicRequestArgs(Id, hasLogic));
             if(!response.Result) {
                 throw new Arcor2Exception($"Setting HasLogic for project {Id} failed.", response.Messages);
@@ -200,10 +208,24 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Builds the project into package.
         /// </summary>
-        public async Task BuildIntoPackage(string packageName) {
+        public async Task BuildIntoPackageAsync(string packageName) {
             var response = await Session.client.BuildProjectAsync(new BuildProjectRequestArgs(Id, packageName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Building project {Id} into package failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new project parameter.
+        /// </summary>
+        /// <param name="name">The name of the parameter.</param>
+        /// <param name="type">The type of the parameter.</param>
+        /// <param name="value">The value of the parameter.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddProjectParameter(string name, string type, string value) {
+            var response = await Session.client.AddProjectParameterAsync(new AddProjectParameterRequestArgs(name, type, value));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
         }
 
@@ -218,7 +240,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             }
 
             Meta = project.MapToBareProject();
-            // TODO: Rest
+            Parameters = Parameters.UpdateListOfArcor2Objects(project.Parameters,
+                p => p.Id,
+                (m, p) => m.UpdateAccordingToNewObject(p),
+                p => new ProjectParameterManager(Session, this, p));
         }
 
         /// <summary>
@@ -239,6 +264,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnProjectSaved += OnSaved;
             Session.client.OnProjectRemoved += OnProjectRemoved;
             Session.client.OnProjectBaseUpdated += OnProjectBaseUpdated;
+            Session.client.OnProjectParameterAdded += OnProjectParameterAdded;
         }
 
         protected override void UnregisterHandlers() {
@@ -246,6 +272,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnProjectSaved -= OnSaved;
             Session.client.OnProjectRemoved -= OnProjectRemoved;
             Session.client.OnProjectBaseUpdated -= OnProjectBaseUpdated;
+            Session.client.OnProjectParameterAdded -= OnProjectParameterAdded;
         }
 
         private void OnProjectBaseUpdated(object sender, BareProjectEventArgs e) {
@@ -260,6 +287,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 Dispose();
             }
         }
-        
+
+        private void OnProjectParameterAdded(object sender, ProjectParameterEventArgs e) {
+            if (Parameters == null) {
+                Session.logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
+            }
+
+            Parameters?.Add(new ProjectParameterManager(Session, this, e.ProjectParameter));
+        }
     }
 }

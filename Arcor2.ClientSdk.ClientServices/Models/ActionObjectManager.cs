@@ -60,7 +60,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="scene">The parent scene.</param>
         /// <param name="data">The action object data.</param>
-        public ActionObjectManager(Arcor2Session session, SceneManager scene, SceneObject data) : base(session, data.Id) {
+        internal ActionObjectManager(Arcor2Session session, SceneManager scene, SceneObject data) : base(session, data.Id) {
             Scene = scene;
             Data = data;
         }
@@ -169,6 +169,19 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             if(!response.Result) {
                 throw new Arcor2Exception($"Registering for robot updates for action object {Id} failed.", response.Messages);
             }
+        }
+
+        /// <summary>
+        /// Updates the action object according to the <paramref name="actionObject"/> instance.
+        /// </summary>
+        /// <param name="actionObject">Newer version of the action object.</param>
+        /// <exception cref="InvalidOperationException"></exception>>
+        internal void UpdateAccordingToNewObject(SceneObject actionObject) {
+            if(Id != actionObject.Id) {
+                throw new InvalidOperationException($"Can't update an ActionObjectManager ({Id}) using a action object data object ({actionObject.Id}) with different ID.");
+            }
+
+            Data = actionObject;
         }
 
         protected override void RegisterHandlers() {

@@ -32,7 +32,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="meta">Object type meta object.</param>
         /// <param name="robotMeta">If the object type is a robot, the robot metadata.</param>
-        public ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta, RobotMeta? robotMeta = null) : base(session, meta.Type) {
+        internal ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta, RobotMeta? robotMeta = null) : base(session, meta.Type) {
             Meta = meta;
             RobotMeta = robotMeta;
         }

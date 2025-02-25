@@ -88,7 +88,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         protected virtual void UnregisterHandlers() {
             Session.client.OnObjectsLocked -= OnObjectsLocked;
-            Session.client.OnObjectsUnlocked += OnObjectsUnlocked;
+            Session.client.OnObjectsUnlocked -= OnObjectsUnlocked;
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnObjectsUnlocked(object sender, ObjectsLockEventArgs e) {
             if(e.Data.ObjectIds.Contains(Id)) {
-                if(Locked) {
+                if(!Locked) {
                     Session.logger?.LogWarning($"The object {Id} received unlock event message while already unlocked.");
                 }
                 Locked = false;
