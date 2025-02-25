@@ -167,7 +167,7 @@ internal class Program {
                     ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
                         .ActionObjects!
                     : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
-                        .ParentScene.ActionObjects;
+                        .Scene.ActionObjects;
 
                 foreach (var actionObject in actionObjects!) {
                     Console.WriteLine(
@@ -342,7 +342,7 @@ internal class Program {
 
                 break;
             case "!add_project_parameter":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddProjectParameter(args[0], args[1],
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddProjectParameterAsync(args[0], args[1],
                     args[2]);
                 break;
             case "!update_project_parameter_value":
@@ -356,6 +356,25 @@ internal class Program {
             case "!remove_project_parameter":
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
                     s.Id == args[0])!.RemoveAsync();
+                break;
+            // Project overrides
+            case "!overrides":
+                var overrides = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides;
+                foreach(var @override in overrides!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(@override));
+                }
+                break;
+            case "!add_project_override":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddOverrideAsync(args[0], new Parameter(args[1], args[2], args[3]));
+                break;
+            case "!update_project_override":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
+                    s.ActionObjectId == args[0])!.UpdateAsync(new Parameter(args[1], args[2], args[3]));
+                break;
+            case "!remove_project_override":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
+                    s.ActionObjectId == args[0])!.RemoveAsync();
                 break;
         }
     }

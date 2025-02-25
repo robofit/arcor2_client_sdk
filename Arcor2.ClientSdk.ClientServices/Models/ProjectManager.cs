@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Extensions;
+using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
@@ -11,7 +12,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of a project.
     /// </summary>
-    public class ProjectManager : Arcor2ObjectManager {
+    public class ProjectManager : LockableArcor2ObjectManager {
 
         /// <summary>
         /// The metadata of the project.
@@ -19,9 +20,19 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public BareProject Meta { get; set; }
 
         /// <summary>
-        /// The project parameters.
+        /// A collection of project parameters.
         /// </summary>
         public IList<ProjectParameterManager>? Parameters { get; set; }
+
+        /// <summary>
+        /// A collection of action points.
+        /// </summary>
+        public IList<ActionPointManager>? ActionPoints { get; set; }
+
+        /// <summary>
+        /// A collection of project overrides.
+        /// </summary>
+        public IList<ProjectOverrideManager>? Overrides { get; set; }
 
         /// <summary>
         /// Gets if the project is open.
@@ -32,7 +43,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Gets the parent scene.
         /// </summary>
-        public SceneManager ParentScene => Session.Scenes.First(s => s.Id == Meta.SceneId);
+        public SceneManager Scene => Session.Scenes.First(s => s.Id == Meta.SceneId);
 
         /// <summary>
         /// Raised when project is saved by the server.
@@ -57,6 +68,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Meta = project.MapToBareProject();
             Parameters = project.Parameters
                 .Select(p => new ProjectParameterManager(Session, this, p)).ToList();
+            ActionPoints = project.ActionPoints
+                .Select(a => new ActionPointManager(Session, this, a)).ToList();
+
+            var flattenedOverrides =
+                project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
+            Overrides = flattenedOverrides
+                .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)).ToList();
             // TODO: Rest
         }
 
@@ -209,6 +227,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Builds the project into package.
         /// </summary>
         public async Task BuildIntoPackageAsync(string packageName) {
+            // TODO: Test
             var response = await Session.client.BuildProjectAsync(new BuildProjectRequestArgs(Id, packageName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Building project {Id} into package failed.", response.Messages);
@@ -221,13 +240,108 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="name">The name of the parameter.</param>
         /// <param name="type">The type of the parameter.</param>
         /// <param name="value">The value of the parameter.</param>
+        /// <remarks>
+        /// The project must be opened.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task AddProjectParameter(string name, string type, string value) {
+        public async Task AddProjectParameterAsync(string name, string type, string value) {
             var response = await Session.client.AddProjectParameterAsync(new AddProjectParameterRequestArgs(name, type, value));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
         }
+
+        /// <summary>
+        /// Adds a new action point.
+        /// </summary>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="position">The position of the action point.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointAsync(string name, Position position) {
+            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, string.Empty));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new action point.
+        /// </summary>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="position">The position of the action point.</param>
+        /// <param name="parent">The parent action point.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointAsync(string name, Position position, ActionPointManager parent) {
+            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new action point.
+        /// </summary>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="position">The position of the action point.</param>
+        /// <param name="parent">The parent action object.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointAsync(string name, Position position, ActionObjectManager parent) {
+            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new action point.
+        /// </summary>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="position">The position of the action point.</param>
+        /// <param name="parentId">The ID of the parent object.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointAsync(string name, Position position, string parentId) {
+            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parentId));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a project override for an action object.
+        /// </summary>
+        /// <param name="actionObjectId">The ID of an action object.</param>
+        /// <param name="parameter">The overriden parameter of an action object.</param>
+        /// <remarks>
+        /// The project must be opened.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddOverrideAsync(string actionObjectId, Parameter parameter) {
+            await LockAsync(actionObjectId);
+            var response = await Session.client.AddOverrideAsync(new AddOverrideRequestArgs(actionObjectId, parameter));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project override for project {Id} failed.", response.Messages);
+            }
+            await UnlockAsync(actionObjectId);
+        }
+
+        /// <summary>
+        /// Adds a project override for an action object.
+        /// </summary>
+        /// <param name="actionObject">The action object.</param>
+        /// <param name="parameter">The overriden parameter of an action object.</param>
+        /// <remarks>
+        /// The project must be opened.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddOverrideAsync(ActionObjectManager actionObject, Parameter parameter) {
+            await LockAsync(actionObject.Id);
+            var response = await Session.client.AddOverrideAsync(new AddOverrideRequestArgs(actionObject.Id, parameter));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding project override for project {Id} failed.", response.Messages);
+            }
+            await UnlockAsync(actionObject.Id);
+        }
+
 
         /// <summary>
         /// Updates the project according to the <paramref name="project"/> instance.
@@ -240,10 +354,20 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             }
 
             Meta = project.MapToBareProject();
-            Parameters = Parameters.UpdateListOfArcor2Objects(project.Parameters,
+            Parameters = Parameters.UpdateListOfLockableArcor2Objects(project.Parameters,
                 p => p.Id,
                 (m, p) => m.UpdateAccordingToNewObject(p),
                 p => new ProjectParameterManager(Session, this, p));
+            ActionPoints = ActionPoints.UpdateListOfLockableArcor2Objects(project.ActionPoints,
+                a => a.Id,
+                (m, a) => m.UpdateAccordingToNewObject(a),
+                a => new ActionPointManager(Session, this, a));
+            var flattenedOverrides =
+                project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
+            Overrides = Overrides.UpdateListOfArcor2Objects(flattenedOverrides,
+                (m, o) => m.ActionObjectId == o.ActionObjectId && m.Parameter.Name == o.Parameter.Name && m.Parameter.Type == o.Parameter.Type,
+                (m, o) => m.UpdateAccordingToNewObject(o.Parameter),
+                o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter));
         }
 
         /// <summary>
@@ -255,7 +379,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             if(Id != project.Id) {
                 throw new InvalidOperationException($"Can't update a ProjectManager ({Id}) using a project data object ({project.Id}) with different ID.");
             }
-
             Meta = project;
         }
 
@@ -265,6 +388,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnProjectRemoved += OnProjectRemoved;
             Session.client.OnProjectBaseUpdated += OnProjectBaseUpdated;
             Session.client.OnProjectParameterAdded += OnProjectParameterAdded;
+            Session.client.OnActionPointAdded += OnActionPointAdded;
+            Session.client.OnOverrideAdded += OnOverrideAdded;
         }
 
         protected override void UnregisterHandlers() {
@@ -273,6 +398,23 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnProjectRemoved -= OnProjectRemoved;
             Session.client.OnProjectBaseUpdated -= OnProjectBaseUpdated;
             Session.client.OnProjectParameterAdded -= OnProjectParameterAdded;
+            Session.client.OnActionPointAdded -= OnActionPointAdded;
+            Session.client.OnOverrideAdded -= OnOverrideAdded;
+        }
+
+        protected override void Dispose(bool disposing) {
+            base.Dispose(disposing);
+            if (ActionPoints != null) {
+                foreach (var actionPoint in ActionPoints) {
+                    actionPoint.Dispose();
+                }
+            }
+
+            if (Parameters != null) {
+                foreach (var parameter in Parameters) {
+                    parameter.Dispose();
+                }
+            }
         }
 
         private void OnProjectBaseUpdated(object sender, BareProjectEventArgs e) {
@@ -289,11 +431,34 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         private void OnProjectParameterAdded(object sender, ProjectParameterEventArgs e) {
-            if (Parameters == null) {
-                Session.logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
-            }
+            if (IsOpen) {
+                if(Parameters == null) {
+                    Session.logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
+                }
 
-            Parameters?.Add(new ProjectParameterManager(Session, this, e.ProjectParameter));
+                Parameters?.Add(new ProjectParameterManager(Session, this, e.ProjectParameter));
+            }
+        }
+
+        private void OnActionPointAdded(object sender, BareActionPointEventArgs e) {
+            if (IsOpen) {
+                if(ActionPoints == null) {
+                    Session.logger?.LogError($"When adding a new action point, the action point collection for project {Id} was null.");
+                }
+
+                ActionPoints?.Add(new ActionPointManager(Session, this, e.ActionPoint));
+            }
+        }
+
+        private void OnOverrideAdded(object sender, ParameterEventArgs e) {
+            if (IsOpen) {
+                if(Overrides == null) {
+                    Session.logger?.LogError($"When adding a new project override, the override collection for project {Id} was null.");
+                    return;
+                }
+
+                Overrides.Add(new ProjectOverrideManager(Session, this, e.ParentId, e.Parameter));
+            }
         }
     }
 }

@@ -4,7 +4,7 @@ using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
-    public class ProjectParameterManager : Arcor2ObjectManager {
+    public class ProjectParameterManager : LockableArcor2ObjectManager {
         /// <summary>
         /// The parent project.
         /// </summary>

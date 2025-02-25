@@ -10,7 +10,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// ARCOR2 Object Type.
     /// </summary>
-    public class ObjectTypeManager : Arcor2ObjectManager {
+    public class ObjectTypeManager : LockableArcor2ObjectManager {
         /// <summary>
         /// Information about the object type.
         /// </summary>

@@ -13,7 +13,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
     /// <summary>
     /// Manages lifetime of a scene.
     /// </summary>
-    public class SceneManager : Arcor2ObjectManager {
+    public class SceneManager : LockableArcor2ObjectManager {
 
         /// <summary>
         /// The metadata of the scene.
@@ -334,7 +334,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             }
             Meta = scene.MapToBareScene();
 
-            ActionObjects = ActionObjects.UpdateListOfArcor2Objects(scene.Objects,
+            ActionObjects = ActionObjects.UpdateListOfLockableArcor2Objects(scene.Objects,
                 o => o.Id,
                 (manager, o) => manager.UpdateAccordingToNewObject(o),
                 o => new ActionObjectManager(Session, this, o));

@@ -239,8 +239,8 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             if (NavigationState == NavigationState.Project) {
                 var project = Projects.First(p => p.Id == NavigationId);
-                if (project.ParentScene!.State.State == OnlineState.Started) {
-                    await project.ParentScene.GetRobotInfoAndUpdatesAsync();
+                if (project.Scene!.State.State == OnlineState.Started) {
+                    await project.Scene.GetRobotInfoAndUpdatesAsync();
                 }
             }
         }

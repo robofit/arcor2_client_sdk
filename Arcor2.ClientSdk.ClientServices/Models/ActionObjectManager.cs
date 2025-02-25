@@ -13,7 +13,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages a lifetime of a scene's action object.
     /// </summary>
-    public class ActionObjectManager : Arcor2ObjectManager {
+    public class ActionObjectManager : LockableArcor2ObjectManager {
         /// <summary>
         /// The parent scene.
         /// </summary>
