@@ -355,6 +355,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(actionObjectId);
             var response = await Session.client.AddOverrideAsync(new AddOverrideRequestArgs(actionObjectId, parameter));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Adding project override for project {Id} failed.", response.Messages);
             }
             await UnlockAsync(actionObjectId);

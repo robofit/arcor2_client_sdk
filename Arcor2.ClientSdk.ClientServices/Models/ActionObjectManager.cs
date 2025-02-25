@@ -86,6 +86,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.UpdateActionObjectPoseAsync(new UpdateObjectPoseRequestArgs(Id, pose));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating pose of action object {Id} failed.", response.Messages);
             }
 
@@ -115,6 +116,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, parameters.ToList()));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
             }
 

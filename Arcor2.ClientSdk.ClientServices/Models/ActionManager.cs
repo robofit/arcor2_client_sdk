@@ -79,6 +79,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.UpdateActionAsync(new UpdateActionRequestArgs(Id, parameters, flows));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating action {Id} failed.", response.Messages);
             }
 

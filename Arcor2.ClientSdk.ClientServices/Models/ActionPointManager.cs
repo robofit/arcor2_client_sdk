@@ -138,6 +138,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(true);
             var response = await Session.client.UpdateActionPointPositionAsync(new UpdateActionPointPositionRequestArgs(Id, newPosition));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating position for action point {Id} failed.", response.Messages);
             }
 
@@ -158,6 +159,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(true);
             var response = await Session.client.UpdateActionPointUsingRobotAsync(new UpdateActionPointUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating action point {Id} using robot failed.", response.Messages);
             }
 
@@ -266,6 +268,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.AddActionPointOrientationAsync(new AddActionPointOrientationRequestArgs(Id, orientation, name));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Creating new orientation for action point {Id} failed.", response.Messages);
             }
 
@@ -287,6 +290,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.AddActionPointOrientationUsingRobotAsync(new AddActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId), name));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Creating new orientation using robot for action point {Id} failed.", response.Messages);
             }
 
@@ -323,6 +327,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.AddActionPointJointsUsingRobotAsync(new AddActionPointJointsUsingRobotRequestArgs(Id, robotId, name, armId, endEffectorId));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Creating new joints using robot for action point {Id} failed.", response.Messages);
             }
 

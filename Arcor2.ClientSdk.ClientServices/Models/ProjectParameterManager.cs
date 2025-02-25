@@ -64,6 +64,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
             }
+            // Unlocked automatically by server
         }
 
         /// <summary>

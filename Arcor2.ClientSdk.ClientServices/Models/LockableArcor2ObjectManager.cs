@@ -62,6 +62,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Unlocks a resource, but doesn't throw on failure.
+        /// </summary>
+        protected internal async Task TryUnlockAsync() {
+            await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+        }
+
+        /// <summary>
         /// Registers event handlers from session/client. Derived classes should override this method to register their specific handlers and invoke the base method.
         /// </summary>
         protected override void RegisterHandlers() {

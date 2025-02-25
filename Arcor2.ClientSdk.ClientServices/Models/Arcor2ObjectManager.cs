@@ -78,6 +78,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Unlocks a resource, but doesn't throw on failure.
+        /// </summary>
+        /// <param name="id">The ID of the resource.</param>
+        protected internal async Task TryUnlockAsync(string id) {
+            await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(id));
+        }
+
+        /// <summary>
         /// Registers event handlers from session/client. Derived classes should override this method to register their specific handlers and invoke the base method.
         /// </summary>
         protected virtual void RegisterHandlers() { }

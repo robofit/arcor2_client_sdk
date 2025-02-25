@@ -91,6 +91,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 await Session.client.UpdateObjectTypeModelAsync(
                     new UpdateObjectModelRequestArgs(Id, model.ToOpenApiObjectModel(Id)));
             if(result.Result == false) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Failed to update model of an object type {Id}.", result.Messages);
             }
 

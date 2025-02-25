@@ -41,6 +41,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(ActionPoint.Id);
             var response = await Session.client.UpdateActionPointJointsAsync(new UpdateActionPointJointsRequestArgs(Id, joints));
             if(!response.Result) {
+                await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Updating joints {Id} for action point {Id} failed.", response.Messages);
             }
 
@@ -58,6 +59,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(ActionPoint.Id);
             var response = await Session.client.UpdateActionPointJointsUsingRobotAsync(new UpdateActionPointJointsUsingRobotRequestArgs(Id));
             if(!response.Result) {
+                await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Updating joints {Id} for action point {Id} using robot failed.", response.Messages);
             }
 
@@ -72,6 +74,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(ActionPoint.Id);
             var response = await Session.client.RemoveActionPointJointsAsync(new RemoveActionPointJointsRequestArgs(Id));
             if(!response.Result) {
+                await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Removing joints {Id} failed.", response.Messages);
             }
             await UnlockAsync(ActionPoint.Id);
@@ -87,6 +90,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync(ActionPoint.Id);
             var response = await Session.client.RenameActionPointJointsAsync(new RenameActionPointJointsRequestArgs(Id, newName));
             if(!response.Result) {
+                await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Renaming joints {Id} failed.", response.Messages);
             }
 

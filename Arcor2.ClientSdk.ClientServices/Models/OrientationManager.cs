@@ -40,6 +40,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.UpdateActionPointOrientationAsync(new UpdateActionPointOrientationRequestArgs(Id, newOrientation));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating orientation {Id} for action point {Id} failed.", response.Messages);
             }
 
@@ -60,6 +61,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.UpdateActionPointOrientationUsingRobotAsync(new UpdateActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating orientation {Id} for action point {Id} using robot failed.", response.Messages);
             }
 
@@ -101,6 +103,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await LockAsync();
             var response = await Session.client.RenameActionPointOrientationAsync(new RenameActionPointOrientationRequestArgs(Id, newName));
             if(!response.Result) {
+                await TryUnlockAsync();
                 throw new Arcor2Exception($"Renaming orientation {Id} failed.", response.Messages);
             }
 
