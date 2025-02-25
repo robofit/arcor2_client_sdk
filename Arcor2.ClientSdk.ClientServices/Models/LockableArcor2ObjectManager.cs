@@ -43,8 +43,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Locks the resource represented by this instance.
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
-        protected internal async Task LockAsync() {
-            var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(Id));
+        protected internal async Task LockAsync(bool lockTree = false) {
+            var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
             }

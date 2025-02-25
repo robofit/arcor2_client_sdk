@@ -8,7 +8,7 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
-    /// ARCOR2 Object Type.
+    /// Manages lifetime of an object type.
     /// </summary>
     public class ObjectTypeManager : LockableArcor2ObjectManager {
         /// <summary>

@@ -27,6 +27,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models.Extras {
         /// </summary>
         public Parameter Parameter { get; private set; }
 
+        /// <summary>
+        /// The action object being overriden.
+        /// </summary>
         public ActionObjectManager ActionObject => Project.Scene.ActionObjects!.First(a => a.Id == ActionObjectId);
 
         /// <summary>

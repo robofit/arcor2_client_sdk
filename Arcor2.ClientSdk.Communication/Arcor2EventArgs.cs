@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
 
 namespace Arcor2.ClientSdk.Communication {
     // This file contains EventArgs definition for
@@ -53,6 +54,14 @@ namespace Arcor2.ClientSdk.Communication {
         public BareAction Action { get; set; }
 
         public BareActionEventArgs(BareAction action, string parentId = "") : base(parentId) {
+            Action = action;
+        }
+    }
+
+    public class ActionEventArgs : ParentIdEventArgs {
+        public Action Action { get; set; }
+
+        public ActionEventArgs(Action action, string parentId = "") : base(parentId) {
             Action = action;
         }
     }

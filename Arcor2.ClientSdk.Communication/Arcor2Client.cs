@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Newtonsoft.Json;
-using WebSocketState = Arcor2.ClientSdk.Communication.Design.WebSocketState;
+using Newtonsoft.Json.Linq;
+using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
 
 namespace Arcor2.ClientSdk.Communication
 {
@@ -142,15 +143,15 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Raised when action is added.
         /// </summary>
-        public event EventHandler<BareActionEventArgs>? OnActionAdded;
+        public event EventHandler<ActionEventArgs>? OnActionAdded;
         /// <summary>
         /// Raised when action is updated (e.g. parameters or flows).
         /// </summary>
-        public event EventHandler<BareActionEventArgs>? OnActionUpdated;
+        public event EventHandler<ActionEventArgs>? OnActionUpdated;
         /// <summary>
         /// Raised when action base is updated (e.g. rename).
         /// </summary>
-        public event EventHandler<BareActionEventArgs>? OnActionBaseUpdated;
+        public event EventHandler<ActionEventArgs>? OnActionBaseUpdated;
         /// <summary>
         /// Raised when action is removed.
         /// </summary>
@@ -804,18 +805,26 @@ namespace Arcor2.ClientSdk.Communication
         private void HandleActionChanged(string data) {
             var actionChanged = JsonConvert.DeserializeObject<ActionChanged>(data, jsonSettings)!;
 
+            // The OpenApi generator thinks all the events use BareAction, which is not true.
+            // So we have to use this small hack.
             switch(actionChanged.ChangeType) {
                 case ActionChanged.ChangeTypeEnum.Add:
-                    OnActionAdded?.Invoke(this, new BareActionEventArgs(actionChanged.Data, actionChanged.ParentId));
+                    var fullActionJson = JObject.Parse(data)["data"]!.ToString();
+                    var fullAction = JsonConvert.DeserializeObject<Action>(fullActionJson, jsonSettings);
+                    OnActionAdded?.Invoke(this, new ActionEventArgs(fullAction!, actionChanged.ParentId));
                     break;
                 case ActionChanged.ChangeTypeEnum.Remove:
                     OnActionRemoved?.Invoke(this, new BareActionEventArgs(actionChanged.Data));
                     break;
                 case ActionChanged.ChangeTypeEnum.Update:
-                    OnActionUpdated?.Invoke(this, new BareActionEventArgs(actionChanged.Data));
+                    var fullActionJson2 = JObject.Parse(data)["data"]!.ToString();
+                    var fullAction2 = JsonConvert.DeserializeObject<Action>(fullActionJson2, jsonSettings);
+                    OnActionUpdated?.Invoke(this, new ActionEventArgs(fullAction2!, actionChanged.ParentId));
                     break;
                 case ActionChanged.ChangeTypeEnum.UpdateBase:
-                    OnActionBaseUpdated?.Invoke(this, new BareActionEventArgs(actionChanged.Data));
+                    var fullActionJson3 = JObject.Parse(data)["data"]!.ToString();
+                    var fullAction3 = JsonConvert.DeserializeObject<Action>(fullActionJson3, jsonSettings);
+                    OnActionBaseUpdated?.Invoke(this, new ActionEventArgs(fullAction3!, actionChanged.ParentId));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'ActionChanged' event.");

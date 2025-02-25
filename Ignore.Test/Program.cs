@@ -370,11 +370,129 @@ internal class Program {
                 break;
             case "!update_project_override":
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
-                    s.ActionObjectId == args[0])!.UpdateAsync(new Parameter(args[1], args[2], args[3]));
+                    s.ActionObjectId == args[0] && s.Parameter.Name == args[1])!.UpdateAsync(new Parameter(args[1], args[2], args[3]));
                 break;
             case "!remove_project_override":
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
-                    s.ActionObjectId == args[0])!.RemoveAsync();
+                    s.ActionObjectId == args[0] && s.Parameter.Name == args[1])!.RemoveAsync();
+                break;
+            // Action points
+            case "!ap" or "!action_points":
+                var actionPoints = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints;
+                foreach(var actionPoint in actionPoints!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(actionPoint));
+                }
+                break;
+            case "!add_ap":
+                if (args.Length > 4) {
+                    await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionPointAsync(args[0], new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])), args[4]);
+                }
+                else {
+                    await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionPointAsync(args[0], new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
+                }
+                break;
+            case "!add_ap_using_robot":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    .AddActionPointUsingRobotAsync(args[0], args[1], args.Length > 2 ? args[2] : "default", args.Length > 3 ? args[3] : null);
+                break;
+            case "!duplicate_ap":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(s =>
+                        s.Id == args[0])!.DuplicateAsync(new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
+                break;
+            case "!rename_ap":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(s =>
+                        s.Id == args[0])!.RenameAsync(args[1]);
+                break;
+            case "!update_ap_parent":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(s =>
+                        s.Id == args[0])!.UpdateParentAsync(args[1]);
+                break;
+            case "!update_ap_position":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(s =>
+                        s.Id == args[0])!.UpdatePositionAsync(new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
+                break;
+            case "!remove_ap":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(s =>
+                        s.Id == args[0])!.RemoveAsync();
+                break;
+            case "!update_ap_using_robot":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(s =>
+                        s.Id == args[0])!.UpdateUsingRobotAsync(args[1], args.Length > 2 ? args[2] : "default", args.Length > 3 ? args[3] : null);
+                break;
+            // Actions 
+            case "!actions":
+                var actions = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
+                    .Actions;
+                foreach(var action in actions!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(action));
+                }
+                break;
+            case "!add_action":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.AddActionAsync(args[1], args[2],
+                        [new Flow(Flow.TypeEnum.Default, [])], []);
+                break;
+            case "!update_action_parameters":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<ActionParameter>>(string.Join(' ', args.Skip(2)))!);
+                break;
+            case "!update_action_flows":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.UpdateFlowsAsync(JsonConvert.DeserializeObject<List<Flow>>(string.Join(' ', args.Skip(2)))!);
+                break;
+            case "!rename_action":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.RenameAsync(args[2]);
+                break;
+            case "!remove_action":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
+                break;
+            // Orientation 
+            case "!orientations":
+                var orientations = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
+                    .Orientations;
+                foreach(var orientation in orientations!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(orientation));
+                }
+                break;
+            case "!add_orientation":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.AddOrientationAsync(
+                        new Orientation(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                            Convert.ToDecimal(args[3]), Convert.ToDecimal(args[4])),
+                        args[5]);
+                break;
+            case "!add_orientation_using_robot":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.AddOrientationUsingRobotAsync(args[1], args.Length > 3 ? args[3] : "default", args.Length > 4 ? args[4] : null, args[2]); ;
+                break;
+            case "!update_orientation":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!
+                    .UpdateAsync(new Orientation(Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3]),
+                        Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5])));
+                break;
+            case "!update_orientation_using_robot":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.UpdateUsingRobotAsync(args[2], args.Length > 3 ? args[3] : "default", args.Length > 4 ? args[4] : null);
+                break;
+            case "!rename_orientation":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.RenameAsync(args[2]);
+                break;
+            case "!remove_orientation":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
                 break;
         }
     }
@@ -461,6 +579,40 @@ internal class Program {
             !update_project_parameter_value <ID> <VALUE> - Changes the value of project parameter.
             !update_project_parameter_name <ID> <Name> - Changes the name of project parameter.
             !remove_project_parameter <ID> - Removes a project parameter.
+            
+            - Project Overrides -
+            !overrides - Lists the project overrides.
+            !add_project_override <ACTION_OBJECT_ID> <NAME> <TYPE> <VALUE> - Adds a new project override.
+            !update_project_override <ACTION_OBJECT_ID> <NAME> <TYPE> <VALUE> - Updates a project override.
+            !remove_project_override <ACTION_OBJECT_ID> <NAME> - Removes a project override.
+            
+            - Action Points -
+            !action_points - Lists the action points.
+            !add_ap <NAME> <POSX> <POSY> <POSZ> [PARENT_ID] - Adds an action point.
+            !add_ap_using_robot <NAME> <ROBOT_ID> [END_EFFECTOR_ID] [ARM_ID] - Adds an action point using robot.
+            !duplicate_ap <ID> <POSX> <POSY> <POSZ> - Duplicates an action point.
+            !rename_ap <ID> <NEW_NAME> - Renames an action point.
+            !update_ap_parent <ID> <PARENT_ID> - Updates the action point parent.
+            !update_ap_position <ID> <POSX> <POSY> <POSZ> - Updates action point position.
+            !update_ap_using_robot <ID> <ROBOT_ID> [END_EFFECTOR_ID] [ARM_ID] - Updates action point using robot.
+            !remove_ap <ID> - Removes action point.
+            
+            - Actions -
+            !actions <AP_ID> - List actions of action point.
+            !add_action <AP_ID> <NAME> <TYPE> - Adds a new action (TYPE = '{ActionObjectId}/{ActionId}')
+            !update_action_parameters <AP_ID> <ID> <PARAMS_AS_JSON_LIST> - Updates action parameters.
+            !update_action_flows <AP_ID>< <ID> <FLOWS_AS_JSON_LIST> - Updates action flows.
+            !rename_action <AP_ID> <ID> <NEW_NAME> - Renames an action.
+            !remove_action <AP_ID> <ID> - Removes the action
+            
+            - Orientations -
+            !orientations <AP_ID> - Lists all orientations.
+            !add_orientation <AP_ID> <X> <Y> <Z> <W> <NAME> - Adds an orientation.
+            !add_orientation_using_robot <AP_ID> <NAME> <ROBOT_ID> [END_EFFECTOR_ID] [ARM_ID] - Adds an orientation using robot.
+            !update_orientation <AP_ID> <ID> <X> <Y> <Z> <W> <NAME> - Updates an orientation.
+            !update_orientation_using_robot <AP_ID> <ID> <ROBOT_ID> [END_EFFECTOR_ID] [ARM_ID] - Adds an orientation using robot.
+            !rename_orientation <AP_ID> <ID> <NEW_NAME> - Renames an orientation.
+            !remove_orientation <AP_ID> <ID> - Removes the orientation.
             """);
     }
 

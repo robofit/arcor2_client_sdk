@@ -293,6 +293,42 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Adds a new action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.+
+        /// </remarks>
+        /// <param name="robotId">The ID of the robot action object.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, string robotId, string endEffectorId = "default", string? armId = null) {
+            var response = await Session.client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(robotId, endEffectorId, name, armId!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null) {
+            var response = await Session.client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(actionObject.Id, endEffectorId, name, armId!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
         /// Adds a new action point.
         /// </summary>
         /// <param name="name">The name of the action point.</param>
@@ -334,12 +370,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOverrideAsync(ActionObjectManager actionObject, Parameter parameter) {
-            await LockAsync(actionObject.Id);
-            var response = await Session.client.AddOverrideAsync(new AddOverrideRequestArgs(actionObject.Id, parameter));
-            if(!response.Result) {
-                throw new Arcor2Exception($"Adding project override for project {Id} failed.", response.Messages);
-            }
-            await UnlockAsync(actionObject.Id);
+            await AddOverrideAsync(actionObject.Id, parameter);
         }
 
 
