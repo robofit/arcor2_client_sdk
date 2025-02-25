@@ -5,6 +5,7 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Ignore.Test.Models;
 using Ignore.Test.Output;
 using Newtonsoft.Json;
+using Joint = Arcor2.ClientSdk.Communication.OpenApi.Models.Joint;
 
 namespace Ignore.Test;
 
@@ -494,6 +495,37 @@ internal class Program {
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
                 break;
+            // Joints 
+            case "!joints":
+                var joints = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
+                    .Joints;
+                foreach(var joint in joints!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(joint));
+                }
+                break;
+            case "!add_joints_using_robot":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.AddJointsUsingRobotAsync(args[1], args.Length > 3 ? args[3] : "default", args.Length > 4 ? args[4] : null, args[2]);
+                ;
+                break;
+            case "!update_joints":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.UpdateAsync(
+                        JsonConvert.DeserializeObject<List<Joint>>(string.Join("", args.Skip(2))));
+                break;
+            case "!update_joints_using_robot":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.UpdateUsingRobotAsync();
+                break;
+            case "!rename_joints":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.RenameAsync(args[2]);
+                break;
+            case "!remove_joints":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
+                break;
         }
     }
 
@@ -613,6 +645,14 @@ internal class Program {
             !update_orientation_using_robot <AP_ID> <ID> <ROBOT_ID> [END_EFFECTOR_ID] [ARM_ID] - Adds an orientation using robot.
             !rename_orientation <AP_ID> <ID> <NEW_NAME> - Renames an orientation.
             !remove_orientation <AP_ID> <ID> - Removes the orientation.
+            
+            - Joints -
+            !joints <AP_ID> - Lists all joints.
+            !add_joints_using_robot <AP_ID> <NAME> <ROBOT_ID> [END_EFFECTOR_ID] [ARM_ID] - Adds joints using robot.
+            !update_joints <AP_ID> <ID> <JOINT_LIST_AS_JSON> - Updates the joints.
+            !update_joints_using_robot <AP_ID> <ID> - Adds joints using robot.
+            !rename_joints <AP_ID> <ID> <NEW_NAME> - Renames joints.
+            !remove_joints <AP_ID> <ID> - Removes the joints.
             """);
     }
 

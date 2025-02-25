@@ -40,7 +40,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             .FirstOrDefault(a => a.Name == Meta.Type.Split('/').Last())!;
 
         /// <summary>
-        /// Initializes a new instance of <see cref="Action"/> class.
+        /// Initializes a new instance of <see cref="ActionManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="actionPoint">The parent action point.</param>

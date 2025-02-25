@@ -32,6 +32,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public IList<OrientationManager> Orientations { get; private set; }
 
         /// <summary>
+        /// A collection of joints.
+        /// </summary>
+        public IList<JointsManager> Joints { get; private set; }
+
+        /// <summary>
         /// Initializes a new instance of <see cref="ActionPointManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
@@ -43,6 +48,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Meta = actionPointMeta;
             Actions = new List<ActionManager>();
             Orientations = new List<OrientationManager>();
+            Joints = new List<JointsManager>();
         }
 
         /// <summary>
@@ -57,8 +63,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Meta = actionPoint.MapToBareActionPoint();
             Actions = actionPoint.Actions.Select(a => new ActionManager(Session, this, a)).ToList();
             Orientations = actionPoint.Orientations.Select(o => new OrientationManager(Session, this, o)).ToList();
-
-            // TODO: Rest
+            Joints = actionPoint.RobotJoints.Select(j => new JointsManager(Session, this, j)).ToList();
         }
 
         /// <summary>
@@ -300,10 +305,43 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="name">The name of the orientation.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOrientationUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null, string name = "default") {
-            var response = await Session.client.AddActionPointOrientationUsingRobotAsync(new AddActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(actionObject.Id, endEffectorId, armId), name));
+            await AddOrientationUsingRobotAsync(actionObject.Id, endEffectorId, armId, name);
+        }
+
+        /// <summary>
+        /// Adds new joints using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="robotId">The robot ID.</param>
+        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <param name="name">The name of the joints.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddJointsUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null, string name = "default") {
+            await LockAsync();
+            var response = await Session.client.AddActionPointJointsUsingRobotAsync(new AddActionPointJointsUsingRobotRequestArgs(Id, robotId, name, armId, endEffectorId));
             if(!response.Result) {
-                throw new Arcor2Exception($"Creating new orientation using robot for action point {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Creating new joints using robot for action point {Id} failed.", response.Messages);
             }
+
+            await UnlockAsync();
+        }
+
+        /// <summary>
+        /// Adds new joints using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <param name="name">The name of the joints.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddJointsUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null, string name = "default") {
+            await AddJointsUsingRobotAsync(actionObject.Id, endEffectorId, armId, name);
         }
 
         /// <summary>
@@ -325,6 +363,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 o => o.Id,
                 (m, o) => m.UpdateAccordingToNewObject(o),
                 o => new OrientationManager(Session, this, o));
+            Joints = Joints.UpdateListOfLockableArcor2Objects(actionPoint.RobotJoints,
+                j => j.Id,
+                (m, j) => m.UpdateAccordingToNewObject(j),
+                j => new JointsManager(Session, this, j));
         }
 
         protected override void Dispose(bool disposing) {
@@ -335,6 +377,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             foreach(var orientation in Orientations) {
                 orientation.Dispose();
             }
+            foreach (var joint in Joints) {
+                joint.Dispose();
+            }
         }
 
         protected override void RegisterHandlers() {
@@ -344,6 +389,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnActionPointRemoved += OnActionPointRemoved;
             Session.client.OnActionAdded += OnActionAdded;
             Session.client.OnOrientationAdded += OnOrientationAdded;
+            Session.client.OnJointsAdded += OnJointsAdded;
         }
 
         protected override void UnregisterHandlers() {
@@ -353,6 +399,15 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnActionPointRemoved -= OnActionPointRemoved;
             Session.client.OnActionAdded -= OnActionAdded;
             Session.client.OnOrientationAdded -= OnOrientationAdded;
+            Session.client.OnJointsAdded -= OnJointsAdded;
+        }
+
+        private void OnJointsAdded(object sender, JointsEventArgs e) {
+            if(Project.IsOpen) {
+                if(e.ParentId == Id) {
+                    Joints.Add(new JointsManager(Session, this, e.Data));
+                }
+            }
         }
 
         private void OnOrientationAdded(object sender, OrientationEventArgs e) {
