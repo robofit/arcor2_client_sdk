@@ -17,22 +17,27 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// The metadata of the project.
         /// </summary>
-        public BareProject Meta { get; set; }
+        public BareProject Meta { get; private set; }
 
         /// <summary>
         /// A collection of project parameters.
         /// </summary>
-        public IList<ProjectParameterManager>? Parameters { get; set; }
+        public IList<ProjectParameterManager>? Parameters { get; private set; }
 
         /// <summary>
         /// A collection of action points.
         /// </summary>
-        public IList<ActionPointManager>? ActionPoints { get; set; }
+        public IList<ActionPointManager>? ActionPoints { get; private set; }
 
         /// <summary>
         /// A collection of project overrides.
         /// </summary>
-        public IList<ProjectOverrideManager>? Overrides { get; set; }
+        public IList<ProjectOverrideManager>? Overrides { get; private set; }
+
+        /// <summary>
+        /// A collection of logic items.
+        /// </summary>
+        public IList<LogicItemManager>? LogicItems { get; private set; }
 
         /// <summary>
         /// Gets if the project is open.
@@ -75,6 +80,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
             Overrides = flattenedOverrides
                 .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)).ToList();
+            LogicItems = project.Logic.Select(l => new LogicItemManager(Session, this, l)).ToList();
+            
             // TODO: Rest
         }
 
@@ -374,6 +381,41 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             await AddOverrideAsync(actionObject.Id, parameter);
         }
 
+        /// <summary>
+        /// Adds a new logic item.
+        /// </summary>
+        /// <remarks>
+        /// Use overload with string ID parameters to set the "START" and "END". Connection to these can only exist one at a time.
+        /// Start and end actions should be different. If an action has multiple start connections (logic item), they should have conditions.
+        /// </remarks>
+        /// <param name="startId">The starting action ID, alternatively, "START" for the first action.</param>
+        /// <param name="endId">The ending action ID, alternatively, "END" for the last action.</param>
+        /// <param name="condition">The condition, <c>null</c> if not applicable.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddLogicItem(string startId, string endId, ProjectLogicIf? condition = null) {
+            var response = await Session.client.AddLogicItemAsync(new AddLogicItemRequestArgs(startId, endId, condition!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding logic item for project {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new logic item.
+        /// </summary>
+        /// <remarks>
+        /// Use overload with string ID parameters to set the "START" and "END". Connection to these can only exist one at a time.
+        /// Start and end actions should be different. If an action has multiple start connections (logic item), they should have conditions.
+        /// </remarks>
+        /// <param name="start">The starting action ID.</param>
+        /// <param name="end">The ending action ID.</param>
+        /// <param name="condition">The condition, <c>null</c> if not applicable.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddLogicItem(ActionManager start, ActionManager end, ProjectLogicIf? condition = null) {
+            await AddLogicItem(start.Id, end.Id, condition);
+        }
+
 
         /// <summary>
         /// Updates the project according to the <paramref name="project"/> instance.
@@ -400,6 +442,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 (m, o) => m.ActionObjectId == o.ActionObjectId && m.Parameter.Name == o.Parameter.Name && m.Parameter.Type == o.Parameter.Type,
                 (m, o) => m.UpdateAccordingToNewObject(o.Parameter),
                 o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter));
+            LogicItems = LogicItems.UpdateListOfLockableArcor2Objects(project.Logic,
+                l => l.Id,
+                (m, l) => m.UpdateAccordingToNewObject(l),
+                l => new LogicItemManager(Session, this, l));
         }
 
         /// <summary>
@@ -422,6 +468,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnProjectParameterAdded += OnProjectParameterAdded;
             Session.client.OnActionPointAdded += OnActionPointAdded;
             Session.client.OnOverrideAdded += OnOverrideAdded;
+            Session.client.OnLogicItemAdded += OnLogicItemAdded;
         }
 
         protected override void UnregisterHandlers() {
@@ -441,10 +488,15 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     actionPoint.Dispose();
                 }
             }
-
             if (Parameters != null) {
                 foreach (var parameter in Parameters) {
                     parameter.Dispose();
+                }
+            }
+
+            if (LogicItems != null) {
+                foreach (var logicItem in LogicItems) {
+                    logicItem.Dispose();
                 }
             }
         }
@@ -490,6 +542,17 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 }
 
                 Overrides.Add(new ProjectOverrideManager(Session, this, e.ParentId, e.Parameter));
+            }
+        }
+
+        private void OnLogicItemAdded(object sender, LogicItemChangedEventArgs e) {
+            if(IsOpen) {
+                if(LogicItems == null) {
+                    Session.logger?.LogError($"When adding a new logic item, the logic item collection for project {Id} was null.");
+                    return;
+                }
+
+                LogicItems!.Add(new LogicItemManager(Session, this, e.Data));
             }
         }
     }

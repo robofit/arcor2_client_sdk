@@ -512,7 +512,7 @@ internal class Program {
             case "!update_joints":
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.UpdateAsync(
-                        JsonConvert.DeserializeObject<List<Joint>>(string.Join("", args.Skip(2))));
+                        JsonConvert.DeserializeObject<List<Joint>>(string.Join("", args.Skip(2)))!);
                 break;
             case "!update_joints_using_robot":
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
@@ -525,6 +525,25 @@ internal class Program {
             case "!remove_joints":
                 await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
+                break;
+            // Logic items
+            case "!logic_items":
+                var logicItems = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.LogicItems;
+                foreach(var logicItem in logicItems!) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(logicItem));
+                }
+                break;
+            case "!add_logic_item":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddLogicItem(args[0], args[1], args.Length > 2 ? new ProjectLogicIf(args[2], args[3]) : null);
+                break;
+            case "!update_logic_item":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
+                    s.Id == args[0])!.UpdateAsync(args[1], args[2], args.Length > 3 ? new ProjectLogicIf(args[3], args[4]) : null);
+                break;
+            case "!remove_logic_item":
+                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
+                    s.Id == args[0])!.RemoveAsync();
                 break;
         }
     }
@@ -653,6 +672,12 @@ internal class Program {
             !update_joints_using_robot <AP_ID> <ID> - Adds joints using robot.
             !rename_joints <AP_ID> <ID> <NEW_NAME> - Renames joints.
             !remove_joints <AP_ID> <ID> - Removes the joints.
+            
+            - Logic Items -
+            !logic_items - Lists all logic items.
+            !add_logic_item <START> <END> [WHAT VALUE] - Creates a logic item with optional condition.
+            !update_logic_item <ID> <START> <END> [WHAT VALUE] - Updates a logic item with optional condition.
+            !remove_logic_item <ID> - Removes a logic item.
             """);
     }
 
