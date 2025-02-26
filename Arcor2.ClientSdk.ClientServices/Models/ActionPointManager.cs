@@ -1,40 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of an action point.
     /// </summary>
-    public class ActionPointManager : LockableArcor2ObjectManager {
+    public class ActionPointManager : LockableArcor2ObjectManager<BareActionPoint> {
         /// <summary>
         /// The parent project.
         /// </summary>
         internal ProjectManager Project { get; }
 
         /// <summary>
-        /// The metadata of the action point.
-        /// </summary>
-        public BareActionPoint Meta { get; private set; }
-
-        /// <summary>
         /// A collection of actions.
         /// </summary>
-        public IList<ActionManager> Actions { get; private set; }
+        public ObservableCollection<ActionManager> Actions { get; private set; }
 
         /// <summary>
         /// A collection of orientations.
         /// </summary>
-        public IList<OrientationManager> Orientations { get; private set; }
+        public ObservableCollection<OrientationManager> Orientations { get; private set; }
 
         /// <summary>
         /// A collection of joints.
         /// </summary>
-        public IList<JointsManager> Joints { get; private set; }
+        public ObservableCollection<JointsManager> Joints { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionPointManager"/> class.
@@ -43,12 +40,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="project">The parent project.</param>
         /// <param name="actionPointMeta">The action point metadata.</param>
         public ActionPointManager(Arcor2Session session, ProjectManager project, BareActionPoint actionPointMeta) : base(
-            session, actionPointMeta.Id) {
+            session, actionPointMeta, actionPointMeta.Id) {
             Project = project;
-            Meta = actionPointMeta;
-            Actions = new List<ActionManager>();
-            Orientations = new List<OrientationManager>();
-            Joints = new List<JointsManager>();
+            Actions = new ObservableCollection<ActionManager>();
+            Orientations = new ObservableCollection<OrientationManager>();
+            Joints = new ObservableCollection<JointsManager>();
         }
 
         /// <summary>
@@ -58,12 +54,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="project">The parent project.</param>
         /// <param name="actionPoint">The action point data.</param>
         public ActionPointManager(Arcor2Session session, ProjectManager project, ActionPoint actionPoint) : base(
-            session, actionPoint.Id) {
+            session, actionPoint.MapToBareActionPoint(), actionPoint.Id) {
             Project = project;
-            Meta = actionPoint.MapToBareActionPoint();
-            Actions = actionPoint.Actions.Select(a => new ActionManager(Session, this, a)).ToList();
-            Orientations = actionPoint.Orientations.Select(o => new OrientationManager(Session, this, o)).ToList();
-            Joints = actionPoint.RobotJoints.Select(j => new JointsManager(Session, this, j)).ToList();
+            Actions = new ObservableCollection<ActionManager>(actionPoint.Actions.Select(a => new ActionManager(Session, this, a)));
+            Orientations = new ObservableCollection<OrientationManager>(actionPoint.Orientations.Select(o => new OrientationManager(Session, this, o)));
+            Joints = new ObservableCollection<JointsManager>(actionPoint.RobotJoints.Select(j => new JointsManager(Session, this, j)));
         }
 
         /// <summary>
@@ -83,7 +78,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task DuplicateAsync() {
-            await DuplicateAsync(Meta.Position);
+            await DuplicateAsync(Data.Position);
         }
 
         /// <summary>
@@ -288,7 +283,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOrientationUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null, string name = "default") {
             await LockAsync();
-            var response = await Session.client.AddActionPointOrientationUsingRobotAsync(new AddActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId), name));
+            var response = await Session.client.AddActionPointOrientationUsingRobotAsync(new AddActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!), name));
             if(!response.Result) {
                 await TryUnlockAsync();
                 throw new Arcor2Exception($"Creating new orientation using robot for action point {Id} failed.", response.Messages);
@@ -325,7 +320,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddJointsUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null, string name = "default") {
             await LockAsync();
-            var response = await Session.client.AddActionPointJointsUsingRobotAsync(new AddActionPointJointsUsingRobotRequestArgs(Id, robotId, name, armId, endEffectorId));
+            var response = await Session.client.AddActionPointJointsUsingRobotAsync(new AddActionPointJointsUsingRobotRequestArgs(Id, robotId, name, armId!, endEffectorId));
             if(!response.Result) {
                 await TryUnlockAsync();
                 throw new Arcor2Exception($"Creating new joints using robot for action point {Id} failed.", response.Messages);
@@ -359,19 +354,19 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new InvalidOperationException($"Can't update an ActionPointManager ({Id}) using a action point data object ({actionPoint.Id}) with different ID.");
             }
 
-            Meta = actionPoint.MapToBareActionPoint();
-            Actions = Actions.UpdateListOfLockableArcor2Objects(actionPoint.Actions,
+            UpdateData(actionPoint.MapToBareActionPoint());
+            Actions = new ObservableCollection<ActionManager>(Actions.UpdateListOfLockableArcor2Objects<ActionManager, Action, Action>(actionPoint.Actions,
                 a => a.Id,
                 (m, a) => m.UpdateAccordingToNewObject(a),
-                a => new ActionManager(Session, this, a));
-            Orientations = Orientations.UpdateListOfLockableArcor2Objects(actionPoint.Orientations,
+                a => new ActionManager(Session, this, a)));
+            Orientations = new ObservableCollection<OrientationManager>(Orientations.UpdateListOfLockableArcor2Objects<OrientationManager, NamedOrientation, NamedOrientation>(actionPoint.Orientations,
                 o => o.Id,
                 (m, o) => m.UpdateAccordingToNewObject(o),
-                o => new OrientationManager(Session, this, o));
-            Joints = Joints.UpdateListOfLockableArcor2Objects(actionPoint.RobotJoints,
+                o => new OrientationManager(Session, this, o)));
+            Joints = new ObservableCollection<JointsManager>(Joints.UpdateListOfLockableArcor2Objects<JointsManager, ProjectRobotJoints, ProjectRobotJoints>(actionPoint.RobotJoints,
                 j => j.Id,
                 (m, j) => m.UpdateAccordingToNewObject(j),
-                j => new JointsManager(Session, this, j));
+                j => new JointsManager(Session, this, j)));
         }
 
         protected override void Dispose(bool disposing) {
@@ -426,6 +421,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnActionPointRemoved(object sender, BareActionPointEventArgs e) {
             if (Project.IsOpen) {
                 if (e.ActionPoint.Id == Id) {
+                    RemoveData();
                     Project.ActionPoints!.Remove(this);
                     Dispose();
                 }
@@ -435,7 +431,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnActionPointBaseUpdated(object sender, BareActionPointEventArgs e) {
             if (Project.IsOpen) {
                 if (e.ActionPoint.Id == Id) {
-                    Meta = e.ActionPoint;
+                    UpdateData(e.ActionPoint);
                 }
             }
         }
@@ -443,7 +439,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnActionPointUpdated(object sender, BareActionPointEventArgs e) {
             if (Project.IsOpen) {
                 if (e.ActionPoint.Id == Id) {
-                    Meta = e.ActionPoint;
+                    UpdateData(e.ActionPoint);
                 }
             }
         }

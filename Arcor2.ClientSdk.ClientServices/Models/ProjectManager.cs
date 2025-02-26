@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
@@ -9,36 +9,31 @@ using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
-namespace Arcor2.ClientSdk.ClientServices.Models {
+namespace Arcor2.ClientSdk.ClientServices.Models
+{
     /// <summary>
     /// Manages lifetime of a project.
     /// </summary>
     public class ProjectManager : LockableArcor2ObjectManager<BareProject> {
-
-        /// <summary>
-        /// The metadata of the project.
-        /// </summary>
-        public BareProject Meta { get; private set; }
-
         /// <summary>
         /// A collection of project parameters.
         /// </summary>
-        public IList<ProjectParameterManager>? Parameters { get; private set; }
+        public ObservableCollection<ProjectParameterManager>? Parameters { get; private set; }
 
         /// <summary>
         /// A collection of action points.
         /// </summary>
-        public IList<ActionPointManager>? ActionPoints { get; private set; }
+        public ObservableCollection<ActionPointManager>? ActionPoints { get; private set; }
 
         /// <summary>
         /// A collection of project overrides.
         /// </summary>
-        public IList<ProjectOverrideManager>? Overrides { get; private set; }
+        public ObservableCollection<ProjectOverrideManager>? Overrides { get; private set; }
 
         /// <summary>
         /// A collection of logic items.
         /// </summary>
-        public IList<LogicItemManager>? LogicItems { get; private set; }
+        public ObservableCollection<LogicItemManager>? LogicItems { get; private set; }
 
         /// <summary>
         /// Gets if the project is open.
@@ -49,39 +44,35 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Gets the parent scene.
         /// </summary>
-        public SceneManager Scene => Session.Scenes.First(s => s.Id == Meta.SceneId);
+        public SceneManager Scene => Session.Scenes.First(s => s.Id == Data.SceneId);
 
         /// <summary>
         /// Raised when project is saved by the server.
         /// </summary>
-        public EventHandler? OnSaved;
+        public EventHandler? Saved;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ProjectManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="meta">Project meta object.</param>
-        internal ProjectManager(Arcor2Session session, BareProject meta) : base(session, meta.Id) {
-            Meta = meta;
-        }
+        internal ProjectManager(Arcor2Session session, BareProject meta) : base(session, meta, meta.Id) { }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ProjectManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="project">Project object.</param>
-        internal ProjectManager(Arcor2Session session, Project project) : base(session, project.Id) {
-            Meta = project.MapToBareProject();
-            Parameters = project.Parameters
-                .Select(p => new ProjectParameterManager(Session, this, p)).ToList();
-            ActionPoints = project.ActionPoints
-                .Select(a => new ActionPointManager(Session, this, a)).ToList();
-
+        internal ProjectManager(Arcor2Session session, Project project) : base(session, project.MapToBareProject(), project.Id) {
+            Parameters = new ObservableCollection<ProjectParameterManager>(project.Parameters
+                .Select(p => new ProjectParameterManager(Session, this, p)));
+            ActionPoints = new ObservableCollection<ActionPointManager>(project.ActionPoints
+                .Select(a => new ActionPointManager(Session, this, a)));
             var flattenedOverrides =
                 project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
-            Overrides = flattenedOverrides
-                .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)).ToList();
-            LogicItems = project.Logic.Select(l => new LogicItemManager(Session, this, l)).ToList();
+            Overrides = new ObservableCollection<ProjectOverrideManager>(flattenedOverrides
+                .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)));
+            LogicItems = new ObservableCollection<LogicItemManager>(project.Logic.Select(l => new LogicItemManager(Session, this, l)));
             // Project functions are not really needed atm...
         }
 
@@ -168,34 +159,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             var response = await Session.client.UpdateProjectDescriptionAsync(new UpdateProjectDescriptionRequestArgs(Id, newDescription));
             if(!response.Result) {
                 throw new Arcor2Exception($"Updating description of project {Id} failed.", response.Messages);
-            }
-        }
-
-        /// <summary>
-        /// Starts the project.
-        /// </summary>
-        /// <remarks>
-        /// The project must be opened, in the stopped state, and all locks freed.
-        /// </remarks>
-        /// <exception cref="Arcor2Exception"></exception>
-        public async Task StartAsync() {
-            var response = await Session.client.StartSceneAsync();
-            if(!response.Result) {
-                throw new Arcor2Exception($"Starting project {Id} (scene {Meta.SceneId}) failed.", response.Messages);
-            }
-        }
-
-        /// <summary>
-        /// Stops the project.
-        /// </summary>
-        /// <remarks>
-        /// The project must be opened, in the started state, and without running actions.
-        /// </remarks>
-        /// <exception cref="Arcor2Exception"></exception>
-        public async Task StopAsync() {
-            var response = await Session.client.StopSceneAsync();
-            if(!response.Result) {
-                throw new Arcor2Exception($"Stopping of project {Id} (scene {Meta.SceneId}) failed.", response.Messages);
             }
         }
 
@@ -427,25 +390,25 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new InvalidOperationException($"Can't update a ProjectManager ({Id}) using a project data object ({project.Id}) with different ID.");
             }
 
-            Meta = project.MapToBareProject();
-            Parameters = Parameters.UpdateListOfLockableArcor2Objects(project.Parameters,
+            UpdateData(project.MapToBareProject());
+            Parameters = new ObservableCollection<ProjectParameterManager>(Parameters.UpdateListOfLockableArcor2Objects<ProjectParameterManager, ProjectParameter, ProjectParameter>(project.Parameters,
                 p => p.Id,
                 (m, p) => m.UpdateAccordingToNewObject(p),
-                p => new ProjectParameterManager(Session, this, p));
-            ActionPoints = ActionPoints.UpdateListOfLockableArcor2Objects(project.ActionPoints,
+                p => new ProjectParameterManager(Session, this, p)));
+            ActionPoints = new ObservableCollection<ActionPointManager>(ActionPoints.UpdateListOfLockableArcor2Objects<ActionPointManager, ActionPoint, BareActionPoint>(project.ActionPoints,
                 a => a.Id,
                 (m, a) => m.UpdateAccordingToNewObject(a),
-                a => new ActionPointManager(Session, this, a));
+                a => new ActionPointManager(Session, this, a)));
             var flattenedOverrides =
                 project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
-            Overrides = Overrides.UpdateListOfArcor2Objects(flattenedOverrides,
-                (m, o) => m.ActionObjectId == o.ActionObjectId && m.Parameter.Name == o.Parameter.Name && m.Parameter.Type == o.Parameter.Type,
+            Overrides = new ObservableCollection<ProjectOverrideManager>(Overrides.UpdateListOfArcor2Objects<ProjectOverrideManager, (string ActionObjectId, Parameter Parameter), ProjectOverride>(flattenedOverrides,
+                (m, o) => m.Data.ActionObjectId == o.ActionObjectId && m.Data.Parameter.Name == o.Parameter.Name && m.Data.Parameter.Type == o.Parameter.Type,
                 (m, o) => m.UpdateAccordingToNewObject(o.Parameter),
-                o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter));
-            LogicItems = LogicItems.UpdateListOfLockableArcor2Objects(project.Logic,
+                o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)));
+            LogicItems = new ObservableCollection<LogicItemManager>(LogicItems.UpdateListOfLockableArcor2Objects<LogicItemManager, LogicItem, LogicItem>(project.Logic,
                 l => l.Id,
                 (m, l) => m.UpdateAccordingToNewObject(l),
-                l => new LogicItemManager(Session, this, l));
+                l => new LogicItemManager(Session, this, l)));
         }
 
         /// <summary>
@@ -457,12 +420,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             if(Id != project.Id) {
                 throw new InvalidOperationException($"Can't update a ProjectManager ({Id}) using a project data object ({project.Id}) with different ID.");
             }
-            Meta = project;
+            UpdateData(project);
         }
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnProjectSaved += OnSaved;
+            Session.client.OnProjectSaved += Saved;
             Session.client.OnProjectRemoved += OnProjectRemoved;
             Session.client.OnProjectBaseUpdated += OnProjectBaseUpdated;
             Session.client.OnProjectParameterAdded += OnProjectParameterAdded;
@@ -473,7 +436,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnProjectSaved -= OnSaved;
+            Session.client.OnProjectSaved -= Saved;
             Session.client.OnProjectRemoved -= OnProjectRemoved;
             Session.client.OnProjectBaseUpdated -= OnProjectBaseUpdated;
             Session.client.OnProjectParameterAdded -= OnProjectParameterAdded;
@@ -484,19 +447,23 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void Dispose(bool disposing) {
             base.Dispose(disposing);
-            if (ActionPoints != null) {
-                foreach (var actionPoint in ActionPoints) {
+            if(ActionPoints != null) {
+                foreach(var actionPoint in ActionPoints) {
                     actionPoint.Dispose();
                 }
             }
-            if (Parameters != null) {
-                foreach (var parameter in Parameters) {
+            if(Parameters != null) {
+                foreach(var parameter in Parameters) {
                     parameter.Dispose();
                 }
             }
-
-            if (LogicItems != null) {
-                foreach (var logicItem in LogicItems) {
+            if(Overrides != null) {
+                foreach(var @override in Overrides) {
+                    @override.Dispose();
+                }
+            }
+            if(LogicItems != null) {
+                foreach(var logicItem in LogicItems) {
                     logicItem.Dispose();
                 }
             }
@@ -504,19 +471,20 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnProjectBaseUpdated(object sender, BareProjectEventArgs e) {
             if(e.Project.Id == Id) {
-                Meta = e.Project;
+                UpdateData(e.Project);
             }
         }
 
         private void OnProjectRemoved(object sender, BareProjectEventArgs e) {
             if(e.Project.Id == Id) {
+                RemoveData();
                 Session.Projects.Remove(this);
                 Dispose();
             }
         }
 
         private void OnProjectParameterAdded(object sender, ProjectParameterEventArgs e) {
-            if (IsOpen) {
+            if(IsOpen) {
                 if(Parameters == null) {
                     Session.logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
                 }
@@ -526,7 +494,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         private void OnActionPointAdded(object sender, BareActionPointEventArgs e) {
-            if (IsOpen) {
+            if(IsOpen) {
                 if(ActionPoints == null) {
                     Session.logger?.LogError($"When adding a new action point, the action point collection for project {Id} was null.");
                 }
@@ -536,7 +504,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         private void OnOverrideAdded(object sender, ParameterEventArgs e) {
-            if (IsOpen) {
+            if(IsOpen) {
                 if(Overrides == null) {
                     Session.logger?.LogError($"When adding a new project override, the override collection for project {Id} was null.");
                     return;

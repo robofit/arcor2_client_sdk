@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
@@ -13,56 +14,26 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages a lifetime of a scene's action object.
     /// </summary>
-    public class ActionObjectManager : LockableArcor2ObjectManager {
+    public class ActionObjectManager : LockableArcor2ObjectManager<ActionObject> {
         /// <summary>
         /// The parent scene.
         /// </summary>
         internal SceneManager Scene { get; }
 
         /// <summary>
-        /// Information about the object type.
-        /// </summary>
-        public SceneObject Data { get; private set; }
-
-        /// <summary>
-        /// The list of joints and its values.
-        /// </summary>
-        /// <value>
-        /// <c>null</c> if not applicable (e.g. the object is not a robot).
-        /// </value>
-        public IList<Joint>? Joints { get; private set; }
-
-        /// <summary>
-        /// The list of end effectors and its poses.
-        /// </summary>
-        /// <value>
-        /// <c>null</c> if not applicable (e.g. the object is not a robot).
-        /// </value>
-        public IList<EndEffector>? EefPose { get; private set; }
-
-        /// <summary>
-        /// The list of joints and its values.
-        /// </summary>
-        /// <value>
-        /// <c>null</c> if not applicable (e.g. the object is not a robot or is single-armed).
-        /// </value>
-        public IList<string>? Arms { get; private set; }
-
-        /// <summary>
         /// The type of action object.
         /// </summary>
         // TODO: Cache this
-        public ObjectTypeManager ObjectType => Session.ObjectTypes.First(o => o.Meta.Type == Data.Type);
+        public ObjectTypeManager ObjectType => Session.ObjectTypes.First(o => o.Data.Meta.Type == Data.Meta.Type);
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionObjectManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="scene">The parent scene.</param>
-        /// <param name="data">The action object data.</param>
-        internal ActionObjectManager(Arcor2Session session, SceneManager scene, SceneObject data) : base(session, data.Id) {
+        /// <param name="meta">The action object data.</param>
+        internal ActionObjectManager(Arcor2Session session, SceneManager scene, SceneObject meta) : base(session, new ActionObject(meta), meta.Id) {
             Scene = scene;
-            Data = data;
         }
 
         /// <summary>
@@ -287,18 +258,25 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// due to locked object type).
         /// </remarks>
         public async Task ReloadRobotArmsAndEefPose() {
-            if (ObjectType.RobotMeta?.MultiArm ?? false) {
+            bool updated = false;
+            if (ObjectType.Data.RobotMeta?.MultiArm ?? false) {
                 var armsResponse = await Session.client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
 
                 if(armsResponse.Result) {
-                    Arms = armsResponse.Data;
+                    Data.Arms = armsResponse.Data;
+                    updated = true;
                 }
             }
 
             var eefResponse = await Session.client.GetRobotEndEffectorsAsync(new GetEndEffectorsRequestArgs(Id));
 
             if (eefResponse.Result) {
-                EefPose = eefResponse.Data.Select(id => new EndEffector(id)).ToList();
+                Data.EefPose = eefResponse.Data.Select(id => new EndEffector(id)).ToList();
+                updated = true;
+            }
+
+            if (updated) {
+                OnUpdated();
             }
         }
 
@@ -313,7 +291,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public async Task ReloadRobotJoints() {
             var jointsResponse = await Session.client.GetRobotJointsAsync(new GetRobotJointsRequestArgs(Id));
             if(jointsResponse.Result) {
-                Joints = jointsResponse.Data.Select(j => j.ToCustomJointObject()).ToList();
+                Data.Joints = jointsResponse.Data.Select(j => j.ToCustomJointObject()).ToList();
+                OnUpdated();
             }
         }
 
@@ -349,7 +328,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new InvalidOperationException($"Can't update an ActionObjectManager ({Id}) using a action object data object ({actionObject.Id}) with different ID.");
             }
 
-            Data = actionObject;
+            Data.Meta = actionObject;
+            OnUpdated();
         }
 
         protected override void RegisterHandlers() {
@@ -367,25 +347,29 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnSceneActionObjectUpdated(object sender, SceneActionObjectEventArgs e) {
             if(Id == e.SceneObject.Id) {
-                Data = e.SceneObject;
+                Data.Meta = e.SceneObject;
+                OnUpdated();
             }
         }
 
         private void OnSceneActionObjectRemoved(object sender, SceneActionObjectEventArgs e) {
             if(Id == e.SceneObject.Id) {
+                RemoveData();
                 Scene.ActionObjects?.Remove(this);
                 Dispose();
             }
         }
         private void OnRobotEndEffectorUpdated(object sender, RobotEndEffectorUpdatedEventArgs e) {
             if (e.Data.RobotId == Id) {
-                EefPose = e.Data.EndEffectors.Select(e => e.ToEndEffector()).ToList();
+                Data.EefPose = e.Data.EndEffectors.Select(e => e.ToEndEffector()).ToList();
+                OnUpdated();
             }
         }
 
         private void OnRobotJointsUpdated(object sender, RobotJointsUpdatedEventArgs e) {
             if (Id == e.Data.RobotId) {
-                Joints = e.Data.Joints.Select(j => j.ToCustomJointObject()).ToList();
+                Data.Joints = e.Data.Joints.Select(j => j.ToCustomJointObject()).ToList();
+                OnUpdated();
             }
         }
 

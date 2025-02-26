@@ -8,16 +8,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of an orientation.
     /// </summary>
-    public class OrientationManager : LockableArcor2ObjectManager {
+    public class OrientationManager : LockableArcor2ObjectManager<NamedOrientation> {
         /// <summary>
         /// The parent action point.
         /// </summary>
         internal ActionPointManager ActionPoint { get; }
 
-        /// <summary>
-        /// The data of the orientation.
-        /// </summary>
-        public NamedOrientation Data { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="Action"/> class.
@@ -25,10 +21,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="actionPoint">The parent action point.</param>
         /// <param name="orientation">The orientation data.</param>
-        public OrientationManager(Arcor2Session session, ActionPointManager actionPoint, NamedOrientation orientation) : base(
-            session, orientation.Id) {
+        internal OrientationManager(Arcor2Session session, ActionPointManager actionPoint, NamedOrientation orientation) : base(
+            session, orientation, orientation.Id) {
             ActionPoint = actionPoint;
-            Data = orientation;
         }
 
         /// <summary>
@@ -116,12 +111,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="orientation">Newer version of the orientation.</param>
         /// <exception cref="InvalidOperationException"></exception>>
         internal void UpdateAccordingToNewObject(NamedOrientation orientation) {
-            if (Id != orientation.Id) {
+            if(Id != orientation.Id) {
                 throw new InvalidOperationException(
                     $"Can't update an OrientationManager ({Id}) using an orientation data object ({orientation.Id}) with different ID.");
             }
 
-            Data = orientation;
+            UpdateData(orientation);
         }
 
         protected override void RegisterHandlers() {
@@ -141,6 +136,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnOrientationRemoved(object sender, OrientationEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
+                    RemoveData();
                     ActionPoint.Orientations.Remove(this);
                     Dispose();
                 }
@@ -148,9 +144,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         private void OnOrientationBaseUpdated(object sender, OrientationEventArgs e) {
-            if (ActionPoint.Project.IsOpen) {
-                if (e.Data.Id == Id) {
-                    Data = e.Data;
+            if(ActionPoint.Project.IsOpen) {
+                if(e.Data.Id == Id) {
+                    UpdateData(e.Data);
                 }
             }
         }
@@ -158,7 +154,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnOrientationUpdated(object sender, OrientationEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
-                    Data = e.Data;
+                    UpdateData(e.Data);
                 }
             }
         }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
@@ -10,21 +9,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of an object type.
     /// </summary>
-    public class ObjectTypeManager : LockableArcor2ObjectManager {
-        /// <summary>
-        /// Information about the object type.
-        /// </summary>
-        public ObjectTypeMeta Meta { get; private set; }
-
-        /// <summary>
-        /// Information about robot capabilities (if the object type is a robot type).
-        /// </summary>
-        public RobotMeta? RobotMeta { get; private set; }
-
-        /// <summary>
-        /// The available actions.
-        /// </summary>
-        public IList<ObjectAction> Actions { get; private set; } = new List<ObjectAction>();
+    public class ObjectTypeManager : LockableArcor2ObjectManager<ObjectType> {
 
         /// <summary>
         /// Initializes a new instance of <see cref="ObjectTypeManager"/> class.
@@ -32,10 +17,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="meta">Object type meta object.</param>
         /// <param name="robotMeta">If the object type is a robot, the robot metadata.</param>
-        internal ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta, RobotMeta? robotMeta = null) : base(session, meta.Type) {
-            Meta = meta;
-            RobotMeta = robotMeta;
-        }
+        internal ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta, RobotMeta? robotMeta = null) : base(session, new ObjectType(meta, robotMeta), meta.Type) { }
 
         /// <summary>
         /// Determines whenever the object type is a type or subtype of another object type.
@@ -43,16 +25,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="objectType">An object type.</param>
         /// <returns><c>true</c> if this object type is a subtype of the second object type, <c>false</c> otherwise.</returns>
         public bool IsTypeOf(ObjectTypeManager objectType) {
-            if (Meta.Type == objectType.Meta.Type) {
+            if (Data.Meta.Type == objectType.Data.Meta.Type) {
                 return true;
             }
-            if (!string.IsNullOrEmpty(Meta.Base)) {
-                var parentType = Session.ObjectTypes.FirstOrDefault(o => o.Meta.Type == Meta.Base);
+            if (!string.IsNullOrEmpty(Data.Meta.Base)) {
+                var parentType = Session.ObjectTypes.FirstOrDefault(o => o.Data.Meta.Type == Data.Meta.Base);
                 if (parentType != null) {
                     return parentType.IsTypeOf(objectType);
                 }
                 else {
-                    Session.logger?.LogWarning($"A object type '{objectType.Meta.Type}' references non-existing parent '{Meta.Base}'.");
+                    Session.logger?.LogWarning($"A object type '{objectType.Data.Meta.Type}' references non-existing parent '{Data.Meta.Base}'.");
                     return false;
                 }
             }
@@ -62,12 +44,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Determines if object is a Robot subtype.
         /// </summary>
-        public bool IsRobot() => IsTypeOf(Session.ObjectTypes.First(o => o.Meta.Type == "Robot"));
+        public bool IsRobot() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "Robot"));
 
         /// <summary>
         /// Determines if object is a CollisionObject subtype.
         /// </summary>
-        public bool IsCollisionObject() => IsTypeOf(Session.ObjectTypes.First(o => o.Meta.Type == "CollisionObject"));
+        public bool IsCollisionObject() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "CollisionObject"));
 
         /// <summary>
         /// Deletes this object type.
@@ -108,7 +90,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public async Task ReloadActionsAsync() {
             var actions = await Session.client.GetActionsAsync(new TypeArgs(Id));
             if(actions.Result) {
-                Actions = actions.Data;
+                Data.Actions = actions.Data;
+                OnUpdated();
             }
             else {
                 Session.logger?.LogWarning(
@@ -120,15 +103,17 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Updates the object type according to the <paramref name="meta"/> and optional <paramref name="robotMeta"/> instances.
         /// </summary>
-        /// <param name="project">Newer version of the project.</param>
+        /// <param name="meta">Newer version of the object type.</param>
+        /// <param name="robotMeta">Optional newer version of the robot meta.</param>
         /// <exception cref="InvalidOperationException"></exception>>
         internal void UpdateAccordingToNewObject(ObjectTypeMeta meta, RobotMeta? robotMeta = null) {
             if(Id != meta.Type) {
                 throw new InvalidOperationException($"Can't update a ObjectTypeManager ({Id}) using a object type data object ({meta.Type}) with different type.");
             }
 
-            Meta = meta;
-            RobotMeta = robotMeta;
+            Data.Meta = meta;
+            Data.RobotMeta = robotMeta ?? Data.RobotMeta;
+            OnUpdated();
         }
 
         protected override void RegisterHandlers() {
@@ -146,6 +131,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnObjectTypeRemoved(object sender, ObjectTypesEventArgs args) {
             foreach (var objectTypeMeta in args.ObjectTypes) {
                 if (Id == objectTypeMeta.Type) {
+                    RemoveData();
                     Session.ObjectTypes.Remove(this);
                     Dispose();
                 }
@@ -155,7 +141,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnObjectTypeUpdated(object sender, ObjectTypesEventArgs args) {
             foreach (var objectTypeMeta in args.ObjectTypes) {
                 if (Id == objectTypeMeta.Type) {
-                    Meta = objectTypeMeta;
+                    OnUpdated();
+                    Data.Meta = objectTypeMeta;
                 }
             }
         }

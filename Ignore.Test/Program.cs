@@ -29,7 +29,7 @@ internal class Program {
         try {
             await InitSession();
         }
-        catch(ArgumentNullException ex) {
+        catch(ArgumentNullException) {
             await session.CloseAsync();
             return;
         }
@@ -131,21 +131,21 @@ internal class Program {
                 break;
             case "!ot" or "!object_types":
                 foreach (var type in session.ObjectTypes) {
-                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(type, objectName: type.Meta.Type));
+                    Console.WriteLine(ReflectionHelper.FormatObjectProperties(type, objectName: type.Data.Meta.Type));
                 }
 
                 break;
             case "!s" or "!scenes":
                 foreach (var sceneData in session.Scenes) {
                     Console.WriteLine(
-                        ReflectionHelper.FormatObjectProperties(sceneData, objectName: sceneData.Meta.Name));
+                        ReflectionHelper.FormatObjectProperties(sceneData, objectName: sceneData.Data.Name));
                 }
 
                 break;
             case "!p" or "!projects":
                 foreach (var projectData in session.Projects) {
                     Console.WriteLine(
-                        ReflectionHelper.FormatObjectProperties(projectData, objectName: projectData.Meta.Name));
+                        ReflectionHelper.FormatObjectProperties(projectData, objectName: projectData.Data.Name));
                 }
 
                 break;
@@ -155,24 +155,24 @@ internal class Program {
                     JsonConvert.DeserializeObject<ObjectTypeMeta>(string.Join(' ', args))!);
                 break;
             case "!rot" or "!remove_object_type":
-                await session.ObjectTypes.FirstOrDefault(s => s.Meta.Type == args[0])!.DeleteAsync();
+                await session.ObjectTypes.FirstOrDefault(s => s.Id == args[0])!.DeleteAsync();
                 break;
             case "!update_object_model_box":
-                await session.ObjectTypes.FirstOrDefault(s => s.Meta.Type == args[0])!.UpdateObjectModel(
+                await session.ObjectTypes.FirstOrDefault(s => s.Id == args[0])!.UpdateObjectModel(
                     new BoxCollisionModel(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
                         Convert.ToDecimal(args[3])));
                 break;
             // Scene RPC commands
             case "!action_objects":
                 var actionObjectsList = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
 
                 foreach (var actionObject in actionObjectsList!) {
                     Console.WriteLine(
-                        ReflectionHelper.FormatObjectProperties(actionObject, objectName: actionObject.Data.Type));
+                        ReflectionHelper.FormatObjectProperties(actionObject, objectName: actionObject.Data.Meta.Type));
                 }
 
                 break;
@@ -180,43 +180,43 @@ internal class Program {
                 await session.ReloadScenesAsync();
                 break;
             case "!usd" or "!update_scene_desc":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.UpdateDescriptionAsync(args[1]);
+                await session.Scenes.FirstOrDefault(s => s.Id == args[0])!.UpdateDescriptionAsync(args[1]);
                 break;
             case "!rename_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.RenameAsync(args[1]);
+                await session.Scenes.FirstOrDefault(s => s.Id == args[0])!.RenameAsync(args[1]);
                 break;
             case "!duplicate_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.DuplicateAsync(args[1]);
+                await session.Scenes.FirstOrDefault(s => s.Id == args[0])!.DuplicateAsync(args[1]);
                 break;
             case "!new_scene":
                 await session.CreateSceneAsync(args[0], args.Length > 1 ? args[1] : string.Empty);
                 break;
             case "!remove_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.RemoveAsync();
+                await session.Scenes.FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
                 break;
             case "!os" or "!open_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.OpenAsync();
+                await session.Scenes.FirstOrDefault(s => s.Id == args[0])!.OpenAsync();
                 break;
             case "!ls" or "!load_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == args[0])!.LoadAsync();
+                await session.Scenes.FirstOrDefault(s => s.Id == args[0])!.LoadAsync();
                 break;
             case "!cs" or "!close_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.CloseAsync(
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.CloseAsync(
                     args.Length > 0 && args[0] == "force");
                 break;
             case "!ss" or "!save_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.SaveAsync();
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.SaveAsync();
                 break;
             case "!start_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StartAsync();
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.StartAsync();
                 break;
             case "!stop_scene":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StopAsync();
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.StopAsync();
                 break;
             // Action Object RPCs
             case "!aac" or "!add_action_object":
                 if (args.Length > 9) {
-                    await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionObjectAsync(
+                    await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.AddActionObjectAsync(
                         args[0],
                         args[1],
                         new Pose(
@@ -225,7 +225,7 @@ internal class Program {
                         JsonConvert.DeserializeObject<List<Parameter>>(args[9])!);
                 }
                 else {
-                    await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionObjectAsync(
+                    await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.AddActionObjectAsync(
                         args[0],
                         args[1],
                         new Pose(
@@ -234,11 +234,11 @@ internal class Program {
                 }
                 break;
             case "!remove_action_object":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.RemoveAsync(args.Length > 1 && args[1] == "force");
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionObjects!
+                    .FirstOrDefault(o => o.Id == args[0])!.RemoveAsync(args.Length > 1 && args[1] == "force");
                 break;
             case "!add_virtual_box":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                     .AddVirtualCollisionBoxAsync(
                         args[0],
                         new Pose(
@@ -249,7 +249,7 @@ internal class Program {
                         new BoxCollisionModel(Convert.ToDecimal(args[8]), Convert.ToDecimal(args[9]), Convert.ToDecimal(args[10])));
                 break;
             case "!add_virtual_cylinder":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                     .AddVirtualCollisionCylinderAsync(
                         args[0],
                         new Pose(
@@ -260,7 +260,7 @@ internal class Program {
                         new CylinderCollisionModel(Convert.ToDecimal(args[8]), Convert.ToDecimal(args[9])));
                 break;
             case "!add_virtual_sphere":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                     .AddVirtualCollisionSphereAsync(
                         args[0],
                         new Pose(
@@ -274,8 +274,8 @@ internal class Program {
                 //...
                 break;
             case "!update_action_object_pose" or "!uaop":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.UpdatePoseAsync(new Pose(
+                await session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionObjects!
+                    .FirstOrDefault(o => o.Id == args[0])!.UpdatePoseAsync(new Pose(
                         new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
                             Convert.ToDecimal(args[3])),
                         new Orientation(Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5]),
@@ -283,30 +283,30 @@ internal class Program {
                 break;
             case "!rename_action_object":
                 var actionObjects = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects!
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.RenameAsync(args[1]);
+                    .FirstOrDefault(o => o.Id == args[0])!.RenameAsync(args[1]);
                 break;
             case "!update_action_object_parameters":
                 var actionObjects2 = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects2
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<Parameter>>(string.Join(' ', args.Skip(1)))!);
+                    .FirstOrDefault(o => o.Id == args[0])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<Parameter>>(string.Join(' ', args.Skip(1)))!);
                 break;
             case "!move_to_pose":
                 var actionObjects3 = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects3
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.MoveToPoseAsync(
+                    .FirstOrDefault(o => o.Id == args[0])!.MoveToPoseAsync(
                         new Pose(
                             new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
                                 Convert.ToDecimal(args[3])),
@@ -320,12 +320,12 @@ internal class Program {
                 break;
             case "!move_to_joints":
                 var actionObjects4 = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects4
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.MoveToActionPointJointsAsync(
+                    .FirstOrDefault(o => o.Id == args[0])!.MoveToActionPointJointsAsync(
                         args[1],
                         safe: Convert.ToBoolean(args[2]),
                         linear: Convert.ToBoolean(args[3]),
@@ -335,12 +335,12 @@ internal class Program {
                 break;
             case "!move_to_orientation":
                 var actionObjects5 = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects5
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.MoveToActionPointOrientationAsync(
+                    .FirstOrDefault(o => o.Id == args[0])!.MoveToActionPointOrientationAsync(
                         args[1],
                         safe: Convert.ToBoolean(args[2]),
                         linear: Convert.ToBoolean(args[3]),
@@ -350,12 +350,12 @@ internal class Program {
                 break;
             case "!step_position":
                 var actionObjects6 = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects6
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.StepPositionAsync(
+                    .FirstOrDefault(o => o.Id == args[0])!.StepPositionAsync(
                         axis: Enum.Parse<StepRobotEefRequestArgs.AxisEnum>(args[1]),
                         step: Convert.ToDecimal(args[2]),
                         safe: Convert.ToBoolean(args[3]),
@@ -366,12 +366,12 @@ internal class Program {
                 break;
             case "!step_orientation":
                 var actionObjects7 = session.NavigationState == NavigationState.Scene
-                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .ActionObjects!
-                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                    : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                         .Scene.ActionObjects;
                 await actionObjects7
-                    .FirstOrDefault(o => o.Data.Id == args[0])!.StepOrientationAsync(
+                    .FirstOrDefault(o => o.Id == args[0])!.StepOrientationAsync(
                         axis: Enum.Parse<StepRobotEefRequestArgs.AxisEnum>(args[1]),
                         step: Convert.ToDecimal(args[2]),
                         safe: Convert.ToBoolean(args[3]),
@@ -388,88 +388,88 @@ internal class Program {
                 await session.CreateProjectAsync(args[0], args[1], args.Length > 3 ? args[3] : string.Empty, Convert.ToBoolean(args[2]));
                 break;
             case "!upd" or "!update_project_desc":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.UpdateDescriptionAsync(args[1]);
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.UpdateDescriptionAsync(args[1]);
                 break;
             case "!rename_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.RenameAsync(args[1]);
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.RenameAsync(args[1]);
                 break;
             case "!duplicate_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.DuplicateAsync(args[1]);
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.DuplicateAsync(args[1]);
                 break;
             case "!remove_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.RemoveAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
                 break;
             case "!op" or "!open_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.OpenAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.OpenAsync();
                 break;
             case "!lp" or "!load_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.LoadAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.LoadAsync();
                 break;
             case "!cp" or "!close_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.CloseAsync(args.Length > 0 && args[0] == "force");
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.CloseAsync(args.Length > 0 && args[0] == "force");
                 break;
             case "!sp" or "!save_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.SaveAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.SaveAsync();
                 break;
             case "!start_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StartAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Scene.StartAsync();
                 break;
             case "!stop_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.StopAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Scene.StopAsync();
                 break;
             case "!set_project_has_logic":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.SetHasLogicAsync(Convert.ToBoolean(args[1]));
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.SetHasLogicAsync(Convert.ToBoolean(args[1]));
                 break;
             case "!build_project":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == args[0])!.BuildIntoPackageAsync(args[1]);
+                await session.Projects.FirstOrDefault(s => s.Id == args[0])!.BuildIntoPackageAsync(args[1]);
                 break;
             // Project parameter
             case "!parameters":
-                var @params = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters;
+                var @params = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Parameters;
                 foreach(var param in @params!) {
                     Console.WriteLine(
-                        ReflectionHelper.FormatObjectProperties(param, objectName: param.Name));
+                        ReflectionHelper.FormatObjectProperties(param, objectName: param.Data.Name));
                 }
 
                 break;
             case "!add_project_parameter":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddProjectParameterAsync(args[0], args[1],
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.AddProjectParameterAsync(args[0], args[1],
                     args[2]);
                 break;
             case "!update_project_parameter_value":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
                     s.Id == args[0])!.UpdateValueAsync(args[1]);
                 break;
             case "!update_project_parameter_name":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
                     s.Id == args[0])!.UpdateNameAsync(args[1]);
                 break;
             case "!remove_project_parameter":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Parameters!.FirstOrDefault(s =>
                     s.Id == args[0])!.RemoveAsync();
                 break;
             // Project overrides
             case "!overrides":
-                var overrides = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides;
+                var overrides = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Overrides;
                 foreach(var @override in overrides!) {
                     Console.WriteLine(
                         ReflectionHelper.FormatObjectProperties(@override));
                 }
                 break;
             case "!add_project_override":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddOverrideAsync(args[0], new Parameter(args[1], args[2], args[3]));
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.AddOverrideAsync(args[0], new Parameter(args[1], args[2], args[3]));
                 break;
             case "!update_project_override":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
-                    s.ActionObjectId == args[0] && s.Parameter.Name == args[1])!.UpdateAsync(new Parameter(args[1], args[2], args[3]));
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
+                    s.Data.ActionObjectId == args[0] && s.Data.Parameter.Name == args[1])!.UpdateAsync(new Parameter(args[1], args[2], args[3]));
                 break;
             case "!remove_project_override":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
-                    s.ActionObjectId == args[0] && s.Parameter.Name == args[1])!.RemoveAsync();
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Overrides!.FirstOrDefault(s =>
+                    s.Data.ActionObjectId == args[0] && s.Data.Parameter.Name == args[1])!.RemoveAsync();
                 break;
             // Action points
             case "!ap" or "!action_points":
-                var actionPoints = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints;
+                var actionPoints = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints;
                 foreach(var actionPoint in actionPoints!) {
                     Console.WriteLine(
                         ReflectionHelper.FormatObjectProperties(actionPoint));
@@ -477,49 +477,49 @@ internal class Program {
                 break;
             case "!add_ap":
                 if (args.Length > 4) {
-                    await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionPointAsync(args[0], new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])), args[4]);
+                    await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.AddActionPointAsync(args[0], new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])), args[4]);
                 }
                 else {
-                    await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddActionPointAsync(args[0], new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
+                    await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.AddActionPointAsync(args[0], new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
                 }
                 break;
             case "!add_ap_using_robot":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!
                     .AddActionPointUsingRobotAsync(args[0], args[1], args.Length > 2 ? args[2] : "default", args.Length > 3 ? args[3] : null);
                 break;
             case "!duplicate_ap":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(s =>
                         s.Id == args[0])!.DuplicateAsync(new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
                 break;
             case "!rename_ap":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(s =>
                         s.Id == args[0])!.RenameAsync(args[1]);
                 break;
             case "!update_ap_parent":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(s =>
                         s.Id == args[0])!.UpdateParentAsync(args[1]);
                 break;
             case "!update_ap_position":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(s =>
                         s.Id == args[0])!.UpdatePositionAsync(new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3])));
                 break;
             case "!remove_ap":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(s =>
                         s.Id == args[0])!.RemoveAsync();
                 break;
             case "!update_ap_using_robot":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(s =>
                         s.Id == args[0])!.UpdateUsingRobotAsync(args[1], args.Length > 2 ? args[2] : "default", args.Length > 3 ? args[3] : null);
                 break;
             // Actions 
             case "!actions":
-                var actions = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
+                var actions = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
                     .Actions;
                 foreach(var action in actions!) {
                     Console.WriteLine(
@@ -527,29 +527,29 @@ internal class Program {
                 }
                 break;
             case "!add_action":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.AddActionAsync(args[1], args[2],
                         [new Flow(Flow.TypeEnum.Default, [])], []);
                 break;
             case "!update_action_parameters":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<ActionParameter>>(string.Join(' ', args.Skip(2)))!);
                 break;
             case "!update_action_flows":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.UpdateFlowsAsync(JsonConvert.DeserializeObject<List<Flow>>(string.Join(' ', args.Skip(2)))!);
                 break;
             case "!rename_action":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.RenameAsync(args[2]);
                 break;
             case "!remove_action":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Actions.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
                 break;
             // Orientation 
             case "!orientations":
-                var orientations = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
+                var orientations = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
                     .Orientations;
                 foreach(var orientation in orientations!) {
                     Console.WriteLine(
@@ -557,37 +557,37 @@ internal class Program {
                 }
                 break;
             case "!add_orientation":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.AddOrientationAsync(
                         new Orientation(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
                             Convert.ToDecimal(args[3]), Convert.ToDecimal(args[4])),
                         args[5]);
                 break;
             case "!add_orientation_using_robot":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.AddOrientationUsingRobotAsync(args[1], args.Length > 3 ? args[3] : "default", args.Length > 4 ? args[4] : null, args[2]); ;
                 break;
             case "!update_orientation":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!
                     .UpdateAsync(new Orientation(Convert.ToDecimal(args[2]), Convert.ToDecimal(args[3]),
                         Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5])));
                 break;
             case "!update_orientation_using_robot":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.UpdateUsingRobotAsync(args[2], args.Length > 3 ? args[3] : "default", args.Length > 4 ? args[4] : null);
                 break;
             case "!rename_orientation":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.RenameAsync(args[2]);
                 break;
             case "!remove_orientation":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Orientations.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
                 break;
             // Joints 
             case "!joints":
-                var joints = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
+                var joints = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!.FirstOrDefault(a => a.Id == args[0])!
                     .Joints;
                 foreach(var joint in joints!) {
                     Console.WriteLine(
@@ -595,44 +595,44 @@ internal class Program {
                 }
                 break;
             case "!add_joints_using_robot":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.AddJointsUsingRobotAsync(args[1], args.Length > 3 ? args[3] : "default", args.Length > 4 ? args[4] : null, args[2]);
                 ;
                 break;
             case "!update_joints":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.UpdateAsync(
                         JsonConvert.DeserializeObject<List<Joint>>(string.Join("", args.Skip(2)))!);
                 break;
             case "!update_joints_using_robot":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.UpdateUsingRobotAsync();
                 break;
             case "!rename_joints":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.RenameAsync(args[2]);
                 break;
             case "!remove_joints":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionPoints!
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionPoints!
                     .FirstOrDefault(a => a.Id == args[0])!.Joints.FirstOrDefault(a => a.Id == args[1])!.RemoveAsync();
                 break;
             // Logic items
             case "!logic_items":
-                var logicItems = session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.LogicItems;
+                var logicItems = session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.LogicItems;
                 foreach(var logicItem in logicItems!) {
                     Console.WriteLine(
                         ReflectionHelper.FormatObjectProperties(logicItem));
                 }
                 break;
             case "!add_logic_item":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.AddLogicItem(args[0], args[1], args.Length > 2 ? new ProjectLogicIf(args[2], args[3]) : null);
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.AddLogicItem(args[0], args[1], args.Length > 2 ? new ProjectLogicIf(args[2], args[3]) : null);
                 break;
             case "!update_logic_item":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
                     s.Id == args[0])!.UpdateAsync(args[1], args[2], args.Length > 3 ? new ProjectLogicIf(args[3], args[4]) : null);
                 break;
             case "!remove_logic_item":
-                await session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
+                await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
                     s.Id == args[0])!.RemoveAsync();
                 break;
         }

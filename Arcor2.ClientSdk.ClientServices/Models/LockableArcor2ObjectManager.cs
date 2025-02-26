@@ -8,9 +8,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// Base class for manager classes with identity. Provides locking features.
     /// </summary>
     /// <remarks>
-    /// If the object does not have distinct identity and does not need locking, use <see cref="Arcor2ObjectManager"/>.
+    /// If the object does not have distinct identity and does not need locking, use <see cref="Arcor2ObjectManager{TData}"/>.
     /// </remarks>
-    public abstract class LockableArcor2ObjectManager : Arcor2ObjectManager {
+    /// <typeparam name="TData">The data type managed by this instance. Notifications will be raised on its change.</typeparam>
+    public abstract class LockableArcor2ObjectManager<TData> : Arcor2ObjectManager<TData> {
         /// <summary>
         /// Unique identifier for the object.
         /// </summary>
@@ -31,11 +32,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public string? LockOwner { get; private set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LockableArcor2ObjectManager"/> class.
+        /// Initializes a new instance of the <see cref="LockableArcor2ObjectManager{TData}"/> class.
         /// </summary>
         /// <param name="session">The session used for communication with the server. Should generally inject only itself.</param>
+        /// <param name="data">The data object.</param>
+        /// <param name="id">Unique identifier for this object.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="session"/> is null.</exception>
-        protected LockableArcor2ObjectManager(Arcor2Session session, string id) : base(session) {
+        protected LockableArcor2ObjectManager(Arcor2Session session, TData data, string id) : base(session, data) {
             Id = Id = id ?? throw new ArgumentNullException(nameof(id));
         }
 

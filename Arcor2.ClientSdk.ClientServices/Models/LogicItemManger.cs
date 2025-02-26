@@ -7,16 +7,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of logic items.
     /// </summary>
-    public class LogicItemManager : LockableArcor2ObjectManager {
+    public class LogicItemManager : LockableArcor2ObjectManager<LogicItem> {
         /// <summary>
         /// The parent project.
         /// </summary>
         internal ProjectManager Project { get; }
 
-        /// <summary>
-        /// The data of the logic item.
-        /// </summary>
-        public LogicItem Data { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="LogicItemManager"/> class.
@@ -24,10 +20,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="project">The parent project.</param>
         /// <param name="logicItem">The logic item data.</param>
-        public LogicItemManager(Arcor2Session session, ProjectManager project, LogicItem logicItem) : base(
-            session, logicItem.Id) {
+        internal LogicItemManager(Arcor2Session session, ProjectManager project, LogicItem logicItem) : base(
+            session, logicItem, logicItem.Id) {
             Project = project;
-            Data = logicItem;
         }
 
         /// <summary>
@@ -83,7 +78,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     $"Can't update an LogicItemManager ({Id}) using an logic item data object ({logicItem.Id}) with different ID.");
             }
 
-            Data = logicItem;
+            UpdateData(logicItem);
         }
 
         protected override void RegisterHandlers() {
@@ -101,6 +96,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnLogicItemRemoved(object sender, LogicItemChangedEventArgs e) {
             if(Project.IsOpen) {
                 if(e.Data.Id == Id) {
+                    RemoveData();
                     Project.LogicItems!.Remove(this);
                     Dispose();
                 }
@@ -110,7 +106,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnLogicItemUpdated(object sender, LogicItemChangedEventArgs e) {
             if(Project.IsOpen) {
                 if(e.Data.Id == Id) {
-                    Data = e.Data;
+                    UpdateData(e.Data);
                 }
             }
         }

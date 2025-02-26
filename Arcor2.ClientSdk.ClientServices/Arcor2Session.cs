@@ -221,7 +221,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// </summary>
         /// <param name="username">The username.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<List<ActionObjectManager>> RegisterAndSubscribeAsync(string username) {
+        public async Task RegisterAndSubscribeAsync(string username) {
             var registrationResult = await client.RegisterUserAsync(new RegisterUserRequestArgs(username));
             if(!registrationResult.Result) {
                 throw new Arcor2Exception("User registration failed.", registrationResult.Messages);
@@ -468,7 +468,7 @@ namespace Arcor2.ClientSdk.ClientServices {
 
         private void OnOpenScene(object sender, OpenSceneEventArgs e) {
             // Ad-Hoc create a manager
-            var scene = Scenes.FirstOrDefault(s => s.Meta.Id == e.Data.Scene.Id);
+            var scene = Scenes.FirstOrDefault(s => s.Data.Id == e.Data.Scene.Id);
             if(scene == null) {
                 Scenes.Add(new SceneManager(this, e.Data.Scene));
             }

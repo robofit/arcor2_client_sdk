@@ -9,16 +9,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of joints.
     /// </summary>
-    public class JointsManager : LockableArcor2ObjectManager {
+    public class JointsManager : LockableArcor2ObjectManager<ProjectRobotJoints> {
         /// <summary>
         /// The parent action point.
         /// </summary>
         internal ActionPointManager ActionPoint { get; }
-
-        /// <summary>
-        /// The data of the joints.
-        /// </summary>
-        public ProjectRobotJoints Data { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="Action"/> class.
@@ -26,10 +21,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="actionPoint">The parent action point.</param>
         /// <param name="joints">The joints data.</param>
-        public JointsManager(Arcor2Session session, ActionPointManager actionPoint, ProjectRobotJoints joints) : base(
-            session, joints.Id) {
+        internal JointsManager(Arcor2Session session, ActionPointManager actionPoint, ProjectRobotJoints joints) : base(
+            session, joints, joints.Id) {
             ActionPoint = actionPoint;
-            Data = joints;
         }
 
         /// <summary>
@@ -108,7 +102,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     $"Can't update an JointsManager ({Id}) using an joints data object ({joints.Id}) with different ID.");
             }
 
-            Data = joints;
+            UpdateAccordingToNewObject(joints);
         }
 
         protected override void RegisterHandlers() {
@@ -128,6 +122,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnJointsRemoved(object sender, JointsEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
+                    RemoveData();
                     ActionPoint.Joints.Remove(this);
                     Dispose();
                 }
@@ -137,7 +132,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnJointsBaseUpdated(object sender, JointsEventArgs e) {
             if (ActionPoint.Project.IsOpen) {
                 if (e.Data.Id == Id) {
-                    Data = e.Data;
+                    UpdateData(e.Data);
                 }
             }
         }
@@ -145,7 +140,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnJointsUpdated(object sender, JointsEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
-                    Data = e.Data;
+                    UpdateData(e.Data);
                 }
             }
         }

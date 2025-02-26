@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
@@ -13,20 +14,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models
     /// <summary>
     /// Manages lifetime of a scene.
     /// </summary>
-    public class SceneManager : LockableArcor2ObjectManager {
-
-        /// <summary>
-        /// The metadata of the scene.
-        /// </summary>
-        public BareScene Meta { get; private set; }
-
+    public class SceneManager : LockableArcor2ObjectManager<BareScene> {
         /// <summary>
         /// Collection of existing action objects.
         /// </summary>
         /// <value>
         /// A list of <see cref="ActionObjectManager"/>, <c>null</c> if not loaded.
         /// </value>
-        public IList<ActionObjectManager>? ActionObjects { get; private set; }
+        public ObservableCollection<ActionObjectManager>? ActionObjects { get; private set; }
 
         /// <summary>
         /// Gets if the scene is open.
@@ -42,32 +37,34 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Raised when scene is saved by the server.
         /// </summary>
-        public EventHandler? OnSaved;
+        public EventHandler? Saved;
+
+        /// <summary>
+        /// Raised when scene state changes.
+        /// </summary>
+        public EventHandler<SceneOnlineStateEventArgs> OnlineStateChanged;
 
         /// <summary>
         /// Initializes a new instance of <see cref="SceneManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="meta">Scene meta object.</param>
-        internal SceneManager(Arcor2Session session, BareScene meta) : base(session, meta.Id) {
-            Meta = meta;
-        }
+        internal SceneManager(Arcor2Session session, BareScene meta) : base(session, meta, meta.Id) { }
 
         /// <summary>
         /// Initializes a new instance of <see cref="SceneManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="scene">Scene object.</param>
-        internal SceneManager(Arcor2Session session, Scene scene) : base(session, scene.Id) {
-            Meta = scene.MapToBareScene();
-            ActionObjects = scene.Objects.Select(o => new ActionObjectManager(session, this, o)).ToList();
+        internal SceneManager(Arcor2Session session, Scene scene) : base(session, scene.MapToBareScene(), scene.Id) {
+            ActionObjects = new ObservableCollection<ActionObjectManager>(scene.Objects.Select(o => new ActionObjectManager(session, this, o)));
         }
 
         /// <summary>
         /// Returns a collection of projects based of this scene.
         /// </summary>
         public IList<ProjectManager> GetProjects() {
-            return Session.Projects.Where(p => p.Meta.SceneId == Id).ToList();
+            return Session.Projects.Where(p => p.Data.SceneId == Id).ToList();
         }
 
         /// <summary>
@@ -78,7 +75,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <param name="pose">The pose.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(ObjectTypeManager objectType, string name, Pose pose) {
-            var parameters = objectType.Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
+            var parameters = objectType.Data.Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
             var response = await Session.client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, objectType.Id, pose, parameters));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new action object {objectType.Id} to scene {Id} failed.", response.Messages);
@@ -93,7 +90,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <param name="pose">The pose.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(string type, string name, Pose pose) {
-            var parameters = Session.ObjectTypes.First(o => o.Id == type).Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
+            var parameters = Session.ObjectTypes.First(o => o.Id == type).Data.Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
             var response = await Session.client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose, parameters));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new action object {type} to scene {Id} failed.", response.Messages);
@@ -332,12 +329,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             if (Id != scene.Id) {
                 throw new InvalidOperationException($"Can't update a SceneManager ({Id}) using a scene data object ({scene.Id}) with different ID.");
             }
-            Meta = scene.MapToBareScene();
 
-            ActionObjects = ActionObjects.UpdateListOfLockableArcor2Objects(scene.Objects,
+            UpdateData(scene.MapToBareScene());
+
+            ActionObjects = new ObservableCollection<ActionObjectManager>(ActionObjects.UpdateListOfLockableArcor2Objects<ActionObjectManager, SceneObject, ActionObject>(scene.Objects,
                 o => o.Id,
                 (manager, o) => manager.UpdateAccordingToNewObject(o),
-                o => new ActionObjectManager(Session, this, o));
+                o => new ActionObjectManager(Session, this, o)));
         }
 
         /// <summary>
@@ -350,7 +348,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
                 throw new InvalidOperationException($"Can't update a SceneManager ({Id}) using a scene data object ({scene.Id}) with different ID.");
             }
 
-            Meta = scene;
+            UpdateData(scene);
         }
 
         /// <summary>
@@ -363,14 +361,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             if (ActionObjects != null) {
                 foreach(var actionObject in ActionObjects) {
                     var objectType = actionObject.ObjectType;
-                    if (objectType.RobotMeta != null) {
+                    if (objectType.Data.RobotMeta != null) {
                         try {
-                            if (objectType.RobotMeta.Features.MoveToPose) {
+                            if (objectType.Data.RobotMeta.Features.MoveToPose) {
                                 await actionObject.ReloadRobotArmsAndEefPose();
                                 await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
                             }
 
-                            if (objectType.RobotMeta.Features.MoveToJoints) {
+                            if (objectType.Data.RobotMeta.Features.MoveToJoints) {
                                 await actionObject.ReloadRobotJoints();
                                 await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
                             }
@@ -387,7 +385,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnSceneSaved += OnSaved;
+            Session.client.OnSceneSaved += Saved;
             Session.client.OnSceneRemoved += OnSceneRemoved;
             Session.client.OnSceneBaseUpdated += OnSceneBaseUpdated;
             Session.client.OnSceneState += OnSceneState;
@@ -396,7 +394,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnSceneSaved -= OnSaved;
+            Session.client.OnSceneSaved -= Saved;
             Session.client.OnSceneRemoved -= OnSceneRemoved;
             Session.client.OnSceneBaseUpdated -= OnSceneBaseUpdated;
             Session.client.OnSceneState -= OnSceneState;
@@ -414,12 +412,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models
 
         private void OnSceneBaseUpdated(object sender, BareSceneEventArgs e) {
             if(e.Scene.Id == Id) {
-                Meta = e.Scene;
+                UpdateData(e.Scene);
             }
         }
 
         private void OnSceneRemoved(object sender, BareSceneEventArgs e) {
             if(e.Scene.Id == Id) {
+                RemoveData();
                 Session.Scenes.Remove(this);
                 Dispose();
             }
@@ -428,6 +427,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         private async void OnSceneState(object sender, SceneStateEventArgs e) {
             if(IsOpen || GetProjects().Any(p => p.IsOpen)) {
                 State = e.Data.ToCustomSceneStateObject();
+                OnlineStateChanged?.Invoke(this, new SceneOnlineStateEventArgs(State));
                 if(State.State == OnlineState.Started && Session.ConnectionState == Arcor2SessionState.Initialized) {
                     await GetRobotInfoAndUpdatesAsync();
                 }

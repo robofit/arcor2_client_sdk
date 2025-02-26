@@ -11,47 +11,28 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of an action.
     /// </summary>
-    public class ActionManager : LockableArcor2ObjectManager {
+    public class ActionManager : LockableArcor2ObjectManager<Action> {
         /// <summary>
         /// The parent action point.
         /// </summary>
         internal ActionPointManager ActionPoint { get; }
 
         /// <summary>
-        /// The metadata of the action.
-        /// </summary>
-        public BareAction Meta { get; private set; }
-
-        /// <summary>
-        /// The parameters of the action.
-        /// </summary>
-        public IList<ActionParameter> Parameters { get; private set; }
-
-        /// <summary>
-        /// The logic flows from the action.
-        /// </summary>
-        public IList<Flow> Flows { get; private set; }
-
-        /// <summary>
         /// Gets the action definition from object type.
         /// </summary>
         public ObjectAction ActionType => ActionPoint.Project.Scene.ActionObjects!
-            .FirstOrDefault(a => a.Id == Meta.Type.Split('/').First())!.ObjectType.Actions
-            .FirstOrDefault(a => a.Name == Meta.Type.Split('/').Last())!;
+            .FirstOrDefault(a => a.Id == Data.Type.Split('/').First())!.ObjectType.Data.Actions
+            .FirstOrDefault(a => a.Name == Data.Type.Split('/').Last())!;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
         /// <param name="actionPoint">The parent action point.</param>
-        /// <param name="actionMeta">The action metadata.</param>
-        public ActionManager(Arcor2Session session, ActionPointManager actionPoint, BareAction actionMeta) : base(
-            session, actionMeta.Id) {
+        /// <param name="actionData">The action metadata.</param>
+        public ActionManager(Arcor2Session session, ActionPointManager actionPoint, BareAction actionData) : base(
+            session, actionData.MapToAction(), actionData.Id) {
             ActionPoint = actionPoint;
-            Meta = actionMeta;
-            // We shouldn't get bare version if the action already has some of these.
-            Parameters = new List<ActionParameter>();
-            Flows = new List<Flow>();
         }
 
 
@@ -62,11 +43,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="actionPoint">The parent action point.</param>
         /// <param name="action">The action data.</param>
         public ActionManager(Arcor2Session session, ActionPointManager actionPoint, Action action) : base(
-            session, action.Id) {
+            session, action, action.Id) {
             ActionPoint = actionPoint;
-            Meta = action.MapToBareAction();
-            Parameters = action.Parameters;
-            Flows = action.Flows;
         }
 
         /// <summary>
@@ -92,7 +70,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="flows">Updated list of flows.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateFlowsAsync(List<Flow> flows) {
-            await UpdateAsync(flows, (Parameters as List<ActionParameter>)!);
+            await UpdateAsync(flows, Data.Parameters!);
         }
 
         /// <summary>
@@ -101,7 +79,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="parameters">Updated list of parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateParametersAsync(List<ActionParameter> parameters) {
-            await UpdateAsync((Flows as List<Flow>)!, parameters);
+            await UpdateAsync(Data.Flows!, parameters);
         }
 
         /// <summary>
@@ -140,10 +118,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new InvalidOperationException(
                     $"Can't update an ActionManager ({Id}) using a action data object ({action.Id}) with different ID.");
             }
-
-            Meta = action.MapToBareAction();
-            Flows = action.Flows;
-            Parameters = action.Parameters;
+            UpdateData(action);
         }
 
         protected override void RegisterHandlers() {
@@ -163,6 +138,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnActionRemoved(object sender, BareActionEventArgs e) {
             if (ActionPoint.Project.IsOpen) {
                 if(e.Action.Id == Id) {
+                    RemoveData();
                     ActionPoint.Actions.Remove(this);
                     Dispose();
                 }
@@ -172,9 +148,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnActionBaseUpdated(object sender, ActionEventArgs e) {
             if (ActionPoint.Project.IsOpen) {
                 if (e.Action.Id == Id) {
-                    Meta = e.Action.MapToBareAction();
-                    Flows = e.Action.Flows ?? Flows;
-                    Parameters = e.Action.Parameters ?? Parameters;
+                    UpdateData(e.Action);
                 }
             }
         }
@@ -182,9 +156,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnActionUpdated(object sender, ActionEventArgs e) {
             if (ActionPoint.Project.IsOpen) {
                 if (e.Action.Id == Id) {
-                    Meta = e.Action.MapToBareAction();
-                    Flows = e.Action.Flows ?? Flows;
-                    Parameters = e.Action.Parameters ?? Parameters;
+                    UpdateData(e.Action);
                 }
             }
         }

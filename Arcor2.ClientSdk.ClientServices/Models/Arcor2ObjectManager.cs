@@ -7,7 +7,23 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// Base class for manager classes. Manager classes usually take care of a lifecycle of some object (such as Scene, ObjectType, etc...).
     /// The corresponding <see cref="Arcor2Session"/> instance should be always injected, providing access for communication with the server.
     /// </summary>
-    public abstract class Arcor2ObjectManager : IDisposable {
+    /// <typeparam name="TData">The data type managed by this instance. Notifications will be raised on its change.</typeparam>
+    public abstract class Arcor2ObjectManager<TData> : IDisposable {
+        /// <summary>
+        /// The data managed by this instance.
+        /// </summary>
+        public TData Data { get; protected set; }
+
+        /// <summary>
+        /// Event raised when the data managed by this instance is updated.
+        /// </summary>
+        public event EventHandler? Updated;
+
+        /// <summary>
+        /// Event raised when before the instance id deleted.
+        /// </summary>
+        public event EventHandler? Remove;
+
         /// <summary>
         /// The session used for communication with the server.
         /// </summary>
@@ -16,11 +32,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private bool disposed;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="LockableArcor2ObjectManager"/> class.
+        /// Initializes a new instance of the <see cref="LockableArcor2ObjectManager{TData}"/> class.
         /// </summary>
         /// <param name="session">The session used for communication with the server. Should generally inject only itself.</param>
+        /// <param name="data">The data object.</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="session"/> is null.</exception>
-        protected Arcor2ObjectManager(Arcor2Session session) {
+        protected Arcor2ObjectManager(Arcor2Session session, TData data) {
+            Data = data;
             Session = session ?? throw new ArgumentNullException(nameof(session));
             // This is fine, we are just registering handlers. The construction order will not change anything
             // ...unless someone does anything more than registering handlers in the override
@@ -83,6 +101,36 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="id">The ID of the resource.</param>
         protected internal async Task TryUnlockAsync(string id) {
             await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(id));
+        }
+
+        /// <summary>
+        /// Raises notifications before removal.
+        /// </summary>
+        protected virtual void RemoveData() {
+            OnRemove();
+        }
+
+        /// <summary>
+        /// Updates the data according to the new instance and raises notification.
+        /// </summary>
+        /// <param name="data">The new data.</param>
+        protected virtual void UpdateData(TData data) {
+            Data = data;
+            OnUpdated();
+        }
+
+        /// <summary>
+        /// Raises the DataUpdated event.
+        /// </summary>
+        protected virtual void OnUpdated() {
+            Updated?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Raises the DataUpdated event.
+        /// </summary>
+        protected virtual void OnRemove() {
+            Remove?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

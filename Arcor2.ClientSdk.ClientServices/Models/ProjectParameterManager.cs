@@ -4,26 +4,11 @@ using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
-    public class ProjectParameterManager : LockableArcor2ObjectManager {
+    public class ProjectParameterManager : LockableArcor2ObjectManager<ProjectParameter> {
         /// <summary>
         /// The parent project.
         /// </summary>
         internal ProjectManager Project { get; }
-
-        /// <summary>
-        /// The name of the parameter.
-        /// </summary>
-        public string Name { get; private set; }
-
-        /// <summary>
-        /// The type of the parameter.
-        /// </summary>
-        public string Type { get; private set; }
-
-        /// <summary>
-        /// The value of the parameter.
-        /// </summary>
-        public string Value { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ProjectParameterManager"/> class.
@@ -31,11 +16,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="session">The session.</param>
         /// <param name="project">The parent project.</param>
         /// <param name="parameter">The project parameter.</param>
-        internal ProjectParameterManager(Arcor2Session session, ProjectManager project, ProjectParameter parameter) : base(session, parameter.Id) {
+        internal ProjectParameterManager(Arcor2Session session, ProjectManager project, ProjectParameter parameter) : base(session, parameter, parameter.Id) {
             Project = project;
-            Name = parameter.Name;
-            Type = parameter.Type;
-            Value = parameter.Value;
         }
 
         /// <summary>
@@ -45,7 +27,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateValueAsync(string value) {
             await LockAsync();
-            var response = await Session.client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, Name, value));
+            var response = await Session.client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, Data.Name, value));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
             }
@@ -60,7 +42,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateNameAsync(string name) {
             await LockAsync();
-            var response = await Session.client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, name, Value));
+            var response = await Session.client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, name, Data.Value));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
             }
@@ -87,9 +69,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             if(Id != parameter.Id) {
                 throw new InvalidOperationException($"Can't update a ProjectParameter ({Id}) using a project parameter data object ({parameter.Id}) with different ID.");
             }
-            Name = parameter.Name;
-            Type = parameter.Type;
-            Value = parameter.Value;
+            UpdateData(parameter);
         }
 
 
@@ -107,6 +87,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnProjectParameterRemoved(object sender, ProjectParameterEventArgs e) {
             if (e.ProjectParameter.Id == Id) {
+                RemoveData();
                 Project.Parameters!.Remove(this);
                 Dispose();
             }
@@ -114,9 +95,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnProjectParameterUpdated(object sender, ProjectParameterEventArgs e) {
             if (e.ProjectParameter.Id == Id) {
-                Name = e.ProjectParameter.Name;
-                Type = e.ProjectParameter.Type;
-                Value = e.ProjectParameter.Value;
+                UpdateData(e.ProjectParameter);
             }
         }
     }
