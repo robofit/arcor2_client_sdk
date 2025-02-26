@@ -1893,6 +1893,9 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Sends a request to move selected robot to a pose.
         /// </summary>
+        /// <remarks>
+        /// Either position or orientation must be filled.
+        /// </remarks>
         /// <param name="args">Robot ID, end effector ID, speed (0-1f), optional position or orientation, safe flag (collision checks), linear flag, and optional arm ID.</param>
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>

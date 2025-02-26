@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
@@ -75,6 +76,20 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null) {
             await UpdateUsingRobotAsync(actionObject.Id, endEffectorId, armId);
+        }
+
+        /// <summary>
+        /// Updates the orientation using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null) {
+            await UpdateUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId);
         }
 
         /// <summary>

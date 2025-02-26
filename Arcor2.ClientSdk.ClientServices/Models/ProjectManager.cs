@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -198,7 +197,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// Builds the project into package.
         /// </summary>
         public async Task BuildIntoPackageAsync(string packageName) {
-            // TODO: Test
             var response = await Session.client.BuildProjectAsync(new BuildProjectRequestArgs(Id, packageName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Building project {Id} into package failed.", response.Messages);
@@ -297,6 +295,21 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
             }
+        }
+
+        /// <summary>
+        /// Adds a new action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null) {
+            await AddActionPointUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", name, armId!);
         }
 
         /// <summary>

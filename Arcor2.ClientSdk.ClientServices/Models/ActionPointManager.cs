@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Extensions;
+using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
@@ -176,6 +177,20 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Updates action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null) {
+            await UpdateUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId);
+        }
+
+        /// <summary>
         /// Renames the action point.
         /// </summary>
         /// <param name="newName">The new name.</param>
@@ -308,6 +323,21 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Adds a new orientation using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <param name="name">The name of the orientation.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddOrientationUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null, string name = "default") {
+            await AddOrientationUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId, name);
+        }
+
+        /// <summary>
         /// Adds new joints using a robot.
         /// </summary>
         /// <remarks>
@@ -342,6 +372,21 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddJointsUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null, string name = "default") {
             await AddJointsUsingRobotAsync(actionObject.Id, endEffectorId, armId, name);
+        }
+
+        /// <summary>
+        /// Adds new joints using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <param name="name">The name of the joints.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddJointsUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null, string name = "default") {
+            await AddJointsUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId, name);
         }
 
         /// <summary>
