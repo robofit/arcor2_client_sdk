@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
@@ -8,7 +7,6 @@ using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
-using Joint = Arcor2.ClientSdk.ClientServices.Models.Extras.Joint;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
@@ -241,9 +239,63 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="parameters">The new list of parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateParametersAsync(ICollection<Parameter> parameters) {
-            // TODO: Maybe make this better? Seems kind of awkward to update by passing new list, maybe small CRUD methods?
             await LockAsync();
             var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, parameters.ToList()));
+            if(!response.Result) {
+                await TryUnlockAsync();
+                throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
+            }
+
+            await UnlockAsync();
+        }
+
+        /// <summary>
+        /// Updates an existing parameter of an action object.
+        /// </summary>
+        /// <param name="parameter">The modified parameter.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdateParameterAsync(Parameter parameter) {
+            var newParameters = Data.Meta.Parameters
+                .Where(p => p.Name != parameter.Name && p.Type != parameter.Type)
+                .Append(parameter)
+                .ToList();
+            await LockAsync();
+            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, newParameters));
+            if(!response.Result) {
+                await TryUnlockAsync();
+                throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
+            }
+
+            await UnlockAsync();
+        }
+
+        /// <summary>
+        /// Adds a new parameter to an action object.
+        /// </summary>
+        /// <param name="parameter">The new parameter.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddParameterAsync(Parameter parameter) {
+            await LockAsync();
+            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, Data.Meta.Parameters.Append(parameter).ToList()));
+            if(!response.Result) {
+                await TryUnlockAsync();
+                throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
+            }
+
+            await UnlockAsync();
+        }
+
+        /// <summary>
+        /// Removes a parameter from an action object.
+        /// </summary>
+        /// <param name="parameter">The removed parameter.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task RemoveParameterAsync(Parameter parameter) {
+            var newParameters = Data.Meta.Parameters
+                .Where(p => p.Name != parameter.Name && p.Type != parameter.Type)
+                .ToList();
+            await LockAsync();
+            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, newParameters));
             if(!response.Result) {
                 await TryUnlockAsync();
                 throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
