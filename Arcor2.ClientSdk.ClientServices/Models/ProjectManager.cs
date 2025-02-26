@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -81,8 +82,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Overrides = flattenedOverrides
                 .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)).ToList();
             LogicItems = project.Logic.Select(l => new LogicItemManager(Session, this, l)).ToList();
-            
-            // TODO: Rest
+            // Project functions are not really needed atm...
         }
 
         /// <summary>

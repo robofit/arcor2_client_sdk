@@ -164,13 +164,13 @@ internal class Program {
                 break;
             // Scene RPC commands
             case "!action_objects":
-                var actionObjects = session.NavigationState == NavigationState.Scene
+                var actionObjectsList = session.NavigationState == NavigationState.Scene
                     ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
                         .ActionObjects!
                     : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
                         .Scene.ActionObjects;
 
-                foreach (var actionObject in actionObjects!) {
+                foreach (var actionObject in actionObjectsList!) {
                     Console.WriteLine(
                         ReflectionHelper.FormatObjectProperties(actionObject, objectName: actionObject.Data.Type));
                 }
@@ -282,14 +282,104 @@ internal class Program {
                             Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))));
                 break;
             case "!rename_action_object":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
+                var actionObjects = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects!
                     .FirstOrDefault(o => o.Data.Id == args[0])!.RenameAsync(args[1]);
                 break;
             case "!update_action_object_parameters":
-                await session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!.ActionObjects!
+                var actionObjects2 = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects2
                     .FirstOrDefault(o => o.Data.Id == args[0])!.UpdateParametersAsync(JsonConvert.DeserializeObject<List<Parameter>>(string.Join(' ', args.Skip(1)))!);
                 break;
-
+            case "!move_to_pose":
+                var actionObjects3 = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects3
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.MoveToPoseAsync(
+                        new Pose(
+                            new Position(Convert.ToDecimal(args[1]), Convert.ToDecimal(args[2]),
+                                Convert.ToDecimal(args[3])),
+                            new Orientation(Convert.ToDecimal(args[4]), Convert.ToDecimal(args[5]),
+                                Convert.ToDecimal(args[6]), Convert.ToDecimal(args[7]))),
+                        safe: Convert.ToBoolean(args[8]),
+                        linear: Convert.ToBoolean(args[9]),
+                        speed: Convert.ToDecimal(args[10]),
+                        endEffectorId: args.Length > 11 ? args[11] : "default",
+                        armId: args.Length > 12 ? args[12] : null!);
+                break;
+            case "!move_to_joints":
+                var actionObjects4 = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects4
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.MoveToActionPointJointsAsync(
+                        args[1],
+                        safe: Convert.ToBoolean(args[2]),
+                        linear: Convert.ToBoolean(args[3]),
+                        speed: Convert.ToDecimal(args[4]),
+                        endEffectorId: args.Length > 5 ? args[5] : "default",
+                        armId: args.Length > 6 ? args[6] : null!);
+                break;
+            case "!move_to_orientation":
+                var actionObjects5 = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects5
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.MoveToActionPointOrientationAsync(
+                        args[1],
+                        safe: Convert.ToBoolean(args[2]),
+                        linear: Convert.ToBoolean(args[3]),
+                        speed: Convert.ToDecimal(args[4]),
+                        endEffectorId: args.Length > 5 ? args[5] : "default",
+                        armId: args.Length > 6 ? args[6] : null!);
+                break;
+            case "!step_position":
+                var actionObjects6 = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects6
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.StepPositionAsync(
+                        axis: Enum.Parse<StepRobotEefRequestArgs.AxisEnum>(args[1]),
+                        step: Convert.ToDecimal(args[2]),
+                        safe: Convert.ToBoolean(args[3]),
+                        linear: Convert.ToBoolean(args[4]),
+                        speed: Convert.ToDecimal(args[5]),
+                        endEffectorId: args.Length > 6 ? args[6] : "default",
+                        armId: args.Length > 7 ? args[7] : null!);
+                break;
+            case "!step_orientation":
+                var actionObjects7 = session.NavigationState == NavigationState.Scene
+                    ? session.Scenes.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .ActionObjects!
+                    : session.Projects.FirstOrDefault(s => s.Meta.Id == session.NavigationId)!
+                        .Scene.ActionObjects;
+                await actionObjects7
+                    .FirstOrDefault(o => o.Data.Id == args[0])!.StepOrientationAsync(
+                        axis: Enum.Parse<StepRobotEefRequestArgs.AxisEnum>(args[1]),
+                        step: Convert.ToDecimal(args[2]),
+                        safe: Convert.ToBoolean(args[3]),
+                        linear: Convert.ToBoolean(args[4]),
+                        speed: Convert.ToDecimal(args[5]),
+                        endEffectorId: args.Length > 6 ? args[6] : "default",
+                        armId: args.Length > 7 ? args[7] : null!);
+                break;
             // Project RPC commands
             case "!rp" or "!reload_projects":
                 await session.ReloadProjectsAsync();
@@ -607,6 +697,21 @@ internal class Program {
             !update_action_object_parameters <ID> <PARAM_LIST_AS_JSON>
                                         - Updates a list of parameters of an action object.
             !rename_action_object <ID> <NEW_NAME> - Renames an action object.
+            !move_to_pose <ID> <POSX> <POSY> <POSZ> 
+                          <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
+                          <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] - Moves the robot into a pose.
+            !move_to_orientation <ID> <ORIENT_ID>
+                                <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] 
+                                - Moves the robot into a pose.
+            !move_to_joints <ID> <JOINTS_ID>
+                            <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] 
+                            - Moves the robot into a pose.
+            !step_position <ID> <AXIS> <STEP>
+                            <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] 
+                            -Steps the robot position.
+            !step_orientation <ID> <AXIS> <STEP>
+                        <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] 
+                        -Steps the robot position.
             
             - Project -
             !reload_projects - Loads projects.

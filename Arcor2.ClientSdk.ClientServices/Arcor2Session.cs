@@ -217,8 +217,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Registers a user for this session.
+        /// Registers a user for this session and subscribes to robot events.
         /// </summary>
+        /// <remarks>
+        /// If the subscription fails, you need
+        /// </remarks>
         /// <param name="username">The username.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RegisterAsync(string username) {
@@ -230,6 +233,11 @@ namespace Arcor2.ClientSdk.ClientServices {
             // We can only subscribe for updates after registering.
             // If there was open project/scene, it could not do it 
             // itself, because registration usually comes a while later.
+            await SubscribeToRobotEventsForOpenedScene();
+            //TODO: Fix if locked
+        }
+
+        private async Task SubscribeToRobotEventsForOpenedScene() {
             if(NavigationState == NavigationState.Scene) {
                 var scene = Scenes.First(s => s.Id == NavigationId);
                 if(scene.State.State == OnlineState.Started) {
