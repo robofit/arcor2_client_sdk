@@ -25,7 +25,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models.Extras {
         /// <value>
         /// <c>null</c> if not applicable (e.g. the object is not a robot).
         /// </value>
-        public IList<EndEffector>? EefPose { get; internal set; }
+        public IList<EndEffector>? EefPoses { get; internal set; }
 
         /// <summary>
         /// The list of joints and its values.
@@ -38,10 +38,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models.Extras {
         /// <summary>
         /// Initializes a new instance of <see cref="ActionObject"/> class.
         /// </summary>
-        public ActionObject(SceneObject meta, IList<Joint>? joints, IList<EndEffector>? eefPose, IList<string>? arms) {
+        public ActionObject(SceneObject meta, IList<Joint>? joints, IList<EndEffector>? eefPoses, IList<string>? arms) {
             Meta = meta;
             Joints = joints;
-            EefPose = eefPose;
+            EefPoses = eefPoses;
             Arms = arms;
         }
 
@@ -51,7 +51,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models.Extras {
         public ActionObject(SceneObject meta) {
             Meta = meta;
             Joints = null;
-            EefPose = null;
+            EefPoses = null;
             Arms = null;
         }
     }

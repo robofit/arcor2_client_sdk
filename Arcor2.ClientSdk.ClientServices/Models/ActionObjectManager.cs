@@ -461,26 +461,30 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// due to locked object type).
         /// </remarks>
         public async Task ReloadRobotArmsAndEefPose() {
-            bool updated = false;
             if (ObjectType.Data.RobotMeta?.MultiArm ?? false) {
                 var armsResponse = await Session.client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
-
+                // Do not throw, it may be single-armed... despite the property
                 if(armsResponse.Result) {
                     Data.Arms = armsResponse.Data;
-                    updated = true;
                 }
             }
 
             var eefResponse = await Session.client.GetRobotEndEffectorsAsync(new GetEndEffectorsRequestArgs(Id));
-
-            if (eefResponse.Result) {
-                Data.EefPose = eefResponse.Data.Select(id => new EndEffector(id)).ToList();
-                updated = true;
+            if (!eefResponse.Result) {
+                throw new Arcor2Exception($"Getting end effectors for action object {Id} failed.", eefResponse.Messages);
             }
 
-            if (updated) {
-                OnUpdated();
+            var endEffectors = eefResponse.Data.Select(id => new EndEffector(id)).ToList();
+            foreach (var endEffector in endEffectors) {
+                var poseResponse = await Session.client.GetEndEffectorPoseAsync(new GetEndEffectorPoseRequestArgs(Id, endEffector.Id, endEffector.ArmId!));
+                if(!eefResponse.Result) {
+                    throw new Arcor2Exception($"Could not get end effector '{endEffector.Id}' pose for action object {Id}.", eefResponse.Messages);
+                }
+                endEffector.Pose = poseResponse.Data;
             }
+            Data.EefPoses = endEffectors;
+
+            OnUpdated();
         }
 
         /// <summary>
@@ -564,7 +568,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
         private void OnRobotEndEffectorUpdated(object sender, RobotEndEffectorUpdatedEventArgs e) {
             if (e.Data.RobotId == Id) {
-                Data.EefPose = e.Data.EndEffectors.Select(e => e.ToEndEffector()).ToList();
+                Data.EefPoses = e.Data.EndEffectors.Select(e => e.ToEndEffector()).ToList();
                 OnUpdated();
             }
         }
