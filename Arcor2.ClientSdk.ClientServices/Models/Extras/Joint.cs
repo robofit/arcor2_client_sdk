@@ -6,11 +6,11 @@
         /// <summary>
         /// The joint ID.
         /// </summary>
-        public string Id { get; private set; }
+        public string Id { get; }
         /// <summary>
         /// The joint value.
         /// </summary>
-        public decimal Value { get; private set; }
+        public decimal Value { get; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="Joint"/> class.
@@ -20,6 +20,10 @@
         public Joint(string id, decimal value) {
             Id = id;
             Value = value;
+        }
+
+        internal Communication.OpenApi.Models.Joint ToOpenApiJointObject() {
+            return new Communication.OpenApi.Models.Joint(Id, Value);
         }
     }
 }

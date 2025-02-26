@@ -72,7 +72,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
                 project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
             Overrides = new ObservableCollection<ProjectOverrideManager>(flattenedOverrides
                 .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)));
-            LogicItems = new ObservableCollection<LogicItemManager>(project.Logic.Select(l => new LogicItemManager(Session, this, l)));
+            LogicItems = new ObservableCollection<LogicItemManager>(project.LogicItems.Select(l => new LogicItemManager(Session, this, l)));
             // Project functions are not really needed atm...
         }
 
@@ -419,7 +419,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
                 (m, o) => m.Data.ActionObjectId == o.ActionObjectId && m.Data.Parameter.Name == o.Parameter.Name && m.Data.Parameter.Type == o.Parameter.Type,
                 (m, o) => m.UpdateAccordingToNewObject(o.Parameter),
                 o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)));
-            LogicItems = new ObservableCollection<LogicItemManager>(LogicItems.UpdateListOfLockableArcor2Objects<LogicItemManager, LogicItem, LogicItem>(project.Logic,
+            LogicItems = new ObservableCollection<LogicItemManager>(LogicItems.UpdateListOfLockableArcor2Objects<LogicItemManager, LogicItem, LogicItem>(project.LogicItems,
                 l => l.Id,
                 (m, l) => m.UpdateAccordingToNewObject(l),
                 l => new LogicItemManager(Session, this, l)));

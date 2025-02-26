@@ -2270,6 +2270,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
+        [Obsolete("Not implemented as of ARServer 1.5.0.")]
         public async Task<CameraColorImageResponse> GetCameraColorImageAsync(CameraColorImageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CameraColorImageRequest(id, "CameraColorImage", args), id, "CameraColorImage");

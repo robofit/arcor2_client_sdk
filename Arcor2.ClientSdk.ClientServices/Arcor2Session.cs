@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using static System.Collections.Specialized.BitVector32;
 
 // Some information about architecture of this package:
 //
@@ -438,6 +441,41 @@ namespace Arcor2.ClientSdk.ClientServices {
             if(!response.Result) {
                 throw new Arcor2Exception("Adding a new object type failed.", response.Messages);
             }
+        }
+
+        /// <summary>
+        /// Estimates the pose of the camera relative to detected markers in an image.
+        /// </summary>
+        /// <param name="cameraParameters">Intrinsic camera parameters (camera matrix and distortion coefficients).</param>
+        /// <param name="image">Raw byte array representing the image in JPEG format.</param>
+        /// <param name="inverse">If true, the returned pose represents the camera's position and orientation relative to the marker. If false, it represents the marker's pose relative to the camera.</param>
+        /// <returns>An <see cref="EstimatedPose"/> object containing the camera's position and orientation relative to the detected markers.</returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task<EstimatedPose> EstimateCameraPoseAsync(CameraParameters cameraParameters, byte[] image, bool inverse = false) {
+            var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
+            var response = await client.GetCameraPoseAsync(new GetCameraPoseRequestArgs(cameraParameters, encodedImage, inverse));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Estimating camera pose failed.", response.Messages);
+            }
+            return response.Data;
+        }
+
+
+        /// <summary>
+        /// Detects the corners of markers in an image and returns their coordinates.
+        /// </summary>
+        /// <param name="cameraParameters">Intrinsic camera parameters (camera matrix and distortion coefficients).</param>
+        /// <param name="image">Raw byte array representing the image in JPEG format.</param>
+        /// <returns>A list of <see cref="MarkerCorners"/> objects representing the coordinates of detected marker corners.</returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task<List<MarkerCorners>> EstimateMarkerCornersAsync(CameraParameters cameraParameters, byte[] image) {
+            var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
+            var response = await client.GetMarkersCornersAsync(new MarkersCornersRequestArgs(cameraParameters, encodedImage));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Estimating marker corners failed.", response.Messages);
+            }
+
+            return response.Data;
         }
 
         private void RegisterHandlers() {
