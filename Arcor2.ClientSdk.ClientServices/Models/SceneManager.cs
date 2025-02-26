@@ -42,7 +42,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Raised when scene state changes.
         /// </summary>
-        public EventHandler<SceneOnlineStateEventArgs> OnlineStateChanged;
+        public EventHandler<SceneOnlineStateEventArgs>? OnlineStateChanged;
 
         /// <summary>
         /// Initializes a new instance of <see cref="SceneManager"/> class.

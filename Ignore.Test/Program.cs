@@ -635,6 +635,31 @@ internal class Program {
                 await session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.LogicItems!.FirstOrDefault(s =>
                     s.Id == args[0])!.RemoveAsync();
                 break;
+            /// Packages
+            case "!packages":
+                foreach(var package in session.Packages) {
+                    Console.WriteLine(
+                        ReflectionHelper.FormatObjectProperties(package));
+                }
+                break;
+            case "!rename_package":
+                await session.Packages.FirstOrDefault(s => s.Id == args[0])!.RenameAsync(args[1]);
+                break;
+            case "!remove_package":
+                await session.Packages.FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
+                break;
+            case "!run_package":
+                await session.Packages.FirstOrDefault(s => s.Id == args[0])!.RunAsync(Convert.ToBoolean(args[1]), args.Skip(2).ToList());
+                break;
+            case "!stop_package":
+                await session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.StopAsync();
+                break;
+            case "!resume_package":
+                await session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.ResumeAsync();
+                break;
+            case "!pause_package":
+                await session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.PauseAsync();
+                break;
         }
     }
 
@@ -783,6 +808,15 @@ internal class Program {
             !add_logic_item <START> <END> [WHAT VALUE] - Creates a logic item with optional condition.
             !update_logic_item <ID> <START> <END> [WHAT VALUE] - Updates a logic item with optional condition.
             !remove_logic_item <ID> - Removes a logic item.
+            
+            - Packages -
+            !packages - Lists all packages
+            !rename_package <ID> <NEW_NAME> - Renames a package.
+            !remove_package <ID> <NEW_NAME> - Deletes a package.
+            !run_package <ID> <START_STOPPED_BOOL> [BREAKPOINTS...] - Runs a package.
+            !stop_package - Stops a package.
+            !pause_package - Pauses a package.
+            !resume_package - Resumes a package.
             """);
     }
 

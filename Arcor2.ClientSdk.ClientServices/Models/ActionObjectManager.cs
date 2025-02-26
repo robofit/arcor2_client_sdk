@@ -85,10 +85,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepPositionAsync(StepRobotEefRequestArgs.AxisEnum axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepRobotEefRequestArgs.ModeEnum mode = StepRobotEefRequestArgs.ModeEnum.Robot) {
-            // TODO: Normal enum
+        public async Task StepPositionAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis, StepRobotEefRequestArgs.WhatEnum.Position, mode, step, safe, null!, speed, linear, armId ));
+            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.ToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.ToOpenApiModeEnum(), step, safe, null!, speed, linear, armId ));
             if(!response.Result) {
                 await TryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
@@ -113,10 +112,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepOrientationAsync(StepRobotEefRequestArgs.AxisEnum axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepRobotEefRequestArgs.ModeEnum mode = StepRobotEefRequestArgs.ModeEnum.Robot) {
-            // TODO: Normal enum
+        public async Task StepOrientationAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis, StepRobotEefRequestArgs.WhatEnum.Orientation, mode, step, safe, null!, speed, linear, armId));
+            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.ToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.ToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
                 await TryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);

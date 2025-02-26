@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
@@ -36,7 +36,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <summary>
         /// The registered username. 
         /// </summary>
-        public string? Username { get; }
+        public string? Username { get; private set; }
 
         /// <summary>
         /// Represents a client view that is expected by the server.
@@ -64,26 +64,29 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// Collection of available object types.
         /// </summary>
         /// <remarks>Loaded on initialization and automatically maintained.</remarks>
-        public IList<ObjectTypeManager> ObjectTypes { get; } = new List<ObjectTypeManager>();
+        public ObservableCollection<ObjectTypeManager> ObjectTypes { get; } = new ObservableCollection<ObjectTypeManager>();
 
         /// <summary>
         /// Collection of available scenes.
         /// </summary>
         /// <remarks>
         /// If the server opens a scene, that scene will get fully initialized and added automatically (regardless of the current state).
-        /// Users can also call <see cref="ReloadScenesAsync"/> to load (and update) metadata of all scenes.
         /// Furthermore, users may also invoke <see cref="SceneManager.LoadAsync"/> on the specific instance to load the action objects without opening it.
         /// </remarks>
-        public IList<SceneManager> Scenes { get; } = new List<SceneManager>();
+        public ObservableCollection<SceneManager> Scenes { get; } = new ObservableCollection<SceneManager>();
 
         /// <summary>
         /// Collection of available projects.
         /// </summary>
         /// <remarks>
         /// If the server opens a project, that project (and corresponding scene) will get fully initialized and added automatically (regardless of the current state).
-        /// Users can also call <see cref="ReloadProjectsAsync"/> to load (and update) metadata of all projects.
         /// </remarks>
-        public IList<ProjectManager> Projects { get; } = new List<ProjectManager>();
+        public ObservableCollection<ProjectManager> Projects { get; } = new ObservableCollection<ProjectManager>();
+
+        /// <summary>
+        /// Collection of available packages.
+        /// </summary>
+        public ObservableCollection<PackageManager> Packages { get; } = new ObservableCollection<PackageManager>();
 
         #region Connection-related Members
 
@@ -212,6 +215,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                 await ReloadObjectTypesAsync();
                 await ReloadScenesAsync();
                 await ReloadProjectsAsync();
+                await ReloadPackagesAsync();
             }
             return systemInfoResult.Data;
         }
@@ -226,6 +230,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             if(!registrationResult.Result) {
                 throw new Arcor2Exception("User registration failed.", registrationResult.Messages);
             }
+            Username = username;
 
             if(NavigationState == NavigationState.Scene) {
                 var scene = Scenes.First(s => s.Id == NavigationId);
@@ -297,11 +302,6 @@ namespace Arcor2.ClientSdk.ClientServices {
             // If we have unsaved opened scenes/projects, this call
             // will not list this scene. So we can't remove unlisted ones.
             // That should not be an issue though.
-            /*var projectsToRemove = Projects.Where(oldProject => newProjects.All(newProject => newProject.Id != oldProject.Id)).ToList();
-            foreach(var project in projectsToRemove) {
-                project.Dispose();
-                Projects.Remove(project);
-            }*/
 
             foreach(var newProject in newProjects) {
                 var existingProject = Projects.FirstOrDefault(p => p.Id == newProject.Id);
@@ -310,6 +310,30 @@ namespace Arcor2.ClientSdk.ClientServices {
                 }
                 else {
                     Projects.Add(new ProjectManager(this, newProject));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates the <see cref="Projects"/> collection and project metadata.
+        /// </summary>
+        /// <remarks>
+        /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception" />
+        public async Task ReloadPackagesAsync() {
+            var packageResponse = await client.ListPackagesAsync();
+            if(!packageResponse.Result) {
+                throw new Arcor2Exception("Loading packages failed.", packageResponse.Messages);
+            }
+
+            foreach(var package in packageResponse.Data) {
+                var existingPackage = Packages.FirstOrDefault(p => p.Id == package.Id);
+                if(existingPackage != null) {
+                    existingPackage.UpdateAccordingToNewObject(package);
+                }
+                else {
+                    Packages.Add(new PackageManager(this, package));
                 }
             }
         }
@@ -428,6 +452,11 @@ namespace Arcor2.ClientSdk.ClientServices {
             client.OnObjectTypeAdded += OnObjectTypeAdded;
             client.OnSceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
             client.OnProjectBaseUpdated += OnProjectBaseUpdated; // Duplication uses this
+            client.OnPackageAdded += OnPackageAdded;
+        }
+
+        private void OnPackageAdded(object sender, PackageChangedEventArgs e) {
+            Packages.Add(new PackageManager(this, e.Data));
         }
 
         private void OnProjectClosed(object sender, EventArgs e) {
