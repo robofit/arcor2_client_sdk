@@ -13,7 +13,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Manages lifetime of a project.
     /// </summary>
-    public class ProjectManager : LockableArcor2ObjectManager {
+    public class ProjectManager : LockableArcor2ObjectManager<BareProject> {
 
         /// <summary>
         /// The metadata of the project.
@@ -479,6 +479,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnProjectParameterAdded -= OnProjectParameterAdded;
             Session.client.OnActionPointAdded -= OnActionPointAdded;
             Session.client.OnOverrideAdded -= OnOverrideAdded;
+            Session.client.OnLogicItemAdded -= OnLogicItemAdded;
         }
 
         protected override void Dispose(bool disposing) {

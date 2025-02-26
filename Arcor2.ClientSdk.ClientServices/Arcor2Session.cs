@@ -217,27 +217,16 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Registers a user for this session and subscribes to robot events.
+        /// Registers a user for this session and if there is opened, online scene, subscribes to robot events.
         /// </summary>
-        /// <remarks>
-        /// If the subscription fails, you need
-        /// </remarks>
         /// <param name="username">The username.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task RegisterAsync(string username) {
+        public async Task<List<ActionObjectManager>> RegisterAndSubscribeAsync(string username) {
             var registrationResult = await client.RegisterUserAsync(new RegisterUserRequestArgs(username));
             if(!registrationResult.Result) {
                 throw new Arcor2Exception("User registration failed.", registrationResult.Messages);
             }
 
-            // We can only subscribe for updates after registering.
-            // If there was open project/scene, it could not do it 
-            // itself, because registration usually comes a while later.
-            await SubscribeToRobotEventsForOpenedScene();
-            //TODO: Fix if locked
-        }
-
-        private async Task SubscribeToRobotEventsForOpenedScene() {
             if(NavigationState == NavigationState.Scene) {
                 var scene = Scenes.First(s => s.Id == NavigationId);
                 if(scene.State.State == OnlineState.Started) {
@@ -245,9 +234,9 @@ namespace Arcor2.ClientSdk.ClientServices {
                 }
             }
 
-            if (NavigationState == NavigationState.Project) {
+            if(NavigationState == NavigationState.Project) {
                 var project = Projects.First(p => p.Id == NavigationId);
-                if (project.Scene!.State.State == OnlineState.Started) {
+                if(project.Scene!.State.State == OnlineState.Started) {
                     await project.Scene.GetRobotInfoAndUpdatesAsync();
                 }
             }

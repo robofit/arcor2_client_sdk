@@ -99,9 +99,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         private void OnLogicItemRemoved(object sender, LogicItemChangedEventArgs e) {
-            if (Project.IsOpen) {
-                if (e.Data.Id == Id) {
-                    Data = e.Data;
+            if(Project.IsOpen) {
+                if(e.Data.Id == Id) {
+                    Project.LogicItems!.Remove(this);
+                    Dispose();
                 }
             }
         }
@@ -109,8 +110,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         private void OnLogicItemUpdated(object sender, LogicItemChangedEventArgs e) {
             if(Project.IsOpen) {
                 if(e.Data.Id == Id) {
-                    Project.LogicItems!.Remove(this);
-                    Dispose();
+                    Data = e.Data;
                 }
             }
         }

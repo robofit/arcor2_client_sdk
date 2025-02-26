@@ -281,7 +281,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Reloads the arms and their end effector of the robot.
         /// </summary>
-        internal async Task ReloadRobotArmsAndEefPose() {
+        /// <remarks>
+        /// This method is invoked automatically and should only be invoked
+        /// in edge cases (the library not being able to subscribe on registration
+        /// due to locked object type).
+        /// </remarks>
+        public async Task ReloadRobotArmsAndEefPose() {
             if (ObjectType.RobotMeta?.MultiArm ?? false) {
                 var armsResponse = await Session.client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
 
@@ -300,7 +305,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Reloads the joints and their values of the robot.
         /// </summary>
-        internal async Task ReloadRobotJoints() {
+        /// <remarks>
+        /// This method is invoked automatically and should only be invoked
+        /// in edge cases (the library not being able to subscribe on registration
+        /// due to locked object type).
+        /// </remarks>
+        public async Task ReloadRobotJoints() {
             var jointsResponse = await Session.client.GetRobotJointsAsync(new GetRobotJointsRequestArgs(Id));
             if(jointsResponse.Result) {
                 Joints = jointsResponse.Data.Select(j => j.ToCustomJointObject()).ToList();
@@ -311,13 +321,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Register the robot for updates of eef pose/joints.
         /// </summary>
         /// <remarks>
-        /// Must be called in an online scene/project. User must be registered.
+        /// This method is invoked automatically and should only be invoked
+        /// in edge cases (the library not being able to subscribe on registration
+        /// due to locked object type). The scene must be online, and the user registered.
         /// </remarks>
         /// <param name="type">The type of registration.</param>
         /// <param name="enabled">Toggle on/off.</param>
-        /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        internal async Task RegisterForUpdatesAsync(RobotUpdateType type, bool enabled = true) {
+        public async Task RegisterForUpdatesAsync(RobotUpdateType type, bool enabled = true) {
             var response = await Session.client.RegisterForRobotEventAsync(new RegisterForRobotEventRequestArgs(Id, send: true, what: type switch {
                 RobotUpdateType.Pose => RegisterForRobotEventRequestArgs.WhatEnum.EefPose,
                 RobotUpdateType.Joints => RegisterForRobotEventRequestArgs.WhatEnum.Joints,

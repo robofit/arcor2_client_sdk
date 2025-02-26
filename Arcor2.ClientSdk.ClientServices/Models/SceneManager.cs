@@ -356,22 +356,33 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Gets and registers eligible action objects for joints and eef updates.
         /// </summary>
-        internal async Task GetRobotInfoAndUpdatesAsync() {
+        /// <returns>Collections of action object where Joints or Eef could not be subscribed to or obtained (probably due to user holding a prolonged lock).</returns>
+        internal async Task<List<ActionObjectManager>> GetRobotInfoAndUpdatesAsync() {
+            List<ActionObjectManager> failed = new List<ActionObjectManager>();
+
             if (ActionObjects != null) {
                 foreach(var actionObject in ActionObjects) {
                     var objectType = actionObject.ObjectType;
                     if (objectType.RobotMeta != null) {
-                        if(objectType.RobotMeta.Features.MoveToPose) {
-                            await actionObject.ReloadRobotArmsAndEefPose();
-                            await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
+                        try {
+                            if (objectType.RobotMeta.Features.MoveToPose) {
+                                await actionObject.ReloadRobotArmsAndEefPose();
+                                await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
+                            }
+
+                            if (objectType.RobotMeta.Features.MoveToJoints) {
+                                await actionObject.ReloadRobotJoints();
+                                await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
+                            }
                         }
-                        if (objectType.RobotMeta.Features.MoveToJoints) {
-                            await actionObject.ReloadRobotJoints();
-                            await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
+                        catch (Arcor2Exception) {
+                            failed.Add(actionObject);
                         }
                     }
                 }
             }
+
+            return failed;
         }
 
         protected override void RegisterHandlers() {

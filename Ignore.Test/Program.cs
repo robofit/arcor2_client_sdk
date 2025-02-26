@@ -100,7 +100,7 @@ internal class Program {
         ConsoleEx.WriteLinePrefix("Username?");
         string? name = await Task.Run(ConsoleEx.ReadLinePrefix);
         ArgumentNullException.ThrowIfNull(name);
-        await session.RegisterAsync(name);
+        await session.RegisterAndSubscribeAsync(name);
         ConsoleEx.WriteLinePrefix($"Registered as '{name}'");
 
         var shutdownTcs = new TaskCompletionSource<bool>();
@@ -711,7 +711,7 @@ internal class Program {
                             -Steps the robot position.
             !step_orientation <ID> <AXIS> <STEP>
                         <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] 
-                        -Steps the robot position.
+                        - Steps the robot position.
             
             - Project -
             !reload_projects - Loads projects.
