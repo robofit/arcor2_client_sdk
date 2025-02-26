@@ -17,10 +17,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// </summary>
         internal ProjectManager Project;
 
+        private ActionObjectManager? cachedActionObject;
+
         /// <summary>
         /// The action object being overriden.
         /// </summary>
-        public ActionObjectManager ActionObject => Project.Scene.ActionObjects!.First(a => a.Id == Data.ActionObjectId);
+        public ActionObjectManager ActionObject => cachedActionObject ??= Project.Scene.ActionObjects!.First(a => a.Id == Data.ActionObjectId);
 
         /// <summary>
         /// Initializes a new instance of <see cref="ProjectOverrideManager"/> class.

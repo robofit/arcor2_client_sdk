@@ -44,6 +44,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Gets the parent scene.
         /// </summary>
+        // Do not cache, can in-theory change.
         public SceneManager Scene => Session.Scenes.First(s => s.Id == Data.SceneId);
 
         /// <summary>

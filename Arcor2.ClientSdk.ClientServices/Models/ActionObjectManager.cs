@@ -20,11 +20,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         internal SceneManager Scene { get; }
 
+        private ObjectTypeManager? cachedObjectType;
+
         /// <summary>
         /// The type of action object.
         /// </summary>
-        // TODO: Cache this
-        public ObjectTypeManager ObjectType => Session.ObjectTypes.First(o => o.Data.Meta.Type == Data.Meta.Type);
+        public ObjectTypeManager ObjectType {
+            get {
+                return cachedObjectType ??= Session.ObjectTypes.First(o => o.Data.Meta.Type == Data.Meta.Type);
+            }
+        }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionObjectManager"/> class.

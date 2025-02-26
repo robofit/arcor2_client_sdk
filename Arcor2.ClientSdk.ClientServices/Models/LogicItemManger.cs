@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -13,6 +14,23 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         internal ProjectManager Project { get; }
 
+        /// <summary>
+        /// Gets the start action. 
+        /// </summary>
+        /// <value>
+        /// <c>null</c> if START/END node.
+        /// </value>
+        // Do not cache, can change
+        public ActionManager? StartAction => Project.ActionPoints?.SelectMany(ap => ap.Actions, (_, action) => action).FirstOrDefault(a => a.Id == Data.Start);
+
+        /// <summary>
+        /// Gets the end action. 
+        /// </summary>
+        /// <value>
+        /// <c>null</c> if START/END node.
+        /// </value>
+        // Do not cache, can change
+        public ActionManager? EndAction => Project.ActionPoints?.SelectMany(ap => ap.Actions, (_, action) => action).FirstOrDefault(a => a.Id == Data.End);
 
         /// <summary>
         /// Initializes a new instance of <see cref="LogicItemManager"/> class.

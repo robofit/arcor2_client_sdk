@@ -20,6 +20,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Gets the action definition from object type.
         /// </summary>
+        // Do not cache, the instance can change.
         public ObjectAction ActionType => ActionPoint.Project.Scene.ActionObjects!
             .FirstOrDefault(a => a.Id == Data.Type.Split('/').First())!.ObjectType.Data.Actions
             .FirstOrDefault(a => a.Name == Data.Type.Split('/').Last())!;
