@@ -407,6 +407,14 @@ internal class Program {
                 await GetActionObjects()
                     .FirstOrDefault(o => o.Id == args[0])!.CalibrateCameraAsync();
                 break;
+            case "!get_camera_color_image":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!.GetCameraColorImageAsync();
+                break;
+            case "!get_camera_color_parameters":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!.GetCameraColorParametersAsync();
+                break;
             // Project RPC commands
             case "!rp" or "!reload_projects":
                 await session.ReloadProjectsAsync();
@@ -634,6 +642,20 @@ internal class Program {
                     .FirstOrDefault(a => a.Id == args[0])!.Actions
                     .FirstOrDefault(a => a.Id == args[1])!
                     .RemoveAsync();
+                break;
+
+            case "!execute_action":
+                await GetCurrentProject().ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Actions
+                    .FirstOrDefault(a => a.Id == args[1])!
+                    .ExecuteAsync();
+                break;
+
+            case "!cancel_action":
+                await GetCurrentProject().ActionPoints!
+                    .FirstOrDefault(a => a.Id == args[0])!.Actions
+                    .FirstOrDefault(a => a.Id == args[1])!
+                    .CancelAsync();
                 break;
 
             // Orientation 
@@ -882,6 +904,8 @@ internal class Program {
             !inverse_kinematics <ID>
             !calibrate_robot <ID> <CAMERA_ID> <MOVE_TO_CAL_POSE_BOOL>
             !calibrate_camera <ID>
+            !get_camera_color_image <ID>
+            !get_camera_color_parameters <ID>
             
             - Project -
             !reload_projects - Loads projects.
@@ -930,6 +954,8 @@ internal class Program {
             !update_action_flows <AP_ID>< <ID> <FLOWS_AS_JSON_LIST> - Updates action flows.
             !rename_action <AP_ID> <ID> <NEW_NAME> - Renames an action.
             !remove_action <AP_ID> <ID> - Removes the action
+            !execute_action <AP_ID> <ID>
+            !cancel_action <AP_ID> <ID>
             
             - Orientations -
             !orientations <AP_ID> - Lists all orientations.

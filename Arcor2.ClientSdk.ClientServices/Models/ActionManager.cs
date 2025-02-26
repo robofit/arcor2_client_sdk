@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Extensions;
+using Arcor2.ClientSdk.ClientServices.Models.EventArguments;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
@@ -16,6 +17,24 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The parent action point.
         /// </summary>
         internal ActionPointManager ActionPoint { get; }
+
+        /// <summary>
+        /// Is the action currently executing?
+        /// </summary>
+        public bool IsExecuting { get; private set; }
+
+        /// <summary>
+        /// Raised when action starts executing.
+        /// </summary>
+        public event EventHandler? Executing;
+        /// <summary>
+        /// Raised when action finished executing.
+        /// </summary>
+        public event EventHandler<ActionExecutedEventArgs>? Executed;
+        /// <summary>
+        /// Raised when action execution was cancelled.
+        /// </summary>
+        public event EventHandler? Cancelled;
 
         /// <summary>
         /// Gets the action definition from object type.
@@ -95,6 +114,35 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Executes the action.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task ExecuteAsync() {
+            var response = await Session.client.ExecuteActionAsync(new ExecuteActionRequestArgs(Id));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Executing action {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Cancels the action.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// Note that this method will cancel any currently running action.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task CancelAsync() {
+            var response = await Session.client.CancelActionAsync();
+            if(!response.Result) {
+                throw new Arcor2Exception($"Cancelling action failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
         /// Renames the action.
         /// </summary>
         /// <param name="newName">The new name.</param>
@@ -115,7 +163,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="action">Newer version of the action.</param>
         /// <exception cref="InvalidOperationException"></exception>>
         internal void UpdateAccordingToNewObject(Action action) {
-            if (Id != action.Id) {
+            if(Id != action.Id) {
                 throw new InvalidOperationException(
                     $"Can't update an ActionManager ({Id}) using a action data object ({action.Id}) with different ID.");
             }
@@ -127,6 +175,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnActionUpdated += OnActionUpdated;
             Session.client.OnActionBaseUpdated += OnActionBaseUpdated;
             Session.client.OnActionRemoved += OnActionRemoved;
+            Session.client.OnActionExecution += OnActionExecution;
+            Session.client.OnActionCancelled += OnActionCancelled;
+            Session.client.OnActionResult += OnActionResult;
         }
 
         protected override void UnregisterHandlers() {
@@ -134,10 +185,13 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.OnActionUpdated -= OnActionUpdated;
             Session.client.OnActionBaseUpdated -= OnActionBaseUpdated;
             Session.client.OnActionRemoved -= OnActionRemoved;
+            Session.client.OnActionExecution -= OnActionExecution;
+            Session.client.OnActionCancelled -= OnActionCancelled;
+            Session.client.OnActionResult -= OnActionResult;
         }
 
         private void OnActionRemoved(object sender, BareActionEventArgs e) {
-            if (ActionPoint.Project.IsOpen) {
+            if(ActionPoint.Project.IsOpen) {
                 if(e.Action.Id == Id) {
                     RemoveData();
                     ActionPoint.Actions.Remove(this);
@@ -147,18 +201,40 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         private void OnActionBaseUpdated(object sender, ActionEventArgs e) {
-            if (ActionPoint.Project.IsOpen) {
-                if (e.Action.Id == Id) {
+            if(ActionPoint.Project.IsOpen) {
+                if(e.Action.Id == Id) {
                     UpdateData(e.Action);
                 }
             }
         }
 
         private void OnActionUpdated(object sender, ActionEventArgs e) {
-            if (ActionPoint.Project.IsOpen) {
-                if (e.Action.Id == Id) {
+            if(ActionPoint.Project.IsOpen) {
+                if(e.Action.Id == Id) {
                     UpdateData(e.Action);
                 }
+            }
+        }
+
+        private void OnActionResult(object sender, ActionResultEventArgs e) {
+            if(e.Data.ActionId == Id) {
+                IsExecuting = false;
+                Executed?.Invoke(this, new ActionExecutedEventArgs(e.Data.Results, e.Data.Error));
+            }
+        }
+
+        private void OnActionCancelled(object sender, EventArgs e) {
+            // No better way to tell.
+            if(IsExecuting) {
+                IsExecuting = false;
+                Cancelled?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private void OnActionExecution(object sender, ActionExecutionEventArgs e) {
+            if(e.Data.ActionId == Id) {
+                IsExecuting = true;
+                Executing?.Invoke(this, EventArgs.Empty);
             }
         }
     }

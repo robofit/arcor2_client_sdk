@@ -22,7 +22,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Event raised when before the instance id deleted.
         /// </summary>
-        public event EventHandler? Remove;
+        public event EventHandler? Removing;
 
         /// <summary>
         /// The session used for communication with the server.
@@ -130,7 +130,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Raises the DataUpdated event.
         /// </summary>
         protected virtual void OnRemove() {
-            Remove?.Invoke(this, EventArgs.Empty);
+            Removing?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
