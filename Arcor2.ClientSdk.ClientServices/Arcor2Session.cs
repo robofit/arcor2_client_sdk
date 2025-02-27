@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Models;
+using Arcor2.ClientSdk.ClientServices.Models.EventArguments;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -223,8 +224,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Registers a user for this session and if there is opened, online scene, subscribes to robot events.
+        /// Registers a user for this session and if there is opened, online scene or project, subscribes to robot events.
         /// </summary>
+        /// <remarks>
+        /// If any robot is locked making us unable to register for its events, the registration will retry when it gets unlocked.
+        /// </remarks>
         /// <param name="username">The username.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RegisterAndSubscribeAsync(string username) {
@@ -234,19 +238,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
             Username = username;
 
-            if(NavigationState == NavigationState.Scene) {
-                var scene = Scenes.First(s => s.Id == NavigationId);
-                if(scene.State.State == OnlineState.Started) {
-                    await scene!.GetRobotInfoAndUpdatesAsync();
-                }
-            }
-
-            if(NavigationState == NavigationState.Project) {
-                var project = Projects.First(p => p.Id == NavigationId);
-                if(project.Scene!.State.State == OnlineState.Started) {
-                    await project.Scene.GetRobotInfoAndUpdatesAsync();
-                }
-            }
+            await RegisterForActiveRobotEvents();
         }
 
         /// <summary>
@@ -475,6 +467,83 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
 
             return response.Data;
+        }
+        /// <summary>
+        /// Subscribes to robot events if there is online opened scene.
+        /// </summary>
+        private async Task RegisterForActiveRobotEvents() {
+            var scene = NavigationState == NavigationState.Scene ?
+                Scenes.First(s => s.Id == NavigationId) :
+                NavigationState == NavigationState.Project ?
+                    Projects.First(p => p.Id == NavigationId).Scene :
+                    null;
+            if(scene is { State: { State: OnlineState.Started } }) {
+                var robotsFailedToRegister = await scene!.GetRobotInfoAndUpdatesAsync();
+                foreach(var robot in robotsFailedToRegister) {
+                    // Check if it is locked to be sure of the error origin.
+                    if(robot.IsLocked) {
+                        ConfigureResubscriptionOnUnlock(robot);
+                    }
+                    else {
+                        // If it is locked, it wasn't an error,
+                        // but just someone holding a lock for prolonged time
+                        if(robot.IsLocked) {
+                            ConfigureResubscriptionOnUnlock(robot);
+                        }
+                        else {
+                            // The lock could come with a delay after the registration.
+                            // Check again in 100ms. No harm in doing so.
+                            await Task.Delay(100);
+                            if(robot.IsLocked) {
+                                ConfigureResubscriptionOnUnlock(robot);
+                            }
+                            else {
+                                // Now we can assume it was really an error.
+                                logger?.LogError($"Robot {robot.Id} couldn't be subscribed for updates on registration.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Configures one time event that resubscribes to robot events on unlock.
+        /// </summary>
+        private void ConfigureResubscriptionOnUnlock(ActionObjectManager robot) {
+            logger?.LogInfo($"Robot {robot.Id} was locked on registration. Retrying on unlock.");
+            EventHandler setRemoveFlag = null!;
+            EventHandler<LockEventArgs> resubscribeOnUnlock = null!;
+
+            var id = NavigationId;
+            object wasRemoved = false;
+            setRemoveFlag = (sender, e) => {
+                wasRemoved = true;
+                // ReSharper disable once AccessToModifiedClosure
+                robot.Removing -= setRemoveFlag;
+            };
+
+            // ReSharper disable once AsyncVoidLambda
+            resubscribeOnUnlock = async (sender, e) => {
+                // Check that we are in the same scene and the object still exists.
+                if(NavigationId == id && !(bool) wasRemoved) {
+                    var actionObject = (ActionObjectManager) sender;
+                    try {
+                        await actionObject.ReloadRobotArmsAndEefPose();
+                        await actionObject.ReloadRobotJoints();
+                        await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
+                        await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
+                        logger?.LogInfo($"Successfully retried subscription to robot {robot.Id}.");
+                    }
+                    catch(Arcor2Exception ex) {
+                        logger?.LogError($"Failed retried subscription to robot {robot.Id} with \"{ex.Message}\".");
+                    }
+                    // ReSharper disable once AccessToModifiedClosure
+                    actionObject.Unlocked -= resubscribeOnUnlock;
+                }
+            };
+            robot.Removing += setRemoveFlag;
+            robot.Unlocked += resubscribeOnUnlock;
         }
 
         private void RegisterHandlers() {

@@ -4,13 +4,11 @@ using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
-namespace Arcor2.ClientSdk.ClientServices.Models
-{
+namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
     /// Represents a group of overrides of action object parameters for a project.
     /// </summary>
-    public class ProjectOverrideManager : Arcor2ObjectManager<ProjectOverride>
-    {
+    public class ProjectOverrideManager : Arcor2ObjectManager<ProjectOverride> {
 
         /// <summary>
         /// The parent project.
@@ -31,8 +29,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <param name="project">The parent project.</param>
         /// <param name="actionObjectId">The ID of overriden action object.</param>
         /// <param name="parameter">An overriden parameters.</param>
-        internal ProjectOverrideManager(Arcor2Session session, ProjectManager project, string actionObjectId, Parameter parameter) : base(session, new ProjectOverride(actionObjectId, parameter))
-        {
+        internal ProjectOverrideManager(Arcor2Session session, ProjectManager project, string actionObjectId, Parameter parameter) : base(session, new ProjectOverride(actionObjectId, parameter)) {
             Project = project;
         }
 
@@ -47,8 +44,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// The project must be opened.
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task UpdateAsync(Parameter parameter)
-        {
+        public async Task UpdateAsync(Parameter parameter) {
             await LockAsync(Data.ActionObjectId);
             var response = await Session.client.UpdateOverrideAsync(new UpdateOverrideRequestArgs(Data.ActionObjectId, parameter));
             if (!response.Result)
@@ -68,8 +64,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// The project must be opened.
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task RemoveAsync()
-        {
+        public async Task RemoveAsync() {
             await LockAsync(Data.ActionObjectId);
             var response = await Session.client.RemoveOverrideAsync(new DeleteOverrideRequestArgs(Data.ActionObjectId, Data.Parameter));
             if (!response.Result)
@@ -85,38 +80,30 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             OnUpdated();
         }
 
-        protected override void RegisterHandlers()
-        {
+        protected override void RegisterHandlers() {
             base.RegisterHandlers();
             Session.client.ProjectOverrideUpdated += OnProjectOverrideUpdated;
             Session.client.ProjectOverrideRemoved += OnProjectOverrideRemoved;
         }
 
-        protected override void UnregisterHandlers()
-        {
+        protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
             Session.client.ProjectOverrideUpdated -= OnProjectOverrideUpdated;
             Session.client.ProjectOverrideRemoved -= OnProjectOverrideRemoved;
         }
 
-        private void OnProjectOverrideUpdated(object sender, ParameterEventArgs e)
-        {
-            if (Project.IsOpen)
-            {
-                if (e.ParentId == Data.ActionObjectId)
-                {
+        private void OnProjectOverrideUpdated(object sender, ParameterEventArgs e) {
+            if (Project.IsOpen) {
+                if (e.ParentId == Data.ActionObjectId) {
                     Data.Parameter = e.Parameter;
                     OnUpdated();
                 }
             }
         }
 
-        private void OnProjectOverrideRemoved(object sender, ParameterEventArgs e)
-        {
-            if (Project.IsOpen)
-            {
-                if (e.ParentId == Data.ActionObjectId)
-                {
+        private void OnProjectOverrideRemoved(object sender, ParameterEventArgs e) {
+            if (Project.IsOpen) {
+                if (e.ParentId == Data.ActionObjectId) {
                     RemoveData();
                     Project.Overrides!.Remove(this);
                     Dispose();

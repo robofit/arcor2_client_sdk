@@ -8,7 +8,6 @@ using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
-using static System.Net.Mime.MediaTypeNames;
 using Joint = Arcor2.ClientSdk.ClientServices.Models.Extras.Joint;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
@@ -920,16 +919,18 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         protected override void RegisterHandlers() {
-            Session.client.OnSceneActionObjectUpdated += OnSceneActionObjectUpdated;
-            Session.client.OnSceneActionObjectRemoved += OnSceneActionObjectRemoved;
-            Session.client.OnRobotJointsUpdated += OnRobotJointsUpdated;
-            Session.client.OnRobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
+            base.RegisterHandlers();
+            Session.client.SceneActionObjectUpdated += OnSceneActionObjectUpdated;
+            Session.client.SceneActionObjectRemoved += OnSceneActionObjectRemoved;
+            Session.client.RobotJointsUpdated += OnRobotJointsUpdated;
+            Session.client.RobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
         }
         protected override void UnregisterHandlers() {
-            Session.client.OnSceneActionObjectUpdated -= OnSceneActionObjectUpdated;
-            Session.client.OnSceneActionObjectRemoved -= OnSceneActionObjectRemoved;
-            Session.client.OnRobotJointsUpdated -= OnRobotJointsUpdated;
-            Session.client.OnRobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
+            base.UnregisterHandlers();
+            Session.client.SceneActionObjectUpdated -= OnSceneActionObjectUpdated;
+            Session.client.SceneActionObjectRemoved -= OnSceneActionObjectRemoved;
+            Session.client.RobotJointsUpdated -= OnRobotJointsUpdated;
+            Session.client.RobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
         }
 
         private void OnSceneActionObjectUpdated(object sender, SceneActionObjectEventArgs e) {

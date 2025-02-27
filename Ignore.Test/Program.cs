@@ -408,8 +408,10 @@ internal class Program {
                     .FirstOrDefault(o => o.Id == args[0])!.CalibrateCameraAsync();
                 break;
             case "!get_camera_color_image":
+#pragma warning disable CS0618 // Type or member is obsolete
                 await GetActionObjects()
                     .FirstOrDefault(o => o.Id == args[0])!.GetCameraColorImageAsync();
+#pragma warning restore CS0618 // Type or member is obsolete
                 break;
             case "!get_camera_color_parameters":
                 await GetActionObjects()

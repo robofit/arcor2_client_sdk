@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Arcor2.ClientSdk.ClientServices.Models.EventArguments;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
@@ -21,7 +22,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Is the object write-locked?
         /// </summary>
         /// <seealso cref="LockOwner"/>
-        public bool Locked { get; private set; }
+        public bool IsLocked { get; private set; }
 
         /// <summary>
         /// The owner of a write-lock on this object.
@@ -30,6 +31,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The owner username, <c>null</c> if unlocked.
         /// </value>
         public string? LockOwner { get; private set; }
+
+        /// <summary>
+        /// Raised when this object gets locked.
+        /// </summary>
+        public event EventHandler<LockEventArgs>? Locked;
+
+        /// <summary>
+        /// Raised when this object gets unlocked.
+        /// </summary>
+        public event EventHandler<LockEventArgs>? Unlocked;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LockableArcor2ObjectManager{TData}"/> class.
@@ -91,21 +102,23 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnObjectsLocked(object sender, ObjectsLockEventArgs e) {
             if (e.Data.ObjectIds.Contains(Id)) {
-                if (Locked) {
+                if (IsLocked) {
                     Session.logger?.LogWarning($"The object {Id} received lock event message while already locked.");
                 }
-                Locked = true;
+                IsLocked = true;
                 LockOwner = e.Data.Owner;
+                Locked?.Invoke(this, new LockEventArgs(e.Data.Owner));
             }
         }
 
         private void OnObjectsUnlocked(object sender, ObjectsLockEventArgs e) {
             if(e.Data.ObjectIds.Contains(Id)) {
-                if(!Locked) {
+                if(!IsLocked) {
                     Session.logger?.LogWarning($"The object {Id} received unlock event message while already unlocked.");
                 }
-                Locked = false;
+                IsLocked = false;
                 LockOwner = null;
+                Unlocked?.Invoke(this, new LockEventArgs(e.Data.Owner));
             }
         }
     }
