@@ -563,7 +563,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new Arcor2Exception($"Getting inverse kinematics for robot {Id} failed.", response.Messages);
             }
 
-            return response.Data.Select(j => j.ToCustomJointObject()).ToList();
+            return response.Data.Select(j => j.MapToCustomJointObject()).ToList();
         }
 
         /// <summary>
@@ -615,7 +615,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new Arcor2Exception($"Getting inverse kinematics for robot {Id} failed.", response.Messages);
             }
 
-            return response.Data.Select(j => j.ToCustomJointObject()).ToList();
+            return response.Data.Select(j => j.MapToCustomJointObject()).ToList();
         }
 
         /// <summary>
@@ -877,7 +877,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public async Task ReloadRobotJoints() {
             var jointsResponse = await Session.client.GetRobotJointsAsync(new GetRobotJointsRequestArgs(Id));
             if(jointsResponse.Result) {
-                Data.Joints = jointsResponse.Data.Select(j => j.ToCustomJointObject()).ToList();
+                Data.Joints = jointsResponse.Data.Select(j => j.MapToCustomJointObject()).ToList();
                 OnUpdated();
             }
         }
@@ -894,11 +894,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="enabled">Toggle on/off.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RegisterForUpdatesAsync(RobotUpdateType type, bool enabled = true) {
-            var response = await Session.client.RegisterForRobotEventAsync(new RegisterForRobotEventRequestArgs(Id, send: true, what: type switch {
-                RobotUpdateType.Pose => RegisterForRobotEventRequestArgs.WhatEnum.EefPose,
-                RobotUpdateType.Joints => RegisterForRobotEventRequestArgs.WhatEnum.Joints,
-                _ => throw new InvalidOperationException("Bad RobotUpdateType enum value.")
-            } ));
+            var response = await Session.client.RegisterForRobotEventAsync(new RegisterForRobotEventRequestArgs(Id, send: true, what: type.MapToOpenApiWhatEnum()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Registering for robot updates for action object {Id} failed.", response.Messages);
             }
@@ -949,14 +945,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
         private void OnRobotEndEffectorUpdated(object sender, RobotEndEffectorUpdatedEventArgs e) {
             if (e.Data.RobotId == Id) {
-                Data.EefPoses = e.Data.EndEffectors.Select(r => r.ToEndEffector()).ToList();
+                Data.EefPoses = e.Data.EndEffectors.Select(r => r.MapToCustomEndEffectorObject()).ToList();
                 OnUpdated();
             }
         }
 
         private void OnRobotJointsUpdated(object sender, RobotJointsUpdatedEventArgs e) {
             if (Id == e.Data.RobotId) {
-                Data.Joints = e.Data.Joints.Select(j => j.ToCustomJointObject()).ToList();
+                Data.Joints = e.Data.Joints.Select(j => j.MapToCustomJointObject()).ToList();
                 OnUpdated();
             }
         }

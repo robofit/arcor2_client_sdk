@@ -2,6 +2,9 @@
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Enums {
+    /// <summary>
+    /// Represents a spatial axis.
+    /// </summary>
     public enum Axis {
         X = 0,
         Y,

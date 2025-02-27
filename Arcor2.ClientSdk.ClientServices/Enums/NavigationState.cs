@@ -35,6 +35,9 @@
         /// A project.
         /// </summary>
         Project,
+        /// <summary>
+        /// A package.
+        /// </summary>
         Package
     }
 

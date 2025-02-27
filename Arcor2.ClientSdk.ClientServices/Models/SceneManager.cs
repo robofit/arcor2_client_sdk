@@ -427,7 +427,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
 
         private async void OnSceneState(object sender, SceneStateEventArgs e) {
             if(IsOpen || GetProjects().Any(p => p.IsOpen)) {
-                State = e.Data.ToCustomSceneStateObject();
+                State = e.Data.MapToCustomSceneStateEnum();
                 OnlineStateChanged?.Invoke(this, new SceneOnlineStateEventArgs(State));
                 if(State.State == OnlineState.Started && Session.ConnectionState == Arcor2SessionState.Initialized) {
                     await GetRobotInfoAndUpdatesAsync();
