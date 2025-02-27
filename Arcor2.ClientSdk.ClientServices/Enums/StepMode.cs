@@ -10,7 +10,7 @@ namespace Arcor2.ClientSdk.ClientServices.Enums {
     }
 
     internal static class StepModeExtensions {
-        public static StepRobotEefRequestArgs.ModeEnum ToOpenApiModeEnum(this StepMode stepMode) {
+        public static StepRobotEefRequestArgs.ModeEnum MapToOpenApiModeEnum(this StepMode stepMode) {
             return stepMode switch {
                 StepMode.World => StepRobotEefRequestArgs.ModeEnum.World,
                 StepMode.Robot => StepRobotEefRequestArgs.ModeEnum.Robot,

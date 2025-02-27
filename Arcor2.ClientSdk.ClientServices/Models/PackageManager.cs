@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
+using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using PackageState = Arcor2.ClientSdk.ClientServices.Enums.PackageState;
+using PackageExceptionEventArgs = Arcor2.ClientSdk.ClientServices.Models.EventArguments.PackageExceptionEventArgs;
+using PackageStateEventArgs = Arcor2.ClientSdk.ClientServices.Models.EventArguments.PackageStateEventArgs;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
     /// <summary>
@@ -15,6 +19,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The parent project ID.
         /// </summary>
         public string ProjectId { get; }
+
+        /// <summary>
+        /// The state of the package.
+        /// </summary>
+        // Realistically will never be undefined if user can use it (unless returned by the server).
+        public PackageState State { get; set; } = PackageState.Undefined;
 
         private ProjectManager? cachedProject;
 
@@ -30,6 +40,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public bool IsOpen => Session.NavigationState == NavigationState.Package && Session.NavigationId == Id;
 
         /// <summary>
+        /// Raised when the state of the package changes.
+        /// </summary>
+        public event EventHandler<PackageStateEventArgs>? StateChanged;
+
+        /// <summary>
+        /// Raised when exception occurs.
+        /// </summary>
+        public event EventHandler<PackageExceptionEventArgs>? ExceptionOccured;
+
+        /// <summary>
         /// Initializes a new instance of <see cref="PackageManager"/> class.
         /// </summary>
         /// <param name="session">The session.</param>
@@ -37,6 +57,18 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         internal PackageManager(Arcor2Session session, PackageSummary package) : base(session, package.PackageMeta,
             package.Id) {
             ProjectId = package.ProjectMeta.Id;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PackageManager"/> class.
+        /// </summary>
+        /// <param name="session">The session.</param>
+        /// <param name="package">Package object.</param>
+        /// <param name="state">The package state.</param>
+        internal PackageManager(Arcor2Session session, PackageInfoData package, PackageStateData? state = null) : base(session, package.MapToPackageMeta(),
+            package.PackageId) {
+            ProjectId = package.Project.Id;
+            State = state?.State?.MapToCustomPackageModeEnum() ?? PackageState.Undefined;
         }
 
         /// <summary>
@@ -119,16 +151,31 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             UpdateData(package.PackageMeta);
         }
 
+        internal void UpdateAccordingToNewObject(PackageInfoData package) {
+            if(Id != package.PackageId) {
+                throw new InvalidOperationException(
+                    $"Can't update an PackageManager ({Id}) using a package data object ({package.PackageId}) with different ID.");
+            }
+
+            if (Data.Name != package.PackageName) {
+                Data.Name = package.PackageName;
+                OnUpdated();
+            }
+        }
+
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
             Session.client.PackageUpdated += OnPackageUpdated;
             Session.client.PackageRemoved += OnPackageRemoved;
+            Session.client.PackageState += OnPackageState;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
             Session.client.PackageUpdated -= OnPackageUpdated;
             Session.client.PackageRemoved -= OnPackageRemoved;
+            Session.client.PackageState -= OnPackageState;
+            Session.client.PackageException -= OnPackageException;
         }
 
         private void OnPackageRemoved(object sender, PackageChangedEventArgs e) {
@@ -143,6 +190,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             if (e.Data.Id == Id) {
                 UpdateData(e.Data.PackageMeta);
             }
+        }
+
+        private void OnPackageState(object sender, Communication.PackageStateEventArgs e) {
+            if(e.Data.PackageId == Id) {
+                State = e.Data.State?.MapToCustomPackageModeEnum() ?? PackageState.Undefined;
+                StateChanged?.Invoke(this, new PackageStateEventArgs(State));
+            }
+        }
+        private void OnPackageException(object sender, Communication.PackageExceptionEventArgs e) {
+            ExceptionOccured?.Invoke(this, new PackageExceptionEventArgs(e.Data.Type, e.Data.Message, e.Data.Handled));
         }
     }
 }

@@ -75,11 +75,11 @@ The library provides a special handling for message containing the `change_type`
 
 ```
 // Registration of handlers
-arcorClient.OnOpenScene += (sender, args) => NavigateToScene(args);
+arcorClient.OpenScene += (sender, args) => NavigateToScene(args);
 
 // Note that the SceneAdded and SceneUpdated are (currently) not possible according to ARCOR2 protocol
-arcorClient.OnSceneBaseUpdated += (sender, args) => UpdateScene(args);
-arcorClient.OnSceneRemove += (sender, args) => RemoveScene(args);
+arcorClient.SceneBaseUpdated += (sender, args) => UpdateScene(args);
+arcorClient.SceneRemove += (sender, args) => RemoveScene(args);
 
 ```
 

@@ -7,15 +7,26 @@ namespace Arcor2.ClientSdk.ClientServices {
     /// </summary>
     public class Arcor2Exception : Exception {
         /// <summary>
-        /// Initializes new instance of the <see cref="Arcor2Exception"/> class.
+        /// The error messages returned by the server.
         /// </summary>
-        public Arcor2Exception() { }
+        /// <remarks>
+        /// More often than not, it is not null with a single message.
+        /// </remarks>
+        public List<string>? ServerMessages;
+
+        /// <summary>
+        /// The error message produced by the library.
+        /// </summary>
+        public string? ClientMessage;
+
 
         /// <summary>
         /// Initializes new instance of the <see cref="Arcor2Exception"/> class with the specified error message.
         /// </summary>
         /// <param name="message">The error message</param>
-        public Arcor2Exception(string message) : base(message) { }
+        public Arcor2Exception(string message) : base(message) {
+            ClientMessage = message;
+        }
 
         /// <summary>
         /// Initializes new instance of the <see cref="Arcor2Exception"/> class with the specified error message and a list of error messages returned by the server.
@@ -23,7 +34,10 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <param name="message">The error message</param>
         /// <param name="serverErrorMessages">The error messages returned by the server.</param>
         public Arcor2Exception(string message, List<string> serverErrorMessages)
-            : base(FormatMessage(message, serverErrorMessages)) { }
+            : base(FormatMessage(message, serverErrorMessages)) {
+            ServerMessages = serverErrorMessages;
+            ClientMessage = message;
+        }
 
         /// <summary>
         /// Initializes new instance of the <see cref="Arcor2Exception"/> class with the specified error message and a reference
@@ -31,7 +45,9 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// </summary>
         /// <param name="message">The error message</param>
         /// <param name="innerException">The inner exception.</param>
-        public Arcor2Exception(string message, Exception innerException) : base(message, innerException) { }
+        public Arcor2Exception(string message, Exception innerException) : base(message, innerException) {
+            ClientMessage = message;
+        }
 
         private static string FormatMessage(string message, List<string> serverErrorMessages) {
             if(serverErrorMessages == null! || serverErrorMessages.Count == 0) {

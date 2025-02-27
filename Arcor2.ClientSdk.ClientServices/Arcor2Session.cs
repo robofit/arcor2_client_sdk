@@ -10,6 +10,7 @@ using Arcor2.ClientSdk.ClientServices.Models.EventArguments;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using PackageStateEventArgs = Arcor2.ClientSdk.Communication.PackageStateEventArgs;
 
 // Some information about architecture of this package:
 //
@@ -32,7 +33,9 @@ namespace Arcor2.ClientSdk.ClientServices {
     /// Class used for session management and communication with ARCOR2 server.
     /// This class mostly offers actions you could do from the main screen.
     /// </summary>
-    public class Arcor2Session {
+    public class Arcor2Session : IDisposable {
+        // For storing the package state, because we receive PackageState before PackageInfo, and thus must store it. 
+        private readonly Stack<PackageStateData> unopenedPackageStates = new Stack<PackageStateData>();
         internal readonly Arcor2Client client;
         internal readonly IArcor2Logger? logger;
 
@@ -53,6 +56,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// </remarks>
         public NavigationState NavigationState { get; set; } = NavigationState.None;
 
+        /// <summary>
+        /// The state of the session.
+        /// </summary>
+        public Arcor2SessionState ConnectionState { get; private set; } = Arcor2SessionState.None;
+
 
         /// <summary>
         /// The ID of a highlighted object or object needed for client view that is expected by the server
@@ -61,7 +69,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <value>
         /// The ID of an object, <c>null</c> if not applicable.
         /// </value>
-        public string? NavigationId = null;
+        public string? NavigationId;
 
         /// <summary>
         /// Collection of available object types.
@@ -91,7 +99,18 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// </summary>
         public ObservableCollection<PackageManager> Packages { get; } = new ObservableCollection<PackageManager>();
 
-        #region Connection-related Members
+        /// <summary>
+        /// Raised when any connection-related error occurs.
+        /// </summary>
+        public event EventHandler<Exception>? OnConnectionError;
+        /// <summary>
+        /// Raised when connection is closed.
+        /// </summary>
+        public event EventHandler? OnConnectionClosed;
+        /// <summary>
+        /// Raised when connection is successfully opened.
+        /// </summary>
+        public event EventHandler? OnConnectionOpened;
 
         /// <summary>
         /// Initializes a new instance of <see cref="Arcor2Session"/> class.
@@ -145,24 +164,6 @@ namespace Arcor2.ClientSdk.ClientServices {
         public Arcor2Client GetUnderlyingArcor2Client() => client;
 
         /// <summary>
-        /// The state of the session.
-        /// </summary>
-        public Arcor2SessionState ConnectionState { get; private set; } = Arcor2SessionState.None;
-
-        /// <summary>
-        /// Raised when any connection-related error occurs.
-        /// </summary>
-        public event EventHandler<Exception>? OnConnectionError;
-        /// <summary>
-        /// Raised when connection is closed.
-        /// </summary>
-        public event EventHandler? OnConnectionClosed;
-        /// <summary>
-        /// Raised when connection is successfully opened.
-        /// </summary>
-        public event EventHandler? OnConnectionOpened;
-
-        /// <summary>
         /// Establishes a connection to ARCOR2 server.
         /// </summary>
         /// <param name="domain">Domain of the ARCOR2 server</param>
@@ -185,14 +186,39 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Closes a connection to ARCOR2 sever.
+        /// Closes the connection to ARCOR2 sever and disposes the object.
         /// </summary>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="InvalidOperationException">When closed in the <see cref="Arcor2SessionState.Closed"/>.</exception>
         public async Task CloseAsync() {
             await client.CloseAsync();
+            Dispose();
         }
 
-        #endregion
+        /// <summary>
+        /// Disposes the object and if needed, closes the connection to ARCOR2 server.
+        /// </summary>
+        /// <remarks>
+        /// Practically idempotent version of <see cref="CloseAsync"/>.
+        /// </remarks>
+        public void Dispose() {
+            if (ConnectionState != Arcor2SessionState.Closed) {
+                client.CloseAsync().GetAwaiter().GetResult();
+            }
+
+            UnregisterHandlers();
+            foreach (var scene in Scenes) {
+                scene.Dispose();
+            }
+            foreach (var project in Projects) {
+                project.Dispose();
+            }
+            foreach (var package in Packages) {
+                package.Dispose();
+            }
+            foreach (var objectType in ObjectTypes) {
+                objectType.Dispose();
+            }
+        }
 
         /// <summary>
         /// Initializes a session. Internally loads all object types, actions, scenes, project, etc..., and returns the server information.
@@ -478,7 +504,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                     Projects.First(p => p.Id == NavigationId).Scene :
                     null;
             if(scene is { State: { State: OnlineState.Started } }) {
-                var robotsFailedToRegister = await scene!.GetRobotInfoAndUpdatesAsync();
+                var robotsFailedToRegister = await scene.GetRobotInfoAndUpdatesAsync();
                 foreach(var robot in robotsFailedToRegister) {
                     // Check if it is locked to be sure of the error origin.
                     if(robot.IsLocked) {
@@ -559,6 +585,27 @@ namespace Arcor2.ClientSdk.ClientServices {
             client.SceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
             client.ProjectBaseUpdated += OnProjectBaseUpdated; // Duplication uses this
             client.PackageAdded += OnPackageAdded;
+
+            client.PackageState += OnPackageState;
+            client.PackageInfo += OnPackageInfo;
+        }
+
+        private void UnregisterHandlers() {
+            // Navigation
+            client.ShowMainScreen -= OnShowMainScreen;
+            client.SceneOpened -= OnSceneOpened;
+            client.SceneClosed -= OnSceneClosed;
+            client.ProjectOpened -= OnProjectOpened;
+            client.ProjectClosed -= OnProjectClosed;
+
+            // Addition of sub-entities
+            client.ObjectTypeAdded -= OnObjectTypeAdded;
+            client.SceneBaseUpdated -= OnSceneBaseUpdated; // Duplication uses this
+            client.ProjectBaseUpdated -= OnProjectBaseUpdated; // Duplication uses this
+            client.PackageAdded -= OnPackageAdded;
+
+            client.PackageState -= OnPackageState;
+            client.PackageInfo -= OnPackageInfo;
         }
 
         private void OnPackageAdded(object sender, PackageChangedEventArgs e) {
@@ -642,6 +689,47 @@ namespace Arcor2.ClientSdk.ClientServices {
             if(Projects.All(s => s.Id != e.Project.Id)) {
                 Projects.Add(new ProjectManager(this, e.Project));
             }
+        }
+
+        private void OnPackageState(object sender, PackageStateEventArgs e) {
+            if(Packages.FirstOrDefault(p => p.Id == e.Data.PackageId) == null) {
+                unopenedPackageStates.Push(e.Data);
+            }
+        }
+
+        private void OnPackageInfo(object sender, PackageInfoEventArgs e) {
+            var scene = Scenes.FirstOrDefault(s => s.Id == e.Data.Scene.Id);
+            if(scene == null) {
+                Scenes.Add(new SceneManager(this, e.Data.Scene));
+            }
+            else {
+                scene.UpdateAccordingToNewObject(e.Data.Scene);
+            }
+
+            var project = Projects.FirstOrDefault(s => s.Id == e.Data.Project.Id);
+            if(project == null) {
+                Projects.Add(new ProjectManager(this, e.Data.Project));
+            }
+            else {
+                project.UpdateAccordingToNewObject(e.Data.Project);
+            }
+
+            var package = Packages.FirstOrDefault(p => p.Id == e.Data.PackageId);
+            if(package == null) {
+                if(unopenedPackageStates.TryPeek(out var data) && data.PackageId == e.Data.PackageId) {
+                    Packages.Add(new PackageManager(this, e.Data, data));
+                    unopenedPackageStates.Pop();
+                }
+                else {
+                    Packages.Add(new PackageManager(this, e.Data));
+                }
+            }
+            else {
+                package.UpdateAccordingToNewObject(e.Data);
+            }
+
+            NavigationState = NavigationState.Package;
+            NavigationId = e.Data.PackageId;
         }
     }
 }

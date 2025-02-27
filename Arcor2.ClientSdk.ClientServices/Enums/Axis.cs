@@ -9,7 +9,7 @@ namespace Arcor2.ClientSdk.ClientServices.Enums {
     }
 
     internal static class AxisExtensions {
-        public static StepRobotEefRequestArgs.AxisEnum ToOpenApiAxisEnum(this Axis axis) {
+        public static StepRobotEefRequestArgs.AxisEnum MapToOpenApiAxisEnum(this Axis axis) {
             return axis switch {
                 Axis.X => StepRobotEefRequestArgs.AxisEnum.X,
                 Axis.Y => StepRobotEefRequestArgs.AxisEnum.Y,
