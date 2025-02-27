@@ -136,16 +136,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnOrientationUpdated += OnOrientationUpdated;
-            Session.client.OnOrientationBaseUpdated += OnOrientationBaseUpdated;
-            Session.client.OnOrientationRemoved += OnOrientationRemoved;
+            Session.client.OrientationUpdated += OnOrientationUpdated;
+            Session.client.OrientationBaseUpdated += OnOrientationBaseUpdated;
+            Session.client.OrientationRemoved += OnOrientationRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnOrientationUpdated -= OnOrientationUpdated;
-            Session.client.OnOrientationBaseUpdated -= OnOrientationBaseUpdated;
-            Session.client.OnOrientationRemoved -= OnOrientationRemoved;
+            Session.client.OrientationUpdated -= OnOrientationUpdated;
+            Session.client.OrientationBaseUpdated -= OnOrientationBaseUpdated;
+            Session.client.OrientationRemoved -= OnOrientationRemoved;
         }
 
         private void OnOrientationRemoved(object sender, OrientationEventArgs e) {

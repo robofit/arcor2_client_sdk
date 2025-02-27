@@ -20,8 +20,8 @@ public class Arcor2ClientFixture : IDisposable
     public Arcor2ClientFixture()
     {
         // Subscribe to events in the constructor
-        Client.OnConnectionOpened += (_, _) => ConnectionOpenedEventRaised = true;
-        Client.OnConnectionClosed += (_, _) => ConnectionClosedEventRaised = true;
+        Client.ConnectionOpened += (_, _) => ConnectionOpenedEventRaised = true;
+        Client.ConnectionClosed += (_, _) => ConnectionClosedEventRaised = true;
     }
 
     public void Dispose()

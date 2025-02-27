@@ -439,24 +439,24 @@ namespace Arcor2.ClientSdk.ClientServices.Models
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnProjectSaved += Saved;
-            Session.client.OnProjectRemoved += OnProjectRemoved;
-            Session.client.OnProjectBaseUpdated += OnProjectBaseUpdated;
-            Session.client.OnProjectParameterAdded += OnProjectParameterAdded;
-            Session.client.OnActionPointAdded += OnActionPointAdded;
-            Session.client.OnOverrideAdded += OnOverrideAdded;
-            Session.client.OnLogicItemAdded += OnLogicItemAdded;
+            Session.client.ProjectSaved += Saved;
+            Session.client.ProjectRemoved += OnProjectRemoved;
+            Session.client.ProjectBaseUpdated += OnProjectBaseUpdated;
+            Session.client.ProjectParameterAdded += OnProjectParameterAdded;
+            Session.client.ActionPointAdded += OnActionPointAdded;
+            Session.client.ProjectOverrideAdded += OnProjectOverrideAdded;
+            Session.client.LogicItemAdded += OnLogicItemAdded;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnProjectSaved -= Saved;
-            Session.client.OnProjectRemoved -= OnProjectRemoved;
-            Session.client.OnProjectBaseUpdated -= OnProjectBaseUpdated;
-            Session.client.OnProjectParameterAdded -= OnProjectParameterAdded;
-            Session.client.OnActionPointAdded -= OnActionPointAdded;
-            Session.client.OnOverrideAdded -= OnOverrideAdded;
-            Session.client.OnLogicItemAdded -= OnLogicItemAdded;
+            Session.client.ProjectSaved -= Saved;
+            Session.client.ProjectRemoved -= OnProjectRemoved;
+            Session.client.ProjectBaseUpdated -= OnProjectBaseUpdated;
+            Session.client.ProjectParameterAdded -= OnProjectParameterAdded;
+            Session.client.ActionPointAdded -= OnActionPointAdded;
+            Session.client.ProjectOverrideAdded -= OnProjectOverrideAdded;
+            Session.client.LogicItemAdded -= OnLogicItemAdded;
         }
 
         protected override void Dispose(bool disposing) {
@@ -517,7 +517,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             }
         }
 
-        private void OnOverrideAdded(object sender, ParameterEventArgs e) {
+        private void OnProjectOverrideAdded(object sender, ParameterEventArgs e) {
             if(IsOpen) {
                 if(Overrides == null) {
                     Session.logger?.LogError($"When adding a new project override, the override collection for project {Id} was null.");

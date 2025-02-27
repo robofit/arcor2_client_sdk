@@ -107,16 +107,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnJointsUpdated += OnJointsUpdated;
-            Session.client.OnJointsBaseUpdated += OnJointsBaseUpdated;
-            Session.client.OnJointsRemoved += OnJointsRemoved;
+            Session.client.JointsUpdated += OnJointsUpdated;
+            Session.client.JointsBaseUpdated += OnJointsBaseUpdated;
+            Session.client.JointsRemoved += OnJointsRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnJointsUpdated -= OnJointsUpdated;
-            Session.client.OnJointsBaseUpdated -= OnJointsBaseUpdated;
-            Session.client.OnJointsRemoved -= OnJointsRemoved;
+            Session.client.JointsUpdated -= OnJointsUpdated;
+            Session.client.JointsBaseUpdated -= OnJointsBaseUpdated;
+            Session.client.JointsRemoved -= OnJointsRemoved;
         }
 
         private void OnJointsRemoved(object sender, JointsEventArgs e) {

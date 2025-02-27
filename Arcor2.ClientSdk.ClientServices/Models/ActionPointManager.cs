@@ -429,22 +429,22 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnActionPointUpdated += OnActionPointUpdated;
-            Session.client.OnActionPointBaseUpdated += OnActionPointBaseUpdated;
-            Session.client.OnActionPointRemoved += OnActionPointRemoved;
-            Session.client.OnActionAdded += OnActionAdded;
-            Session.client.OnOrientationAdded += OnOrientationAdded;
-            Session.client.OnJointsAdded += OnJointsAdded;
+            Session.client.ActionPointUpdated += OnActionPointUpdated;
+            Session.client.ActionPointBaseUpdated += OnActionPointBaseUpdated;
+            Session.client.ActionPointRemoved += OnActionPointRemoved;
+            Session.client.ActionAdded += OnActionAdded;
+            Session.client.OrientationAdded += OnOrientationAdded;
+            Session.client.JointsAdded += OnJointsAdded;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnActionPointUpdated -= OnActionPointUpdated;
-            Session.client.OnActionPointBaseUpdated -= OnActionPointBaseUpdated;
-            Session.client.OnActionPointRemoved -= OnActionPointRemoved;
-            Session.client.OnActionAdded -= OnActionAdded;
-            Session.client.OnOrientationAdded -= OnOrientationAdded;
-            Session.client.OnJointsAdded -= OnJointsAdded;
+            Session.client.ActionPointUpdated -= OnActionPointUpdated;
+            Session.client.ActionPointBaseUpdated -= OnActionPointBaseUpdated;
+            Session.client.ActionPointRemoved -= OnActionPointRemoved;
+            Session.client.ActionAdded -= OnActionAdded;
+            Session.client.OrientationAdded -= OnOrientationAdded;
+            Session.client.JointsAdded -= OnJointsAdded;
         }
 
         private void OnJointsAdded(object sender, JointsEventArgs e) {

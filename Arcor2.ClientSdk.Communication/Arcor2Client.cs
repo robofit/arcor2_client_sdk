@@ -73,304 +73,304 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Raised when any connection-related error occurs.
         /// </summary>
-        public event EventHandler<Exception>? OnConnectionError;
+        public event EventHandler<Exception>? ConnectionError;
         /// <summary>
         /// Raised when connection is closed.
         /// </summary>
-        public event EventHandler<WebSocketCloseEventArgs>? OnConnectionClosed;
+        public event EventHandler<WebSocketCloseEventArgs>? ConnectionClosed;
         /// <summary>
         /// Raised when connection is successfully opened.
         /// </summary>
-        public event EventHandler? OnConnectionOpened;
+        public event EventHandler? ConnectionOpened;
 
         /// <summary>
         /// Raised when scene is removed.
         /// </summary>
-        public event EventHandler<BareSceneEventArgs>? OnSceneRemoved;
+        public event EventHandler<BareSceneEventArgs>? SceneRemoved;
         /// <summary>
         /// Raised when scene base is updated (e.g. duplication or name/description update).
         /// </summary>
-        public event EventHandler<BareSceneEventArgs>? OnSceneBaseUpdated;
+        public event EventHandler<BareSceneEventArgs>? SceneBaseUpdated;
 
         /// <summary>
         /// Raised when state of scene changes (stopping/stopped/starting/started).
         /// </summary>
-        public event EventHandler<SceneStateEventArgs>? OnSceneState;
+        public event EventHandler<SceneStateEventArgs>? SceneState;
 
         /// <summary>
         /// Raised when action object is added. 
         /// </summary>
-        public event EventHandler<SceneActionObjectEventArgs>? OnSceneActionObjectAdded;
+        public event EventHandler<SceneActionObjectEventArgs>? SceneActionObjectAdded;
         /// <summary>
         /// Raised when action object is removed.
         /// </summary>
-        public event EventHandler<SceneActionObjectEventArgs>? OnSceneActionObjectRemoved;
+        public event EventHandler<SceneActionObjectEventArgs>? SceneActionObjectRemoved;
         /// <summary>
         /// Raised when action object is updated (e.g. translated).
         /// </summary>
-        public event EventHandler<SceneActionObjectEventArgs>? OnSceneActionObjectUpdated;
+        public event EventHandler<SceneActionObjectEventArgs>? SceneActionObjectUpdated;
 
         /// <summary>
         /// Raised when action point is added.
         /// </summary>
-        public event EventHandler<BareActionPointEventArgs>? OnActionPointAdded;
+        public event EventHandler<BareActionPointEventArgs>? ActionPointAdded;
         /// <summary>
         /// Raised when action point is updated (e.g. translated).
         /// </summary>
-        public event EventHandler<BareActionPointEventArgs>? OnActionPointUpdated;
+        public event EventHandler<BareActionPointEventArgs>? ActionPointUpdated;
         /// <summary>
         /// Raised when action point base is updated (e.g. renamed).
         /// </summary>
-        public event EventHandler<BareActionPointEventArgs>? OnActionPointBaseUpdated;
+        public event EventHandler<BareActionPointEventArgs>? ActionPointBaseUpdated;
         /// <summary>
         /// Raised when action point is removed.
         /// </summary>
-        public event EventHandler<BareActionPointEventArgs>? OnActionPointRemoved;
+        public event EventHandler<BareActionPointEventArgs>? ActionPointRemoved;
 
         /// <summary>
         /// Raised when project override is added.
         /// </summary>
-        public event EventHandler<ParameterEventArgs>? OnOverrideAdded;
+        public event EventHandler<ParameterEventArgs>? ProjectOverrideAdded;
         /// <summary>
         /// Raised when project override is updated (existing named value changed).
         /// </summary>
-        public event EventHandler<ParameterEventArgs>? OnOverrideUpdated;
+        public event EventHandler<ParameterEventArgs>? ProjectOverrideUpdated;
         /// <summary>
         /// Raised when project override is removed.
         /// </summary>
-        public event EventHandler<ParameterEventArgs>? OnOverrideRemoved;
+        public event EventHandler<ParameterEventArgs>? ProjectOverrideRemoved;
 
         /// <summary>
         /// Raised when action is added.
         /// </summary>
-        public event EventHandler<ActionEventArgs>? OnActionAdded;
+        public event EventHandler<ActionEventArgs>? ActionAdded;
         /// <summary>
         /// Raised when action is updated (e.g. parameters or flows).
         /// </summary>
-        public event EventHandler<ActionEventArgs>? OnActionUpdated;
+        public event EventHandler<ActionEventArgs>? ActionUpdated;
         /// <summary>
         /// Raised when action base is updated (e.g. rename).
         /// </summary>
-        public event EventHandler<ActionEventArgs>? OnActionBaseUpdated;
+        public event EventHandler<ActionEventArgs>? ActionBaseUpdated;
         /// <summary>
         /// Raised when action is removed.
         /// </summary>
-        public event EventHandler<BareActionEventArgs>? OnActionRemoved;
+        public event EventHandler<BareActionEventArgs>? ActionRemoved;
 
         /// <summary>
         /// Raised when logic item is added.
         /// </summary>
-        public event EventHandler<LogicItemChangedEventArgs>? OnLogicItemAdded;
+        public event EventHandler<LogicItemChangedEventArgs>? LogicItemAdded;
         /// <summary>
         /// Raised when logic item is updated.
         /// </summary>
-        public event EventHandler<LogicItemChangedEventArgs>? OnLogicItemUpdated;
+        public event EventHandler<LogicItemChangedEventArgs>? LogicItemUpdated;
         /// <summary>
         /// Raised when logic item is removed.
         /// </summary>
-        public event EventHandler<LogicItemChangedEventArgs>? OnLogicItemRemoved;
+        public event EventHandler<LogicItemChangedEventArgs>? LogicItemRemoved;
 
         /// <summary>
         /// Raised when new action point orientation is added.
         /// </summary>
-        public event EventHandler<OrientationEventArgs>? OnOrientationAdded;
+        public event EventHandler<OrientationEventArgs>? OrientationAdded;
         /// <summary>
         /// Raised when action point orientation is updated.
         /// </summary>
-        public event EventHandler<OrientationEventArgs>? OnOrientationUpdated;
+        public event EventHandler<OrientationEventArgs>? OrientationUpdated;
         /// <summary>
         /// Raised when action point orientation base is updated (e.g. rename).
         /// </summary>
-        public event EventHandler<OrientationEventArgs>? OnOrientationBaseUpdated;
+        public event EventHandler<OrientationEventArgs>? OrientationBaseUpdated;
         /// <summary>
         /// Raised when action point orientation is removed.
         /// </summary>
-        public event EventHandler<OrientationEventArgs>? OnOrientationRemoved;
+        public event EventHandler<OrientationEventArgs>? OrientationRemoved;
 
         /// <summary>
         /// Raised when new action point joints are added.
         /// </summary>
-        public event EventHandler<JointsEventArgs>? OnJointsAdded;
+        public event EventHandler<JointsEventArgs>? JointsAdded;
         /// <summary>
         /// Raised when action point joints are updated.
         /// </summary>
-        public event EventHandler<JointsEventArgs>? OnJointsUpdated;
+        public event EventHandler<JointsEventArgs>? JointsUpdated;
         /// <summary>
         /// Raised when action point joints base is updated (e.g. rename).
         /// </summary>
-        public event EventHandler<JointsEventArgs>? OnJointsBaseUpdated;
+        public event EventHandler<JointsEventArgs>? JointsBaseUpdated;
         /// <summary>
         /// Raised when action point joints are removed.
         /// </summary>
-        public event EventHandler<JointsEventArgs>? OnJointsRemoved;
+        public event EventHandler<JointsEventArgs>? JointsRemoved;
 
         /// <summary>
         /// Raised when new object type is added.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneActionObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="SceneActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
-        public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeAdded;
+        public event EventHandler<ObjectTypesEventArgs>? ObjectTypeAdded;
         /// <summary>
         /// Raised when new object type is updated.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneActionObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="SceneActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
-        public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeUpdated;
+        public event EventHandler<ObjectTypesEventArgs>? ObjectTypeUpdated;
         /// <summary>
         /// Raised when new object type is removed.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="OnSceneActionObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="SceneActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
-        public event EventHandler<ObjectTypesEventArgs>? OnObjectTypeRemoved;
+        public event EventHandler<ObjectTypesEventArgs>? ObjectTypeRemoved;
 
         /// <summary>
         /// Raised when robot moves to a pose (start/end).
         /// </summary>
-        public event EventHandler<RobotMoveToPoseEventArgs>? OnRobotMoveToPose;
+        public event EventHandler<RobotMoveToPoseEventArgs>? RobotMoveToPose;
         /// <summary>
         /// Raised when robot moves to a joint (start/end).
         /// </summary>
-        public event EventHandler<RobotMoveToJointsEventArgs>? OnRobotMoveToJoints;
+        public event EventHandler<RobotMoveToJointsEventArgs>? RobotMoveToJoints;
         /// <summary>
         /// Raised when robot moves to action point orientation (start/end).
         /// </summary>
-        public event EventHandler<RobotMoveToActionPointOrientationEventArgs>? OnRobotMoveToActionPointOrientation;
+        public event EventHandler<RobotMoveToActionPointOrientationEventArgs>? RobotMoveToActionPointOrientation;
         /// <summary>
         /// Raised when robot moves to action point joints (start/end).
         /// </summary>
-        public event EventHandler<RobotMoveToActionPointJointsEventArgs>? OnRobotMoveToActionPointJoints;
+        public event EventHandler<RobotMoveToActionPointJointsEventArgs>? RobotMoveToActionPointJoints;
         /// <summary>
         /// Raised when hand teaching mode is enabled/disabled.
         /// </summary>
-        public event EventHandler<HandTeachingModeEventArgs>? OnHandTeachingMode;
+        public event EventHandler<HandTeachingModeEventArgs>? HandTeachingMode;
 
         /// <summary>
         /// Raised when new end effector poses.
         /// </summary>
-        public event EventHandler<RobotEndEffectorUpdatedEventArgs>? OnRobotEndEffectorUpdated;
+        public event EventHandler<RobotEndEffectorUpdatedEventArgs>? RobotEndEffectorUpdated;
         /// <summary>
         /// Raised on new joints values.
         /// </summary>
-        public event EventHandler<RobotJointsUpdatedEventArgs>? OnRobotJointsUpdated;
+        public event EventHandler<RobotJointsUpdatedEventArgs>? RobotJointsUpdated;
 
         /// <summary>
         /// Raised when project is saved by the server.
         /// </summary>
-        public event EventHandler? OnProjectSaved;
+        public event EventHandler? ProjectSaved;
         /// <summary>
         /// Raised when server finds open project for the user, and it is requesting the client UI to open it (e.g. such as when the user quickly reconnects).
         /// </summary>
-        public event EventHandler<OpenProjectEventArgs>? OnOpenProject;
+        public event EventHandler<OpenProjectEventArgs>? ProjectOpened;
         /// <summary>
         /// Raised when server closes a project, and it is requesting the client UI to close it.
         /// </summary>
-        public event EventHandler? OnProjectClosed;
+        public event EventHandler? ProjectClosed;
         /// <summary>
         /// Raised when project base is updated (e.g. rename).
         /// </summary>
-        public event EventHandler<BareProjectEventArgs>? OnProjectBaseUpdated;
+        public event EventHandler<BareProjectEventArgs>? ProjectBaseUpdated;
         /// <summary>
         /// Raised when project is removed.
         /// </summary>
-        public event EventHandler<BareProjectEventArgs>? OnProjectRemoved;
+        public event EventHandler<BareProjectEventArgs>? ProjectRemoved;
 
         /// <summary>
         /// Raised when project parameter is added.
         /// </summary>
-        public event EventHandler<ProjectParameterEventArgs>? OnProjectParameterAdded;
+        public event EventHandler<ProjectParameterEventArgs>? ProjectParameterAdded;
         /// <summary>
         /// Raised when project parameter is updated.
         /// </summary>
-        public event EventHandler<ProjectParameterEventArgs>? OnProjectParameterUpdated;
+        public event EventHandler<ProjectParameterEventArgs>? ProjectParameterUpdated;
         /// <summary>
         /// Raised when project parameter is removed.
         /// </summary>
-        public event EventHandler<ProjectParameterEventArgs>? OnProjectParameterRemoved;
+        public event EventHandler<ProjectParameterEventArgs>? ProjectParameterRemoved;
 
         /// <summary>
         /// Raised when scene is saved by the server.
         /// </summary>
-        public event EventHandler? OnSceneSaved;
+        public event EventHandler? SceneSaved;
         /// <summary>
         /// Raised when server finds open scene for the user, and it is requesting the client UI to open it (e.g. such as when the user quickly reconnects).
         /// </summary>
-        public event EventHandler<OpenSceneEventArgs>? OnOpenScene;
+        public event EventHandler<OpenSceneEventArgs>? SceneOpened;
         /// <summary>
         /// Raised when server closes a scene, and it is requesting the client UI to close it.
         /// </summary>
-        public event EventHandler? OnSceneClosed;
+        public event EventHandler? SceneClosed;
 
         /// <summary>
         /// Raised when the server is requesting the client UI to show the main screen (e.g. after project/scene is closed).
         /// </summary>
-        public event EventHandler<ShowMainScreenEventArgs>? OnShowMainScreen;
+        public event EventHandler<ShowMainScreenEventArgs>? ShowMainScreen;
 
         /// <summary>
         /// Raised when objects get locked by a user.
         /// </summary>
-        public event EventHandler<ObjectsLockEventArgs>? OnObjectsLocked;
+        public event EventHandler<ObjectsLockEventArgs>? ObjectsLocked;
         /// <summary>
         /// Raised when objects get unlocked.
         /// </summary>
-        public event EventHandler<ObjectsLockEventArgs>? OnObjectsUnlocked;
+        public event EventHandler<ObjectsLockEventArgs>? ObjectsUnlocked;
 
         /// <summary>
         /// Raised when server notifies beginning of the action execution triggered while editing a project.
         /// </summary>
-        public event EventHandler<ActionExecutionEventArgs>? OnActionExecution;
+        public event EventHandler<ActionExecutionEventArgs>? ActionExecution;
         /// <summary>
         /// Raised when server notifies that action execution was cancelled.
         /// </summary>
-        public event EventHandler? OnActionCancelled;
+        public event EventHandler? ActionCancelled;
         /// <summary>
         /// Raised when server notifies the result of the action execution triggered while editing a project.
         /// </summary>
-        public event EventHandler<ActionResultEventArgs>? OnActionResult;
+        public event EventHandler<ActionResultEventArgs>? ActionResult;
 
         /// <summary>
         /// Raised when the state of long-running process changes.
         /// </summary>
-        public event EventHandler<ProcessStateEventArgs>? OnProcessState;
+        public event EventHandler<ProcessStateEventArgs>? ProcessState;
 
         /// <summary>
         /// Raised when new package is added.
         /// </summary>
-        public event EventHandler<PackageChangedEventArgs>? OnPackageAdded;
+        public event EventHandler<PackageChangedEventArgs>? PackageAdded;
         /// <summary>
         /// Raised when package is updated (e.g. renamed)
         /// </summary>
-        public event EventHandler<PackageChangedEventArgs>? OnPackageUpdated;
+        public event EventHandler<PackageChangedEventArgs>? PackageUpdated;
         /// <summary>
         /// Raised when package is removed.
         /// </summary>
-        public event EventHandler<PackageChangedEventArgs>? OnPackageRemoved;
+        public event EventHandler<PackageChangedEventArgs>? PackageRemoved;
 
         /// <summary>
         /// Raised when package (script) is initialized and ready to execute.
         /// </summary>
-        public event EventHandler<PackageInfoEventArgs>? OnPackageInfo;
+        public event EventHandler<PackageInfoEventArgs>? PackageInfo;
         /// <summary>
         /// Raised when execution status of a package changes.
         /// </summary>
-        public event EventHandler<PackageStateEventArgs>? OnPackageState;
+        public event EventHandler<PackageStateEventArgs>? PackageState;
         /// <summary>
         /// Raised when error occurs while running a package.
         /// </summary>
-        public event EventHandler<PackageExceptionEventArgs>? OnPackageException;
+        public event EventHandler<PackageExceptionEventArgs>? PackageException;
         /// <summary>
         /// Raised while running a package before execution of an action (parameters and other information).
         /// </summary>
-        public event EventHandler<ActionStateBeforeEventArgs>? OnActionStateBefore;
+        public event EventHandler<ActionStateBeforeEventArgs>? ActionStateBefore;
         /// <summary>
         /// Raised while running a package after execution of an action (returned value and other information).
         /// </summary>
-        public event EventHandler<ActionStateAfterEventArgs>? OnActionStateAfter;
+        public event EventHandler<ActionStateAfterEventArgs>? ActionStateAfter;
 
         #endregion
 
@@ -386,15 +386,15 @@ namespace Arcor2.ClientSdk.Communication
             this.logger = logger ?? null;
 
             webSocket.OnError += (_, args) => {
-                OnConnectionError?.Invoke(this, args.Exception);
+                ConnectionError?.Invoke(this, args.Exception);
                 logger?.LogError($"A connection-related exception occured.\n{args}");
             };
             webSocket.OnClose += (_, args) => {
-                OnConnectionClosed?.Invoke(this, args);
+                ConnectionClosed?.Invoke(this, args);
                 logger?.LogInfo("A connection with the ARCOR2 server was closed.");
             };
             webSocket.OnOpen += (_, __) => {
-                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
                 logger?.LogInfo("A connection with the ARCOR2 server was opened.");
             };
             webSocket.OnMessage += (_, args) => {
@@ -420,15 +420,15 @@ namespace Arcor2.ClientSdk.Communication
             this.logger = logger ?? null;
 
             webSocket.OnError += (_, args) => {
-                OnConnectionError?.Invoke(this, args.Exception);
+                ConnectionError?.Invoke(this, args.Exception);
                 logger?.LogError($"A connection-related exception occured.\n{args}");
             };
             webSocket.OnClose += (_, args) => {
-                OnConnectionClosed?.Invoke(this, args);
+                ConnectionClosed?.Invoke(this, args);
                 logger?.LogInfo("A connection with the ARCOR2 server was closed.");
             };
             webSocket.OnOpen += (_, __) => {
-                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
                 logger?.LogInfo("A connection with the ARCOR2 server was opened.");
             };
             webSocket.OnMessage += (_, args) => {
@@ -725,12 +725,12 @@ namespace Arcor2.ClientSdk.Communication
                 case SceneChanged.ChangeTypeEnum.Add:
                     throw new NotImplementedException("SceneChanged add should never occur.");
                 case SceneChanged.ChangeTypeEnum.Remove:
-                    OnSceneRemoved?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
+                    SceneRemoved?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
                     break;
                 case SceneChanged.ChangeTypeEnum.Update:
                     throw new NotImplementedException("SceneChanged update should never occur.");
                 case SceneChanged.ChangeTypeEnum.UpdateBase:
-                    OnSceneBaseUpdated?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
+                    SceneBaseUpdated?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'SceneChanged' event.");
@@ -739,20 +739,20 @@ namespace Arcor2.ClientSdk.Communication
 
         private void HandleSceneState(string data) {
             var sceneState = JsonConvert.DeserializeObject<SceneState>(data, jsonSettings)!;
-            OnSceneState?.Invoke(this, new SceneStateEventArgs(sceneState.Data));
+            SceneState?.Invoke(this, new SceneStateEventArgs(sceneState.Data));
         }
 
         private void HandleSceneObjectChanged(string data) {
             var sceneObjectChanged = JsonConvert.DeserializeObject<SceneObjectChanged>(data, jsonSettings)!;
             switch(sceneObjectChanged.ChangeType) {
                 case SceneObjectChanged.ChangeTypeEnum.Add:
-                    OnSceneActionObjectAdded?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
+                    SceneActionObjectAdded?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.Remove:
-                    OnSceneActionObjectRemoved?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
+                    SceneActionObjectRemoved?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.Update:
-                    OnSceneActionObjectUpdated?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
+                    SceneActionObjectUpdated?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("SceneObjectChanged base update should never occur.");
@@ -766,16 +766,16 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(actionPointChanged.ChangeType) {
                 case ActionPointChanged.ChangeTypeEnum.Add:
-                    OnActionPointAdded?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
+                    ActionPointAdded?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
                     break;
                 case ActionPointChanged.ChangeTypeEnum.Remove:
-                    OnActionPointRemoved?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
+                    ActionPointRemoved?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
                     break;
                 case ActionPointChanged.ChangeTypeEnum.Update:
-                    OnActionPointUpdated?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
+                    ActionPointUpdated?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
                     break;
                 case ActionPointChanged.ChangeTypeEnum.UpdateBase:
-                    OnActionPointBaseUpdated?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
+                    ActionPointBaseUpdated?.Invoke(this, new BareActionPointEventArgs(actionPointChanged.Data));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'ActionPointChanged' event.");
@@ -786,16 +786,16 @@ namespace Arcor2.ClientSdk.Communication
             var overrideUpdated = JsonConvert.DeserializeObject<OverrideUpdated>(data, jsonSettings)!;
 
             switch(overrideUpdated.ChangeType) {
-                case OverrideUpdated.ChangeTypeEnum.Add:
-                    OnOverrideAdded?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
+                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.Add:
+                    ProjectOverrideAdded?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
                     break;
-                case OverrideUpdated.ChangeTypeEnum.Remove:
-                    OnOverrideRemoved?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
+                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.Remove:
+                    ProjectOverrideRemoved?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
                     break;
-                case OverrideUpdated.ChangeTypeEnum.Update:
-                    OnOverrideUpdated?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
+                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.Update:
+                    ProjectOverrideUpdated?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
                     break;
-                case OverrideUpdated.ChangeTypeEnum.UpdateBase:
+                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("OverrideUpdated base update should never occur.");
                 default:
                     throw new NotImplementedException("Unknown change type for 'OverrideUpdated' event.");
@@ -811,20 +811,20 @@ namespace Arcor2.ClientSdk.Communication
                 case ActionChanged.ChangeTypeEnum.Add:
                     var fullActionJson = JObject.Parse(data)["data"]!.ToString();
                     var fullAction = JsonConvert.DeserializeObject<Action>(fullActionJson, jsonSettings);
-                    OnActionAdded?.Invoke(this, new ActionEventArgs(fullAction!, actionChanged.ParentId));
+                    ActionAdded?.Invoke(this, new ActionEventArgs(fullAction!, actionChanged.ParentId));
                     break;
                 case ActionChanged.ChangeTypeEnum.Remove:
-                    OnActionRemoved?.Invoke(this, new BareActionEventArgs(actionChanged.Data));
+                    ActionRemoved?.Invoke(this, new BareActionEventArgs(actionChanged.Data));
                     break;
                 case ActionChanged.ChangeTypeEnum.Update:
                     var fullActionJson2 = JObject.Parse(data)["data"]!.ToString();
                     var fullAction2 = JsonConvert.DeserializeObject<Action>(fullActionJson2, jsonSettings);
-                    OnActionUpdated?.Invoke(this, new ActionEventArgs(fullAction2!, actionChanged.ParentId));
+                    ActionUpdated?.Invoke(this, new ActionEventArgs(fullAction2!, actionChanged.ParentId));
                     break;
                 case ActionChanged.ChangeTypeEnum.UpdateBase:
                     var fullActionJson3 = JObject.Parse(data)["data"]!.ToString();
                     var fullAction3 = JsonConvert.DeserializeObject<Action>(fullActionJson3, jsonSettings);
-                    OnActionBaseUpdated?.Invoke(this, new ActionEventArgs(fullAction3!, actionChanged.ParentId));
+                    ActionBaseUpdated?.Invoke(this, new ActionEventArgs(fullAction3!, actionChanged.ParentId));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'ActionChanged' event.");
@@ -836,13 +836,13 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(logicItemChanged.ChangeType) {
                 case LogicItemChanged.ChangeTypeEnum.Add:
-                    OnLogicItemAdded?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
+                    LogicItemAdded?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
                     break;
                 case LogicItemChanged.ChangeTypeEnum.Remove:
-                    OnLogicItemRemoved?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
+                    LogicItemRemoved?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
                     break;
                 case LogicItemChanged.ChangeTypeEnum.Update:
-                    OnLogicItemUpdated?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
+                    LogicItemUpdated?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
                     break;
                 case LogicItemChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("LogicItemChanged base update should never occur.");
@@ -856,16 +856,16 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(orientationChanged.ChangeType) {
                 case OrientationChanged.ChangeTypeEnum.Add:
-                    OnOrientationAdded?.Invoke(this, new OrientationEventArgs(orientationChanged.Data, orientationChanged.ParentId));
+                    OrientationAdded?.Invoke(this, new OrientationEventArgs(orientationChanged.Data, orientationChanged.ParentId));
                     break;
                 case OrientationChanged.ChangeTypeEnum.Remove:
-                    OnOrientationRemoved?.Invoke(this, new OrientationEventArgs(orientationChanged.Data));
+                    OrientationRemoved?.Invoke(this, new OrientationEventArgs(orientationChanged.Data));
                     break;
                 case OrientationChanged.ChangeTypeEnum.Update:
-                    OnOrientationUpdated?.Invoke(this, new OrientationEventArgs(orientationChanged.Data));
+                    OrientationUpdated?.Invoke(this, new OrientationEventArgs(orientationChanged.Data));
                     break;
                 case OrientationChanged.ChangeTypeEnum.UpdateBase:
-                    OnOrientationBaseUpdated?.Invoke(this, new OrientationEventArgs(orientationChanged.Data));
+                    OrientationBaseUpdated?.Invoke(this, new OrientationEventArgs(orientationChanged.Data));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'OrientationChanged' event.");
@@ -877,16 +877,16 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(jointsChanged.ChangeType) {
                 case JointsChanged.ChangeTypeEnum.Add:
-                    OnJointsAdded?.Invoke(this, new JointsEventArgs(jointsChanged.Data, jointsChanged.ParentId));
+                    JointsAdded?.Invoke(this, new JointsEventArgs(jointsChanged.Data, jointsChanged.ParentId));
                     break;
                 case JointsChanged.ChangeTypeEnum.Remove:
-                    OnJointsRemoved?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
+                    JointsRemoved?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
                     break;
                 case JointsChanged.ChangeTypeEnum.Update:
-                    OnJointsUpdated?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
+                    JointsUpdated?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
                     break;
                 case JointsChanged.ChangeTypeEnum.UpdateBase:
-                    OnJointsBaseUpdated?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
+                    JointsBaseUpdated?.Invoke(this, new JointsEventArgs(jointsChanged.Data));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'JointsChanged' event.");
@@ -898,13 +898,13 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(objectTypesChangedEvent.ChangeType) {
                 case ChangedObjectTypes.ChangeTypeEnum.Add:
-                    OnObjectTypeAdded?.Invoke(this, new ObjectTypesEventArgs(objectTypesChangedEvent.Data));
+                    ObjectTypeAdded?.Invoke(this, new ObjectTypesEventArgs(objectTypesChangedEvent.Data));
                     break;
                 case ChangedObjectTypes.ChangeTypeEnum.Remove:
-                    OnObjectTypeRemoved?.Invoke(this, new ObjectTypesEventArgs(objectTypesChangedEvent.Data));
+                    ObjectTypeRemoved?.Invoke(this, new ObjectTypesEventArgs(objectTypesChangedEvent.Data));
                     break;
                 case ChangedObjectTypes.ChangeTypeEnum.Update:
-                    OnObjectTypeUpdated?.Invoke(this, new ObjectTypesEventArgs(objectTypesChangedEvent.Data));
+                    ObjectTypeUpdated?.Invoke(this, new ObjectTypesEventArgs(objectTypesChangedEvent.Data));
                     break;
                 case ChangedObjectTypes.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("ChangedObjectTypes base update should never occur.");
@@ -915,107 +915,107 @@ namespace Arcor2.ClientSdk.Communication
 
         private void HandleRobotMoveToActionPointOrientation(string data) {
             var robotMoveToActionPointOrientation = JsonConvert.DeserializeObject<RobotMoveToActionPointOrientation>(data, jsonSettings)!;
-            OnRobotMoveToActionPointOrientation?.Invoke(this, new RobotMoveToActionPointOrientationEventArgs(robotMoveToActionPointOrientation.Data));
+            RobotMoveToActionPointOrientation?.Invoke(this, new RobotMoveToActionPointOrientationEventArgs(robotMoveToActionPointOrientation.Data));
         }
 
         private void HandleRobotMoveToPose(string data) {
             var robotMoveToPose = JsonConvert.DeserializeObject<RobotMoveToPose>(data, jsonSettings)!;
-            OnRobotMoveToPose?.Invoke(this, new RobotMoveToPoseEventArgs(robotMoveToPose.Data));
+            RobotMoveToPose?.Invoke(this, new RobotMoveToPoseEventArgs(robotMoveToPose.Data));
         }
 
         private void HandleRobotMoveToJoints(string data) {
             var robotMoveToJoints = JsonConvert.DeserializeObject<RobotMoveToJoints>(data, jsonSettings)!;
-            OnRobotMoveToJoints?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
+            RobotMoveToJoints?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
         }
 
         private void HandleRobotMoveToActionPointJoints(string data) {
             var robotMoveToActionPointJoints = JsonConvert.DeserializeObject<RobotMoveToActionPointJoints>(data, jsonSettings)!;
-            OnRobotMoveToActionPointJoints?.Invoke(this, new RobotMoveToActionPointJointsEventArgs(robotMoveToActionPointJoints.Data));
+            RobotMoveToActionPointJoints?.Invoke(this, new RobotMoveToActionPointJointsEventArgs(robotMoveToActionPointJoints.Data));
         }
 
         private void HandleActionStateBefore(string data) {
             var actionStateBefore = JsonConvert.DeserializeObject<ActionStateBefore>(data, jsonSettings)!;
-            OnActionStateBefore?.Invoke(this, new ActionStateBeforeEventArgs(actionStateBefore.Data));
+            ActionStateBefore?.Invoke(this, new ActionStateBeforeEventArgs(actionStateBefore.Data));
         }
 
         private void HandleActionStateAfter(string data) {
             var actionStateAfter = JsonConvert.DeserializeObject<ActionStateAfter>(data, jsonSettings)!;
-            OnActionStateAfter?.Invoke(this, new ActionStateAfterEventArgs(actionStateAfter.Data));
+            ActionStateAfter?.Invoke(this, new ActionStateAfterEventArgs(actionStateAfter.Data));
         }
 
         private void HandlePackageState(string data) {
             var projectState = JsonConvert.DeserializeObject<PackageState>(data, jsonSettings)!;
-            OnPackageState?.Invoke(this, new PackageStateEventArgs(projectState.Data));
+            PackageState?.Invoke(this, new PackageStateEventArgs(projectState.Data));
         }
 
         private void HandlePackageInfo(string data) {
             var packageInfo = JsonConvert.DeserializeObject<PackageInfo>(data, jsonSettings)!;
-            OnPackageInfo?.Invoke(this, new PackageInfoEventArgs(packageInfo.Data));
+            PackageInfo?.Invoke(this, new PackageInfoEventArgs(packageInfo.Data));
         }
 
         private void HandleProjectSaved(string data) {
             // Not needed, but may throw depending on the set strictness
             var projectSaved = JsonConvert.DeserializeObject<ProjectSaved>(data, jsonSettings)!;
-            OnProjectSaved?.Invoke(this, EventArgs.Empty);
+            ProjectSaved?.Invoke(this, EventArgs.Empty);
         }
 
         private void HandleSceneSaved(string data) {
             // Not needed, but may throw depending on the set strictness
             var sceneSaved = JsonConvert.DeserializeObject<SceneSaved>(data, jsonSettings)!;
-            OnSceneSaved?.Invoke(this, EventArgs.Empty);
+            SceneSaved?.Invoke(this, EventArgs.Empty);
         }
 
         private void HandleProjectException(string data) {
             var projectException = JsonConvert.DeserializeObject<ProjectException>(data, jsonSettings)!;
-            OnPackageException?.Invoke(this, new PackageExceptionEventArgs(projectException.Data));
+            PackageException?.Invoke(this, new PackageExceptionEventArgs(projectException.Data));
         }
 
         private void HandleActionResult(string data) {
             var actionResult = JsonConvert.DeserializeObject<ActionResult>(data, jsonSettings)!;
-            OnActionResult?.Invoke(this, new ActionResultEventArgs(actionResult.Data));
+            ActionResult?.Invoke(this, new ActionResultEventArgs(actionResult.Data));
         }
 
         private void HandleActionCancelled(string data) {
             // Not needed, but may throw depending on the set strictness
             var actionCancelled = JsonConvert.DeserializeObject<ActionCancelled>(data, jsonSettings)!;
-            OnActionCancelled?.Invoke(this, EventArgs.Empty);
+            ActionCancelled?.Invoke(this, EventArgs.Empty);
         }
 
         private void HandleActionExecution(string data) {
             var actionExecution = JsonConvert.DeserializeObject<ActionExecution>(data, jsonSettings)!;
-            OnActionExecution?.Invoke(this, new ActionExecutionEventArgs(actionExecution.Data));
+            ActionExecution?.Invoke(this, new ActionExecutionEventArgs(actionExecution.Data));
         }
 
         private void HandleRobotEef(string data) {
             var robotEef = JsonConvert.DeserializeObject<RobotEef>(data, jsonSettings)!;
-            OnRobotEndEffectorUpdated?.Invoke(this, new RobotEndEffectorUpdatedEventArgs(robotEef.Data));
+            RobotEndEffectorUpdated?.Invoke(this, new RobotEndEffectorUpdatedEventArgs(robotEef.Data));
         }
 
         private void HandleRobotJoints(string data) {
             var robotJoints = JsonConvert.DeserializeObject<RobotJoints>(data, jsonSettings)!;
-            OnRobotJointsUpdated?.Invoke(this, new RobotJointsUpdatedEventArgs(robotJoints.Data));
+            RobotJointsUpdated?.Invoke(this, new RobotJointsUpdatedEventArgs(robotJoints.Data));
         }
 
         private void HandleOpenProject(string data) {
             var openProject = JsonConvert.DeserializeObject<OpenProject>(data, jsonSettings)!;
-            OnOpenProject?.Invoke(this, new OpenProjectEventArgs(openProject.Data));
+            ProjectOpened?.Invoke(this, new OpenProjectEventArgs(openProject.Data));
         }
 
         private void HandleOpenScene(string data) {
             var openScene = JsonConvert.DeserializeObject<OpenScene>(data, jsonSettings)!;
-            OnOpenScene?.Invoke(this, new OpenSceneEventArgs(openScene.Data));
+            SceneOpened?.Invoke(this, new OpenSceneEventArgs(openScene.Data));
         }
 
         private void HandleProjectClosed(string data) {
             // Not needed, but may throw depending on the set strictness
             var projectClosed = JsonConvert.DeserializeObject<ProjectClosed>(data, jsonSettings)!;
-            OnProjectClosed?.Invoke(this, EventArgs.Empty);
+            ProjectClosed?.Invoke(this, EventArgs.Empty);
         }
 
         private void HandleSceneClosed(string data) {
             // Not needed, but may throw depending on the set strictness
             var sceneClosed = JsonConvert.DeserializeObject<SceneClosed>(data, jsonSettings)!;
-            OnSceneClosed?.Invoke(this, EventArgs.Empty);
+            SceneClosed?.Invoke(this, EventArgs.Empty);
         }
 
         private void HandleProjectChanged(string data) {
@@ -1025,12 +1025,12 @@ namespace Arcor2.ClientSdk.Communication
                 case ProjectChanged.ChangeTypeEnum.Add:
                     throw new NotImplementedException("ProjectChanged add should never occur!");
                 case ProjectChanged.ChangeTypeEnum.Remove:
-                    OnProjectRemoved?.Invoke(this, new BareProjectEventArgs(projectChanged.Data));
+                    ProjectRemoved?.Invoke(this, new BareProjectEventArgs(projectChanged.Data));
                     break;
                 case ProjectChanged.ChangeTypeEnum.Update:
                     throw new NotImplementedException("ProjectChanged update should never occur!");
                 case ProjectChanged.ChangeTypeEnum.UpdateBase:
-                    OnProjectBaseUpdated?.Invoke(this, new BareProjectEventArgs(projectChanged.Data));
+                    ProjectBaseUpdated?.Invoke(this, new BareProjectEventArgs(projectChanged.Data));
                     break;
                 default:
                     throw new NotImplementedException("Unknown change type for 'ProjectChanged' event.");
@@ -1039,7 +1039,7 @@ namespace Arcor2.ClientSdk.Communication
 
         private void HandleShowMainScreen(string data) {
             var showMainScreen = JsonConvert.DeserializeObject<ShowMainScreen>(data, jsonSettings)!;
-            OnShowMainScreen?.Invoke(this, new ShowMainScreenEventArgs(showMainScreen.Data));
+            ShowMainScreen?.Invoke(this, new ShowMainScreenEventArgs(showMainScreen.Data));
         }
 
         private void HandleProjectParameterChanged(string data) {
@@ -1047,16 +1047,16 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(projectParameterChanged.ChangeType) {
                 case ProjectParameterChanged.ChangeTypeEnum.Add:
-                    OnProjectParameterAdded?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
+                    ProjectParameterAdded?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
                     break;
                 case ProjectParameterChanged.ChangeTypeEnum.Update:
-                    OnProjectParameterUpdated?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
+                    ProjectParameterUpdated?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
                     break;
                 case ProjectParameterChanged.ChangeTypeEnum.Remove:
-                    OnProjectParameterRemoved?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
+                    ProjectParameterRemoved?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
                     break;
                 case ProjectParameterChanged.ChangeTypeEnum.UpdateBase:
-                    OnProjectParameterUpdated?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
+                    ProjectParameterUpdated?.Invoke(this, new ProjectParameterEventArgs(projectParameterChanged.Data));
                     break;
                 default:
                     throw new NotImplementedException();
@@ -1065,22 +1065,22 @@ namespace Arcor2.ClientSdk.Communication
 
         private void HandleObjectUnlocked(string data) {
             var objectsUnlocked = JsonConvert.DeserializeObject<ObjectsUnlocked>(data, jsonSettings)!;
-            OnObjectsUnlocked?.Invoke(this, new ObjectsLockEventArgs(objectsUnlocked.Data));
+            ObjectsUnlocked?.Invoke(this, new ObjectsLockEventArgs(objectsUnlocked.Data));
         }
 
         private void HandleObjectLocked(string data) {
             var objectsLocked = JsonConvert.DeserializeObject<ObjectsLocked>(data, jsonSettings)!;
-            OnObjectsLocked?.Invoke(this, new ObjectsLockEventArgs(objectsLocked.Data));
+            ObjectsLocked?.Invoke(this, new ObjectsLockEventArgs(objectsLocked.Data));
         }
 
         private void HandleProcessState(string data) {
             var processState = JsonConvert.DeserializeObject<ProcessState>(data, jsonSettings)!;
-            OnProcessState?.Invoke(this, new ProcessStateEventArgs(processState.Data));
+            ProcessState?.Invoke(this, new ProcessStateEventArgs(processState.Data));
         }
 
         private void HandleHandTeachingMode(string data) {
             var handTeachingMode = JsonConvert.DeserializeObject<HandTeachingMode>(data, jsonSettings)!;
-            OnHandTeachingMode?.Invoke(this, new HandTeachingModeEventArgs(handTeachingMode.Data));
+            HandTeachingMode?.Invoke(this, new HandTeachingModeEventArgs(handTeachingMode.Data));
         }
 
         private void HandlePackageChanged(string data) {
@@ -1088,13 +1088,13 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(packageChanged.ChangeType) {
                 case PackageChanged.ChangeTypeEnum.Add:
-                    OnPackageAdded?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    PackageAdded?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
                     break;
                 case PackageChanged.ChangeTypeEnum.Update:
-                    OnPackageUpdated?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    PackageUpdated?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
                     break;
                 case PackageChanged.ChangeTypeEnum.Remove:
-                    OnPackageRemoved?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    PackageRemoved?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
                     break;
                 case PackageChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("PackageChanged base update should never occur.");

@@ -172,22 +172,22 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnActionUpdated += OnActionUpdated;
-            Session.client.OnActionBaseUpdated += OnActionBaseUpdated;
-            Session.client.OnActionRemoved += OnActionRemoved;
-            Session.client.OnActionExecution += OnActionExecution;
-            Session.client.OnActionCancelled += OnActionCancelled;
-            Session.client.OnActionResult += OnActionResult;
+            Session.client.ActionUpdated += OnActionUpdated;
+            Session.client.ActionBaseUpdated += OnActionBaseUpdated;
+            Session.client.ActionRemoved += OnActionRemoved;
+            Session.client.ActionExecution += OnActionExecution;
+            Session.client.ActionCancelled += OnActionCancelled;
+            Session.client.ActionResult += OnActionResult;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnActionUpdated -= OnActionUpdated;
-            Session.client.OnActionBaseUpdated -= OnActionBaseUpdated;
-            Session.client.OnActionRemoved -= OnActionRemoved;
-            Session.client.OnActionExecution -= OnActionExecution;
-            Session.client.OnActionCancelled -= OnActionCancelled;
-            Session.client.OnActionResult -= OnActionResult;
+            Session.client.ActionUpdated -= OnActionUpdated;
+            Session.client.ActionBaseUpdated -= OnActionBaseUpdated;
+            Session.client.ActionRemoved -= OnActionRemoved;
+            Session.client.ActionExecution -= OnActionExecution;
+            Session.client.ActionCancelled -= OnActionCancelled;
+            Session.client.ActionResult -= OnActionResult;
         }
 
         private void OnActionRemoved(object sender, BareActionEventArgs e) {

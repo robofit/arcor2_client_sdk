@@ -88,18 +88,18 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         protected override void RegisterHandlers()
         {
             base.RegisterHandlers();
-            Session.client.OnOverrideUpdated += OnOverrideUpdated;
-            Session.client.OnOverrideRemoved += OnOverrideRemoved;
+            Session.client.ProjectOverrideUpdated += OnProjectOverrideUpdated;
+            Session.client.ProjectOverrideRemoved += OnProjectOverrideRemoved;
         }
 
         protected override void UnregisterHandlers()
         {
             base.UnregisterHandlers();
-            Session.client.OnOverrideUpdated -= OnOverrideUpdated;
-            Session.client.OnOverrideRemoved -= OnOverrideRemoved;
+            Session.client.ProjectOverrideUpdated -= OnProjectOverrideUpdated;
+            Session.client.ProjectOverrideRemoved -= OnProjectOverrideRemoved;
         }
 
-        private void OnOverrideUpdated(object sender, ParameterEventArgs e)
+        private void OnProjectOverrideUpdated(object sender, ParameterEventArgs e)
         {
             if (Project.IsOpen)
             {
@@ -111,7 +111,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             }
         }
 
-        private void OnOverrideRemoved(object sender, ParameterEventArgs e)
+        private void OnProjectOverrideRemoved(object sender, ParameterEventArgs e)
         {
             if (Project.IsOpen)
             {

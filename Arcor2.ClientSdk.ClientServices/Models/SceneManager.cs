@@ -385,20 +385,20 @@ namespace Arcor2.ClientSdk.ClientServices.Models
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnSceneSaved += Saved;
-            Session.client.OnSceneRemoved += OnSceneRemoved;
-            Session.client.OnSceneBaseUpdated += OnSceneBaseUpdated;
-            Session.client.OnSceneState += OnSceneState;
-            Session.client.OnSceneActionObjectAdded += OnSceneActionObjectAdded;
+            Session.client.SceneSaved += Saved;
+            Session.client.SceneRemoved += OnSceneRemoved;
+            Session.client.SceneBaseUpdated += OnSceneBaseUpdated;
+            Session.client.SceneState += OnSceneState;
+            Session.client.SceneActionObjectAdded += OnSceneActionObjectAdded;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnSceneSaved -= Saved;
-            Session.client.OnSceneRemoved -= OnSceneRemoved;
-            Session.client.OnSceneBaseUpdated -= OnSceneBaseUpdated;
-            Session.client.OnSceneState -= OnSceneState;
-            Session.client.OnSceneActionObjectAdded -= OnSceneActionObjectAdded;
+            Session.client.SceneSaved -= Saved;
+            Session.client.SceneRemoved -= OnSceneRemoved;
+            Session.client.SceneBaseUpdated -= OnSceneBaseUpdated;
+            Session.client.SceneState -= OnSceneState;
+            Session.client.SceneActionObjectAdded -= OnSceneActionObjectAdded;
         }
 
         public new void Dispose() {

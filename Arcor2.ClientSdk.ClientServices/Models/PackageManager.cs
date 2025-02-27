@@ -121,14 +121,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnPackageUpdated += OnPackageUpdated;
-            Session.client.OnPackageRemoved += OnPackageRemoved;
+            Session.client.PackageUpdated += OnPackageUpdated;
+            Session.client.PackageRemoved += OnPackageRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnPackageUpdated -= OnPackageUpdated;
-            Session.client.OnPackageRemoved -= OnPackageRemoved;
+            Session.client.PackageUpdated -= OnPackageUpdated;
+            Session.client.PackageRemoved -= OnPackageRemoved;
         }
 
         private void OnPackageRemoved(object sender, PackageChangedEventArgs e) {

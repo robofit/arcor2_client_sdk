@@ -21,7 +21,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : Arcor2ClientFixture {
         await Client.ConnectAsync(ValidUri);
         ObjectsLockEventArgs? raisedEventArgs = null;
 
-        Client.OnObjectsLocked += (_, args) => { raisedEventArgs = args; };
+        Client.ObjectsLocked += (_, args) => { raisedEventArgs = args; };
 
         WebSocket.ReceiveMockMessage(sampleObjectsLockedEvent.ToJson());
 
@@ -35,7 +35,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : Arcor2ClientFixture {
         await Client.ConnectAsync(ValidUri);
         BareSceneEventArgs? raisedEventArgs = null;
 
-        Client.OnSceneRemoved += (_, args) => { raisedEventArgs = args; };
+        Client.SceneRemoved += (_, args) => { raisedEventArgs = args; };
 
         WebSocket.ReceiveMockMessage(sampleSceneRemovedEvent.ToJson());
 
@@ -53,7 +53,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : Arcor2ClientFixture {
         await Client.ConnectAsync(ValidUri);
         ObjectsLockEventArgs? raisedEventArgs = null;
 
-        Client.OnObjectsLocked += (_, args) => { raisedEventArgs = args; };
+        Client.ObjectsLocked += (_, args) => { raisedEventArgs = args; };
 
         var sampleEventWrongName = sampleObjectsLockedEvent;
         sampleEventWrongName.Event = "WrongEventName";

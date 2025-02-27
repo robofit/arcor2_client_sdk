@@ -9,7 +9,6 @@ using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
-using static System.Collections.Specialized.BitVector32;
 
 // Some information about architecture of this package:
 //
@@ -101,15 +100,15 @@ namespace Arcor2.ClientSdk.ClientServices {
             this.logger = logger;
             client = new Arcor2Client(new Arcor2ClientSettings(), this.logger);
 
-            client.OnConnectionOpened += (sender, args) => {
+            client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
                 OnConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
-            client.OnConnectionClosed += (sender, args) => {
+            client.ConnectionClosed += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Closed;
                 OnConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
-            client.OnConnectionError += OnConnectionError;
+            client.ConnectionError += OnConnectionError;
             RegisterHandlers();
         }
 
@@ -127,15 +126,15 @@ namespace Arcor2.ClientSdk.ClientServices {
             this.logger = logger;
             client = new Arcor2Client(websocket, new Arcor2ClientSettings(), this.logger);
 
-            client.OnConnectionOpened += (sender, args) => {
+            client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
                 OnConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
-            client.OnConnectionClosed += (sender, args) => {
+            client.ConnectionClosed += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Closed;
                 OnConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
-            client.OnConnectionError += OnConnectionError;
+            client.ConnectionError += OnConnectionError;
         }
 
         /// <summary>
@@ -480,17 +479,17 @@ namespace Arcor2.ClientSdk.ClientServices {
 
         private void RegisterHandlers() {
             // Navigation
-            client.OnShowMainScreen += OnShowMainScreen;
-            client.OnOpenScene += OnOpenScene;
-            client.OnSceneClosed += OnSceneClosed;
-            client.OnOpenProject += OnOpenProject;
-            client.OnProjectClosed += OnProjectClosed;
+            client.ShowMainScreen += OnShowMainScreen;
+            client.SceneOpened += OnSceneOpened;
+            client.SceneClosed += OnSceneClosed;
+            client.ProjectOpened += OnProjectOpened;
+            client.ProjectClosed += OnProjectClosed;
 
             // Addition of sub-entities
-            client.OnObjectTypeAdded += OnObjectTypeAdded;
-            client.OnSceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
-            client.OnProjectBaseUpdated += OnProjectBaseUpdated; // Duplication uses this
-            client.OnPackageAdded += OnPackageAdded;
+            client.ObjectTypeAdded += OnObjectTypeAdded;
+            client.SceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
+            client.ProjectBaseUpdated += OnProjectBaseUpdated; // Duplication uses this
+            client.PackageAdded += OnPackageAdded;
         }
 
         private void OnPackageAdded(object sender, PackageChangedEventArgs e) {
@@ -504,7 +503,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
         }
 
-        private void OnOpenProject(object sender, OpenProjectEventArgs e) {
+        private void OnProjectOpened(object sender, OpenProjectEventArgs e) {
             // Ad-Hoc create managers if needed
             var scene = Scenes.FirstOrDefault(s => s.Id == e.Data.Scene.Id);
             if(scene == null) {
@@ -533,7 +532,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
         }
 
-        private void OnOpenScene(object sender, OpenSceneEventArgs e) {
+        private void OnSceneOpened(object sender, OpenSceneEventArgs e) {
             // Ad-Hoc create a manager
             var scene = Scenes.FirstOrDefault(s => s.Data.Id == e.Data.Scene.Id);
             if(scene == null) {

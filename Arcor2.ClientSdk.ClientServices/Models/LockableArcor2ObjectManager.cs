@@ -76,8 +76,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnObjectsLocked += OnObjectsLocked;
-            Session.client.OnObjectsUnlocked += OnObjectsUnlocked;
+            Session.client.ObjectsLocked += OnObjectsLocked;
+            Session.client.ObjectsUnlocked += OnObjectsUnlocked;
         }
 
         /// <summary>
@@ -85,8 +85,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnObjectsLocked -= OnObjectsLocked;
-            Session.client.OnObjectsUnlocked -= OnObjectsUnlocked;
+            Session.client.ObjectsLocked -= OnObjectsLocked;
+            Session.client.ObjectsUnlocked -= OnObjectsUnlocked;
         }
 
         private void OnObjectsLocked(object sender, ObjectsLockEventArgs e) {

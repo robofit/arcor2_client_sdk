@@ -75,14 +75,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnProjectParameterUpdated += OnProjectParameterUpdated;
-            Session.client.OnProjectParameterRemoved += OnProjectParameterRemoved;
+            Session.client.ProjectParameterUpdated += OnProjectParameterUpdated;
+            Session.client.ProjectParameterRemoved += OnProjectParameterRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnProjectParameterUpdated -= OnProjectParameterUpdated;
-            Session.client.OnProjectParameterRemoved -= OnProjectParameterRemoved;
+            Session.client.ProjectParameterUpdated -= OnProjectParameterUpdated;
+            Session.client.ProjectParameterRemoved -= OnProjectParameterRemoved;
         }
 
         private void OnProjectParameterRemoved(object sender, ProjectParameterEventArgs e) {

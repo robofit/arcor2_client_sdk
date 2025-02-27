@@ -118,14 +118,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnObjectTypeUpdated += OnObjectTypeUpdated;
-            Session.client.OnObjectTypeRemoved += OnObjectTypeRemoved;
+            Session.client.ObjectTypeUpdated += OnObjectTypeUpdated;
+            Session.client.ObjectTypeRemoved += OnObjectTypeRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnObjectTypeUpdated -= OnObjectTypeUpdated;
-            Session.client.OnObjectTypeRemoved -= OnObjectTypeRemoved;
+            Session.client.ObjectTypeUpdated -= OnObjectTypeUpdated;
+            Session.client.ObjectTypeRemoved -= OnObjectTypeRemoved;
         }
 
         private void OnObjectTypeRemoved(object sender, ObjectTypesEventArgs args) {

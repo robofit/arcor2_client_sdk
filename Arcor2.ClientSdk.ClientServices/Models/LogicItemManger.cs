@@ -101,14 +101,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OnLogicItemUpdated += OnLogicItemUpdated;
-            Session.client.OnLogicItemRemoved += OnLogicItemRemoved;
+            Session.client.LogicItemUpdated += OnLogicItemUpdated;
+            Session.client.LogicItemRemoved += OnLogicItemRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OnLogicItemUpdated -= OnLogicItemUpdated;
-            Session.client.OnLogicItemRemoved -= OnLogicItemRemoved;
+            Session.client.LogicItemUpdated -= OnLogicItemUpdated;
+            Session.client.LogicItemRemoved -= OnLogicItemRemoved;
         }
 
         private void OnLogicItemRemoved(object sender, LogicItemChangedEventArgs e) {
