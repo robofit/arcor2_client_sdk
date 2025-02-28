@@ -1,8 +1,9 @@
 ﻿using System;
-using Arcor2.ClientSdk.ClientServices.Models.Extras;
+using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
-namespace Arcor2.ClientSdk.ClientServices.Enums {
+namespace Arcor2.ClientSdk.ClientServices.Enums
+{
     /// <summary>
     /// Represents state of a scene.
     /// </summary>

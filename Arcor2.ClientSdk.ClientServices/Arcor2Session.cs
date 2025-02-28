@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
-using Arcor2.ClientSdk.ClientServices.Models;
-using Arcor2.ClientSdk.ClientServices.Models.EventArguments;
+using Arcor2.ClientSdk.ClientServices.EventArguments;
+using Arcor2.ClientSdk.ClientServices.Managers;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -27,7 +27,8 @@ using PackageStateEventArgs = Arcor2.ClientSdk.Communication.PackageStateEventAr
 //  2.3 Always make sure Manager instances are properly disposed, they will otherwise at best leak a lot of memory (exponentially). At worst, they will cause unwanted behavior.
 //  2.4 Managers (see abstract type Arcor2ObjectManager) all have a distinct ID, corresponding to the managed ARCOR2 resource, injected during construction. This ID is immutable (= don't reuse instances).
 
-namespace Arcor2.ClientSdk.ClientServices {
+namespace Arcor2.ClientSdk.ClientServices
+{
 
     /// <summary>
     /// Class used for session management and communication with ARCOR2 server.

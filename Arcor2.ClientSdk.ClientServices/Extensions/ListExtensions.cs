@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Arcor2.ClientSdk.ClientServices.Models;
+using Arcor2.ClientSdk.ClientServices.Managers;
 
 namespace Arcor2.ClientSdk.ClientServices.Extensions {
     internal static class ListExtensions {
