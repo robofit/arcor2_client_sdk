@@ -57,7 +57,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Locks the resource represented by this instance.
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
-        protected internal async Task LockAsync(bool lockTree = false) {
+        public async Task LockAsync(bool lockTree = false) {
             var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
@@ -68,7 +68,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Unlocks the resource represented by this instance.
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
-        protected internal async Task UnlockAsync() {
+        public async Task UnlockAsync() {
             var @lock = await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Unlocking object {Id} failed.", @lock.Messages);
@@ -78,7 +78,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Unlocks a resource, but doesn't throw on failure.
         /// </summary>
-        protected internal async Task TryUnlockAsync() {
+        public async Task TryUnlockAsync() {
             await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
         }
 

@@ -101,10 +101,11 @@ namespace Arcor2.ClientSdk.Communication.Design {
                     switch(result.MessageType) {
                         case System.Net.WebSockets.WebSocketMessageType.Text:
                             try {
-                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
-                                    Data = messageBuffer.ToArray(),
-                                    MessageType = WebSocketMessageType.Text
-                                });
+                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs(
+
+                                    messageBuffer.ToArray(),
+                                    WebSocketMessageType.Text
+                                ));
                             }
                             catch {
                                 // Badly handled exception from client code. Swallow it to keep connection alive.
@@ -112,10 +113,11 @@ namespace Arcor2.ClientSdk.Communication.Design {
                             break;
                         case System.Net.WebSockets.WebSocketMessageType.Binary:
                             try {
-                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
-                                    Data = messageBuffer.ToArray(),
-                                    MessageType = WebSocketMessageType.Text
-                                });
+                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs (
+                                    
+                                    messageBuffer.ToArray(),
+                                   WebSocketMessageType.Text
+                                ));
                             }
                             catch {
                                 // Badly handled exception from client code. Swallow it to keep connection alive.
@@ -134,9 +136,7 @@ namespace Arcor2.ClientSdk.Communication.Design {
                 }
             }
             catch(Exception ex) {
-                OnError?.Invoke(this, new WebSocketErrorEventArgs {
-                    Exception = ex
-                });
+                OnError?.Invoke(this, new WebSocketErrorEventArgs(ex));
                 OnClose?.Invoke(this, new WebSocketCloseEventArgs() {
                     CloseStatus = WebSocketCloseStatus.Empty
                 });
@@ -218,7 +218,7 @@ namespace Arcor2.ClientSdk.Communication.Design {
                 }
             }
             catch(Exception ex) {
-                OnError?.Invoke(this, new WebSocketErrorEventArgs { Exception = ex });
+                OnError?.Invoke(this, new WebSocketErrorEventArgs(ex));
                 lock(sendMessageLock) {
                     sendingMessage = false;
                 }

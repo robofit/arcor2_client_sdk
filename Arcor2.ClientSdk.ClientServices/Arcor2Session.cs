@@ -461,6 +461,20 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
+        /// Uploads a package to the server.
+        /// </summary>
+        /// <param name="packageId">The ID of the package.</param>
+        /// <param name="encodedPackage">The package ZIP file encoded as base64 string.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UploadPackageAsync(string packageId, string encodedPackage) {
+            var response = await client.UploadPackageAsync(new UploadPackageRequestArgs(packageId, encodedPackage));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Upload package {packageId} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
         /// Estimates the pose of the camera relative to detected markers in an image.
         /// </summary>
         /// <param name="cameraParameters">Intrinsic camera parameters (camera matrix and distortion coefficients).</param>

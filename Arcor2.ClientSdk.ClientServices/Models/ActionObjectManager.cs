@@ -36,6 +36,22 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Raised when state of long-running process of the action object changes (e.g., camera or robot calibration).
         /// </summary>
         public EventHandler<ProcessStateChangedEventArgs>? ProcessStateChanged { get; set; }
+        /// <summary>
+        /// Raised when the state of movement of robot to joints changes.
+        /// </summary>
+        public EventHandler<RobotMovingToJointsEventArgs>? MovingToJoints { get; set; }
+        /// <summary>
+        /// Raised when the state of movement of robot to joints changes.
+        /// </summary>
+        public EventHandler<RobotMovingToPoseEventArgs>? MovingToPose { get; set; }
+        /// <summary>
+        /// Raised when the state of movement of robot to joints changes.
+        /// </summary>
+        public EventHandler<RobotMovingToActionPointJointsEventArgs>? MovingToActionPointJoints { get; set; }
+        /// <summary>
+        /// Raised when the state of movement of robot to joints changes.
+        /// </summary>
+        public EventHandler<RobotMovingToActionPointOrientationEventArgs>? MovingToActionPointOrientation { get; set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionObjectManager"/> class.
@@ -93,7 +109,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StepPositionAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId ));
+            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
                 await TryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
@@ -240,7 +256,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToPoseAsync(EndEffector? endEffector, Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ??  "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
+            var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ?? "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
@@ -393,7 +409,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToActionPointJointsAsync(string jointsId, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, null!, jointsId, safe, linear, armId!));
-            if (!response.Result) {
+            if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to action point joints failed.", response.Messages);
             }
         }
@@ -550,6 +566,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature. See <c>HandTeaching</c> feature flag in object type's robot meta of this action object.
+        /// The robot must not be moving.
         /// </remarks>
         /// <param name="enable">Should hand teaching mode be enabled?</param>
         /// <param name="armId">The optional arm ID.</param>
@@ -933,11 +950,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <exception cref="InvalidOperationException"></exception>
         public async Task RemoveParameterAsync(string parameterName) {
             var param = Data.Meta.Parameters.FirstOrDefault(p => p.Name == parameterName);
-            if (param == null) {
+            if(param == null) {
                 throw new InvalidOperationException($"The parameter with name '{parameterName}' was not found in the client data.");
             }
 
-            await RemoveParameterAsync();
+            await RemoveParameterAsync(param);
         }
 
         /// <summary>
@@ -996,6 +1013,188 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
+        /// Updates the pose of the action object using robot's end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="robotId">The robot ID.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="pivot">The pivot.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdatePoseUsingRobotAsync(string robotId, string endEffectorId, string? armId = null, Pivot pivot = Pivot.Middle ) {
+            var response = await Session.client.UpdateObjectPoseUsingRobotAsync(new UpdateObjectPoseUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!), pivot.MapToOpenApiPivotEnum()));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Updating pose of action object {Id} using robot failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Updates the pose of the action object using robot's end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="robot">The robot.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="pivot">The pivot.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdatePoseUsingRobotAsync(ActionObjectManager robot, string endEffectorId, string? armId = null, Pivot pivot = Pivot.Middle) {
+            await UpdatePoseUsingRobotAsync(robot.Id, endEffectorId, armId, pivot);
+        }
+
+        /// <summary>
+        /// Updates the pose of the action object using robot's end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="robot">The robot.</param>
+        /// <param name="endEffector">The end effector.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="pivot">The pivot.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdatePoseUsingRobotAsync(ActionObjectManager robot, EndEffector endEffector, string? armId = null, Pivot pivot = Pivot.Middle) {
+            await UpdatePoseUsingRobotAsync(robot.Id, endEffector.Id, armId, pivot);
+        }
+
+        /// <summary>
+        /// Updates the pose of the action object using robot's end effector. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="robot">The robot.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="pivot">The pivot.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdatePoseUsingRobotAsync(ActionObjectManager robot, string? armId = null, Pivot pivot = Pivot.Middle) {
+            await UpdatePoseUsingRobotAsync(robot.Id, "default", armId, pivot);
+        }
+
+        /// <summary>
+        /// Updates the pose of the action object using robot's end effector. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="robotId">The robot ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="pivot">The pivot.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdatePoseUsingRobotAsync(string robotId, string? armId = null, Pivot pivot = Pivot.Middle) {
+            await UpdatePoseUsingRobotAsync(robotId, "default", armId, pivot);
+        }
+
+        /// <summary>
+        /// Starts an object aiming process for this action object.
+        /// </summary>
+        /// <remarks>
+        /// Before starting the process, a lock must be acquired manually (using the locking methods) for both the action object and the robot.
+        /// In case of successful process, the robot and the action object must be unlocked.
+        /// On failure, it is possible to do another attempt or call <see cref="CancelObjectAimingAsync"/>.
+        ///
+        /// The scene must be online. The action object must have a pose and a mesh model with defined focus point.
+        /// </remarks>
+        /// <param name="robotId">The robot ID.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task StartObjectAimingAsync(string robotId, string endEffectorId, string? armId = null) {
+            var response = await Session.client.ObjectAimingStartAsync(new ObjectAimingStartRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Starting object aiming process for action object {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Starts an object aiming process for this action object.
+        /// </summary>
+        /// <param name="robot">The robot.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task StartObjectAimingAsync(ActionObjectManager robot, string endEffectorId, string? armId = null) {
+            await StartObjectAimingAsync(robot.Id, endEffectorId, armId);
+        }
+
+        /// <summary>
+        /// Starts an object aiming process for this action object.
+        /// </summary>
+        /// <param name="robot">The robot.</param>
+        /// <param name="endEffector">The end effector.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task StartObjectAimingAsync(ActionObjectManager robot, EndEffector endEffector, string? armId = null) {
+            await StartObjectAimingAsync(robot.Id, endEffector.Id, armId);
+        }
+
+        /// <summary>
+        /// Starts an object aiming process for this action object.
+        /// </summary>
+        /// <remarks>
+        ///
+        /// </remarks>
+        /// <param name="robotId">The robot ID.</param>
+        /// <param name="endEffector">The end effector.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task StartObjectAimingAsync(string robotId, EndEffector endEffector, string? armId = null) {
+            await StartObjectAimingAsync(robotId, endEffector.Id, armId);
+        }
+
+        /// <summary>
+        /// Starts an object aiming process for this action object. Uses the default end effector and arm.
+        /// </summary>
+        /// <param name="robotId">The robot ID.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task StartObjectAimingAsync(string robotId) {
+            await StartObjectAimingAsync(robotId, "default", null);
+        }
+
+        /// <summary>
+        /// Cancels object aiming process for this action object.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task CancelObjectAimingAsync() {
+            var response = await Session.client.ObjectAimingCancelAsync();
+            if(!response.Result) {
+                throw new Arcor2Exception($"Cancelling object aiming process for action object {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Finishes object aiming process for this action object.
+        /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task FinishObjectAimingAsync() {
+            var response = await Session.client.ObjectAimingDoneAsync();
+            if(!response.Result) {
+                throw new Arcor2Exception($"Finishing object aiming process for action object {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a point index for object aiming process for this action object.
+        /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddPointForObjectAimingAsync(int pointId) {
+            var response = await Session.client.ObjectAimingAddPointAsync(new ObjectAimingAddPointRequestArgs(pointId));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding point index for object aiming process for action object {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
         /// Reloads the arms and their end effector of the robot.
         /// </summary>
         /// <remarks>
@@ -1004,7 +1203,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// due to locked object type).
         /// </remarks>
         public async Task ReloadRobotArmsAndEefPoseAsync() {
-            if (ObjectType.Data.RobotMeta?.MultiArm ?? false) {
+            if(ObjectType.Data.RobotMeta?.MultiArm ?? false) {
                 var armsResponse = await Session.client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
                 // Do not throw, it may be single-armed... despite the property
                 if(armsResponse.Result) {
@@ -1013,12 +1212,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             }
 
             var eefResponse = await Session.client.GetRobotEndEffectorsAsync(new GetEndEffectorsRequestArgs(Id));
-            if (!eefResponse.Result) {
+            if(!eefResponse.Result) {
                 throw new Arcor2Exception($"Getting end effectors for action object {Id} failed.", eefResponse.Messages);
             }
 
             var endEffectors = eefResponse.Data.Select(id => new EndEffector(id)).ToList();
-            foreach (var endEffector in endEffectors) {
+            foreach(var endEffector in endEffectors) {
                 var poseResponse = await Session.client.GetEndEffectorPoseAsync(new GetEndEffectorPoseRequestArgs(Id, endEffector.Id, endEffector.ArmId!));
                 if(!eefResponse.Result) {
                     throw new Arcor2Exception($"Could not get end effector '{endEffector.Id}' pose for action object {Id}.", eefResponse.Messages);
@@ -1085,6 +1284,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.RobotJointsUpdated += OnRobotJointsUpdated;
             Session.client.RobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
             Session.client.ProcessState += OnProcessState;
+            Session.client.RobotMoveToPose += OnRobotMoveToPose;
+            Session.client.RobotMoveToJoints += OnRobotMoveToJoints;
+            Session.client.RobotMoveToActionPointJoints += OnRobotMoveToActionPointJoints;
+            Session.client.RobotMoveToActionPointOrientation += OnRobotMoveToActionPointOrientation;
         }
 
         protected override void UnregisterHandlers() {
@@ -1094,6 +1297,10 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.RobotJointsUpdated -= OnRobotJointsUpdated;
             Session.client.RobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
             Session.client.ProcessState -= OnProcessState;
+            Session.client.RobotMoveToPose -= OnRobotMoveToPose;
+            Session.client.RobotMoveToJoints -= OnRobotMoveToJoints;
+            Session.client.RobotMoveToActionPointJoints -= OnRobotMoveToActionPointJoints;
+            Session.client.RobotMoveToActionPointOrientation -= OnRobotMoveToActionPointOrientation;
         }
 
         private void OnSceneActionObjectUpdated(object sender, SceneActionObjectEventArgs e) {
@@ -1111,24 +1318,98 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             }
         }
         private void OnRobotEndEffectorUpdated(object sender, RobotEndEffectorUpdatedEventArgs e) {
-            if (e.Data.RobotId == Id) {
+            if(e.Data.RobotId == Id) {
                 Data.EefPoses = e.Data.EndEffectors.Select(r => r.MapToCustomEndEffectorObject()).ToList();
                 OnUpdated();
             }
         }
 
         private void OnRobotJointsUpdated(object sender, RobotJointsUpdatedEventArgs e) {
-            if (Id == e.Data.RobotId) {
+            if(Id == e.Data.RobotId) {
                 Data.Joints = e.Data.Joints.Select(j => j.MapToCustomJointObject()).ToList();
                 OnUpdated();
             }
         }
 
         private void OnProcessState(object sender, ProcessStateEventArgs e) {
-            if (e.Data.Id == Id) {
+            if(e.Data.Id == Id) {
                 ProcessStateChanged?.Invoke(this, new ProcessStateChangedEventArgs(e.Data.State.MapToCustomProcessStateEnum(), e.Data.Message));
             }
         }
+
+        private void OnRobotMoveToActionPointOrientation(object sender, RobotMoveToActionPointOrientationEventArgs e) {
+            if(e.Data.RobotId == Id) {
+                // Get Manager
+                var project = Session.NavigationState == NavigationState.Project
+                    ?
+                    Session.Projects.FirstOrDefault(p => Session.NavigationId == p.Id)
+                    : Session.Packages.FirstOrDefault(p => Session.NavigationId == p.Id)?.Project;
+                var orientation = project?.ActionPoints?
+                    .SelectMany(a => a.Orientations, (a, o) => o)
+                    .FirstOrDefault(o => o.Id == e.Data.OrientationId);
+                if(orientation == null) {
+                    Session.logger?.LogError($"Could not get OrientationManager ({e.Data.OrientationId}) for RobotMoveToActionPointOrientation.");
+                    return;
+                }
+
+                MovingToActionPointOrientation?.Invoke(this, new RobotMovingToActionPointOrientationEventArgs(
+                    e.Data.MoveEventType.MapToCustomRobotMoveTypeEnum(),
+                    orientation,
+                    e.Data.Safe,
+                    e.Data.Message,
+                    e.Data.ArmId,
+                    e.Data.EndEffectorId));
+            }
+        }
+
+        private void OnRobotMoveToActionPointJoints(object sender, RobotMoveToActionPointJointsEventArgs e) {
+            if(e.Data.RobotId == Id) {
+                // Get Manager
+                var project = Session.NavigationState == NavigationState.Project
+                    ?
+                    Session.Projects.FirstOrDefault(p => Session.NavigationId == p.Id)
+                    : Session.Packages.FirstOrDefault(p => Session.NavigationId == p.Id)?.Project;
+                var joints = project?.ActionPoints?
+                    .SelectMany(a => a.Joints, (a, o) => o)
+                    .FirstOrDefault(o => o.Id == e.Data.JointsId);
+                if(joints == null) {
+                    Session.logger?.LogError($"Could not get JointsManager ({e.Data.JointsId}) for RobotMoveToActionPointJoints.");
+                    return;
+                }
+
+                MovingToActionPointJoints?.Invoke(this, new RobotMovingToActionPointJointsEventArgs(
+                    e.Data.MoveEventType.MapToCustomRobotMoveTypeEnum(),
+                    joints,
+                    e.Data.Safe,
+                    e.Data.Message,
+                    e.Data.ArmId));
+            }
+        }
+
+        private void OnRobotMoveToJoints(object sender, RobotMoveToJointsEventArgs e) {
+            if(e.Data.RobotId == Id) {
+                MovingToJoints?.Invoke(this, new RobotMovingToJointsEventArgs(
+                    e.Data.MoveEventType.MapToCustomRobotMoveTypeEnum(),
+                    e.Data.TargetJoints.Select(j => j.MapToCustomJointObject()).ToList(),
+                    e.Data.Safe,
+                    e.Data.Message,
+                    e.Data.ArmId));
+            }
+        }
+
+        private void OnRobotMoveToPose(object sender, RobotMoveToPoseEventArgs e) {
+            if(e.Data.RobotId == Id) {
+                MovingToPose?.Invoke(this, new RobotMovingToPoseEventArgs(
+                    e.Data.MoveEventType.MapToCustomRobotMoveTypeEnum(),
+                    e.Data.EndEffectorId,
+                    e.Data.TargetPose,
+                    e.Data.Safe,
+                    e.Data.Linear,
+                    e.Data.Message,
+                    e.Data.ArmId));
+            }
+        }
+
     }
 }
 

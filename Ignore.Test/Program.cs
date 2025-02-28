@@ -444,6 +444,31 @@ internal class Program {
                     .FirstOrDefault(o => o.Id == args[0])!
                     .GetParameterValuesAsync(args[1]);
                 break;
+            case "!update_pose_using_robot":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!
+                    .UpdatePoseUsingRobotAsync(args[1]);
+                break;
+            case "!aiming_start":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!
+                    .StartObjectAimingAsync(args[1]);
+                break;
+            case "!aiming_cancel":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!
+                    .CancelObjectAimingAsync();
+                break;
+            case "!aiming_finish":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!
+                    .FinishObjectAimingAsync();
+                break;
+            case "!aiming_add":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!
+                    .AddPointForObjectAimingAsync(Convert.ToInt32(args[1]));
+                break;
             // Project RPC commands
             case "!rp" or "!reload_projects":
                 await session.ReloadProjectsAsync();
@@ -942,6 +967,7 @@ internal class Program {
             !get_camera_color_image <ID>
             !get_camera_color_parameters <ID>
             !stop_robot <ID>
+            !update_pose_using_robot <ID> <ROBOT_ID>
             
             - Project -
             !reload_projects - Loads projects.

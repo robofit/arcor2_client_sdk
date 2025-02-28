@@ -7,5 +7,10 @@ namespace Arcor2.ClientSdk.Communication.Design {
     public class WebSocketMessageEventArgs : EventArgs {
         public byte[] Data { get; set; }
         public WebSocketMessageType MessageType { get; set; }
+
+        public WebSocketMessageEventArgs(byte[] data, WebSocketMessageType messageType) {
+            Data = data;
+            MessageType = messageType;
+        }
     }
 }
