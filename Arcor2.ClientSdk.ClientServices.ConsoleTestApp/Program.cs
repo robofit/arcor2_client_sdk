@@ -17,7 +17,7 @@ internal class Program {
     public static Arcor2Session Session = null!;
     private static int _isTerminating;
 
-    private static async Task Main(string[] args) {
+    private static async Task Main() {
         ConfigureGracefulTermination();
 
         // Initialize application and get configuration options
@@ -100,7 +100,9 @@ internal class Program {
     /// </summary>
     private static async Task RunCommandLoopAsync() {
         using var cts = new CancellationTokenSource();
+        // ReSharper disable once MethodSupportsCancellation
         var commandLoopTask = Task.Run(async () => {
+            // ReSharper disable AccessToDisposedClosure
             while (!cts.Token.IsCancellationRequested) {
                 if (Console.KeyAvailable) {
                     var command = ConsoleEx.ReadLinePrefix();
@@ -780,16 +782,16 @@ internal class Program {
             !step_orientation <ID> <AXIS> <STEP>
                         <SAFE_BOOL> <LINEAR_BOOL> <SPEED> [EEF_ID] [ARM_ID] 
                         - Steps the robot position.
-            !set_eef_perpendicular_to_world <ID>
-            !set_hand_teaching_mode <ID> ["true"/"false"]
-            !forward_kinematics <ID>
-            !inverse_kinematics <ID>
-            !calibrate_robot <ID> <CAMERA_ID> <MOVE_TO_CAL_POSE_BOOL>
-            !calibrate_camera <ID>
-            !get_camera_color_image <ID>
-            !get_camera_color_parameters <ID>
-            !stop_robot <ID>
-            !update_pose_using_robot <ID> <ROBOT_ID>
+            !set_eef_perpendicular_to_world <ID> - Sets the default end-effector perpendicular to world.
+            !set_hand_teaching_mode <ID> ["true"/"false"] - Toggles the hand teaching mode for the default arm.
+            !forward_kinematics <ID> - Calculates forward kinematics for the current joints.
+            !inverse_kinematics <ID >- Calculates forward kinematics for the current pose.
+            !calibrate_robot <ID> <CAMERA_ID> <MOVE_TO_CAL_POSE_BOOL> - Calibrates the robot.
+            !calibrate_camera <ID> - Calibrates the camera.
+            !get_camera_color_image <ID> - Gets camera color image.
+            !get_camera_color_parameters <ID> - Get camera intrinsic parameters.
+            !stop_robot <ID> - Stops the robot's movement.
+            !update_pose_using_robot <ID> <ROBOT_ID> - Updates pose using the default end effector of a robot.
             
             - Project -
             !reload_projects - Loads projects.
@@ -839,8 +841,8 @@ internal class Program {
             !update_action_flows <AP_ID>< <ID> <FLOWS_AS_JSON_LIST> - Updates action flows.
             !rename_action <AP_ID> <ID> <NEW_NAME> - Renames an action.
             !remove_action <AP_ID> <ID> - Removes the action
-            !execute_action <AP_ID> <ID>
-            !cancel_action <AP_ID> <ID>
+            !execute_action <AP_ID> <ID> - Executes the action.
+            !cancel_action <AP_ID> <ID> - Cancels the execution of the action.
             
             - Orientations -
             !orientations <AP_ID> - Lists all orientations.

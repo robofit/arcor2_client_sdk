@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.Communicat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.Communication.OpenApi", "Arcor2.ClientSdk.Communication.OpenApi\Arcor2.ClientSdk.Communication.OpenApi.csproj", "{818CB3FE-88CE-462A-AE60-BDEF7EE05308}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.ClientServices.ConsoleTestApp", "Ignore.Test\Arcor2.ClientSdk.ClientServices.ConsoleTestApp.csproj", "{81F6FBD2-34A9-4105-88DE-6D45DFB6502A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.ClientServices.ConsoleTestApp", "Arcor2.ClientSdk.ClientServices.ConsoleTestApp\Arcor2.ClientSdk.ClientServices.ConsoleTestApp.csproj", "{81F6FBD2-34A9-4105-88DE-6D45DFB6502A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.Communication.UnitTests", "Arcor2.ClientSdk.Communication.UnitTests\Arcor2.ClientSdk.Communication.UnitTests.csproj", "{9ACF2DAC-D965-42AC-8A8A-97FE7D87B592}"
 EndProject
