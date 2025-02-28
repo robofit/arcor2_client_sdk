@@ -124,14 +124,22 @@ internal class Program {
         // Helper method to get the current scene
         SceneManager GetCurrentScene() =>
             session.NavigationState == NavigationState.Scene
-                ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!
-                : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Scene;
+                ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)! 
+                : session.NavigationState == NavigationState.Project 
+                ? session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Scene
+                : session.NavigationState == NavigationState.Package 
+                ? session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.Project.Scene
+                : throw new Exception("Bad navigation state.");
 
         // Helper method to get action objects for current scene/project
         ObservableCollection<ActionObjectManager> GetActionObjects() =>
             session.NavigationState == NavigationState.Scene
-                ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionObjects!
-                : session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Scene.ActionObjects!;
+                ? session.Scenes.FirstOrDefault(s => s.Id == session.NavigationId)!.ActionObjects
+                : session.NavigationState == NavigationState.Project
+                    ? session.Projects.FirstOrDefault(s => s.Id == session.NavigationId)!.Scene.ActionObjects
+                    : session.NavigationState == NavigationState.Package
+                        ? session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.Project.Scene.ActionObjects
+                        : throw new Exception("Bad navigation state.");
 
         // Helper method to get the current project
         ProjectManager GetCurrentProject() =>
@@ -322,14 +330,24 @@ internal class Program {
                 break;
 
             case "!move_to_pose":
-                await GetActionObjects()
-                    .FirstOrDefault(o => o.Id == args[0])!.MoveToPoseAsync(
-                        ParsePose(1),
-                        safe: Convert.ToBoolean(args[8]),
-                        linear: Convert.ToBoolean(args[9]),
-                        speed: Convert.ToDecimal(args[10]),
-                        endEffectorId: args.Length > 11 ? args[11] : "default",
-                        armId: args.Length > 12 ? args[12] : null!);
+                if (args.Length > 11) {
+                    await GetActionObjects()
+                        .FirstOrDefault(o => o.Id == args[0])!.MoveToPoseAsync(
+                            args[0],
+                            ParsePose(2),
+                            safe: Convert.ToBoolean(args[9]),
+                            linear: Convert.ToBoolean(args[10]),
+                            speed: Convert.ToDecimal(args[11]),
+                            armId: args.Length > 12 ? args[12] : null!);
+                }
+                else {
+                    await GetActionObjects()
+                        .FirstOrDefault(o => o.Id == args[0])!.MoveToPoseAsync(
+                            ParsePose(1),
+                            safe: Convert.ToBoolean(args[8]),
+                            linear: Convert.ToBoolean(args[9]),
+                            speed: Convert.ToDecimal(args[10]));
+                }
                 break;
 
             case "!move_to_joints":
@@ -417,6 +435,15 @@ internal class Program {
                 await GetActionObjects()
                     .FirstOrDefault(o => o.Id == args[0])!.GetCameraColorParametersAsync();
                 break;
+            case "!stop_robot":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!.StopAsync();
+                break;
+            case "!action_object_param_value":
+                await GetActionObjects()
+                    .FirstOrDefault(o => o.Id == args[0])!
+                    .GetParameterValuesAsync(args[1]);
+                break;
             // Project RPC commands
             case "!rp" or "!reload_projects":
                 await session.ReloadProjectsAsync();
@@ -476,6 +503,9 @@ internal class Program {
 
             case "!build_project":
                 await session.Projects.FirstOrDefault(s => s.Id == args[0])!.BuildIntoPackageAsync(args[1]);
+                break;
+            case "!build_project_temp":
+                await GetCurrentProject().BuildIntoTemporaryPackageAndRunAsync(Convert.ToBoolean(args[0]), args.Skip(1).ToList());
                 break;
 
             // Project parameter
@@ -824,6 +854,9 @@ internal class Program {
             case "!pause_package":
                 await session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.PauseAsync();
                 break;
+            case "!step_package":
+                await session.Packages.FirstOrDefault(s => s.Id == session.NavigationId)!.StepAsync();
+                break;
         }
     }
     private static void PrintHelp() {
@@ -883,7 +916,7 @@ internal class Program {
                                        <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
                                        - Updates a pose of an action object.
             !update_action_object_parameters <ID> <PARAM_LIST_AS_JSON>
-                                        - Updates a list of parameters of an action object.
+                                          - Updates a list of parameters of an action object.
             !rename_action_object <ID> <NEW_NAME> - Renames an action object.
             !move_to_pose <ID> <POSX> <POSY> <POSZ> 
                           <ORIENTX> <ORIENTY> <ORIENTZ> <ORIENTW>
@@ -908,6 +941,7 @@ internal class Program {
             !calibrate_camera <ID>
             !get_camera_color_image <ID>
             !get_camera_color_parameters <ID>
+            !stop_robot <ID>
             
             - Project -
             !reload_projects - Loads projects.
@@ -924,6 +958,7 @@ internal class Program {
             !stop_project - Stops the currently opened project.
             !set_project_has_logic <ID> <"true"/"false"> - Sets if the project should have logic.
             !build_project <ID> <PACKAGE_NAME> - Builds a project into package.
+            !build_project_temp <START_STOPPED_BOOL> [BREAKPOINTS...] - Builds a project into temp package and runs it.
             
             - Project Parameters -
             !parameters - Lists project parameters for a project.
@@ -990,6 +1025,7 @@ internal class Program {
             !stop_package - Stops a package.
             !pause_package - Pauses a package.
             !resume_package - Resumes a package.
+            !step_package - Steps onto the next action in pause package.
             """);
     }
 

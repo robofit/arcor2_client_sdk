@@ -365,12 +365,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models
                     if (objectType.Data.RobotMeta != null) {
                         try {
                             if (objectType.Data.RobotMeta.Features.MoveToPose) {
-                                await actionObject.ReloadRobotArmsAndEefPose();
+                                await actionObject.ReloadRobotArmsAndEefPoseAsync();
                                 await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
                             }
 
                             if (objectType.Data.RobotMeta.Features.MoveToJoints) {
-                                await actionObject.ReloadRobotJoints();
+                                await actionObject.ReloadRobotJointsAsync();
                                 await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
                             }
                         }

@@ -46,17 +46,17 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Current settings of the client.
         /// </summary>
-        private Arcor2ClientSettings clientSettings;
+        private readonly Arcor2ClientSettings clientSettings;
 
         /// <summary>
         /// Injected logger.
         /// </summary>
-        private IArcor2Logger? logger;
+        private readonly IArcor2Logger? logger;
 
         /// <summary>
         /// JSON deserialization options.
         /// </summary>
-        private JsonSerializerSettings jsonSettings;
+        private readonly JsonSerializerSettings jsonSettings;
 
         /// <summary>
         /// The URI of the current server.
@@ -332,7 +332,6 @@ namespace Arcor2.ClientSdk.Communication
         /// Raised when server notifies the result of the action execution triggered while editing a project.
         /// </summary>
         public event EventHandler<ActionResultEventArgs>? ActionResult;
-
         /// <summary>
         /// Raised when the state of long-running process changes.
         /// </summary>
@@ -352,7 +351,7 @@ namespace Arcor2.ClientSdk.Communication
         public event EventHandler<PackageChangedEventArgs>? PackageRemoved;
 
         /// <summary>
-        /// Raised when package (script) is initialized and ready to execute.
+        /// Raised when package is initialized and ready to execute.
         /// </summary>
         public event EventHandler<PackageInfoEventArgs>? PackageInfo;
         /// <summary>
@@ -364,11 +363,11 @@ namespace Arcor2.ClientSdk.Communication
         /// </summary>
         public event EventHandler<PackageExceptionEventArgs>? PackageException;
         /// <summary>
-        /// Raised while running a package before execution of an action (parameters and other information).
+        /// Raised while running a package before an execution of an action (parameters and other information).
         /// </summary>
         public event EventHandler<ActionStateBeforeEventArgs>? ActionStateBefore;
         /// <summary>
-        /// Raised while running a package after execution of an action (returned value and other information).
+        /// Raised while running a package after n execution of an action (returned value and other information).
         /// </summary>
         public event EventHandler<ActionStateAfterEventArgs>? ActionStateAfter;
 
@@ -1484,8 +1483,8 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Sends a request to get all available values for selected parameter.
         /// </summary>
-        /// <param name="args">Action object ID, parameter ID, and a list of parent parameters (e.g. to obtain list of available end effectors, robot ID has to be provided) </param>
-        /// <returns>List of available options or empty list when request failed</returns>
+        /// <param name="args">Action object ID, parameter ID, and a list of parent parameters. </param>
+        /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
         public async Task<ActionParamValuesResponse> GetActionParameterValuesAsync(ActionParamValuesRequestArgs args) {
@@ -1884,7 +1883,6 @@ namespace Arcor2.ClientSdk.Communication
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
         public async Task<MoveToActionPointResponse> MoveToActionPointAsync(MoveToActionPointRequestArgs args) {
-            // TODO: Joints x Orientation
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new MoveToActionPointRequest(id, "MoveToActionPoint", args), id, "MoveToActionPoint");
             return JsonConvert.DeserializeObject<MoveToActionPointResponse>(response, jsonSettings)!;
@@ -2270,7 +2268,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <returns>The response.</returns>
         /// <exception cref="TimeoutException">When the response is not received within <see cref="Arcor2ClientSettings.RpcTimeout"/> (10 seconds by default).</exception>
         /// <exception cref="Arcor2ConnectionException">When connection fails or the in case of ARCOR2 protocol violation (e.g. matching IDs, but mismatching RPC names).</exception>
-        [Obsolete("Not implemented as of ARServer 1.5.0.")]
+        [Obsolete("Current ARCOR2 implementation (1.5.0) does not implement this RPC yet.")]
         public async Task<CameraColorImageResponse> GetCameraColorImageAsync(CameraColorImageRequestArgs args) {
             var id = Interlocked.Increment(ref requestId);
             var response = await SendAndWaitAsync(new CameraColorImageRequest(id, "CameraColorImage", args), id, "CameraColorImage");

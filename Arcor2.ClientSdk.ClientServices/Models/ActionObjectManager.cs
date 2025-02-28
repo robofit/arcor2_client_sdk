@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Extensions;
+using Arcor2.ClientSdk.ClientServices.Models.EventArguments;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -15,8 +16,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
     /// Manages a lifetime of a scene's action object.
     /// </summary>
     public class ActionObjectManager : LockableArcor2ObjectManager<ActionObject> {
-        // TODO: Stop, maybe Grippers and suctions?
-
         /// <summary>
         /// The parent scene.
         /// </summary>
@@ -32,6 +31,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 return cachedObjectType ??= Session.ObjectTypes.First(o => o.Data.Meta.Type == Data.Meta.Type);
             }
         }
+
+        /// <summary>
+        /// Raised when state of long-running process of the action object changes (e.g., camera or robot calibration).
+        /// </summary>
+        public EventHandler<ProcessStateChangedEventArgs>? ProcessStateChanged { get; set; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionObjectManager"/> class.
@@ -180,20 +184,40 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
-        /// Moves the robot into a pose.
+        /// Moves the robot into a pose. Uses the default end effector.
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToPose</c> feature flag in object type's robot meta of this action object.
         /// </remarks>
         /// <param name="pose">The target pose.</param>
-        /// <param name="endEffectorId">The end effector ID. By default, <c>"default"</c>.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToPoseAsync(Pose pose, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+        public async Task MoveToPoseAsync(Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Moves the robot into a pose.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToPose</c> feature flag in object type's robot meta of this action object.
+        /// </remarks>
+        /// <param name="pose">The target pose.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
+        /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
+        /// <param name="speed">The speed in 0..1 interval.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task MoveToPoseAsync(string endEffectorId, Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffectorId, speed, pose.Position, pose.Orientation, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
@@ -208,18 +232,74 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToPose</c> feature flag in object type's robot meta of this action object.
         /// </remarks>
         /// <param name="pose">The target pose.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToPoseAsync(Pose pose, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+        public async Task MoveToPoseAsync(EndEffector? endEffector, Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ??  "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
+        }
+
+        /// <summary>
+        /// Moves the robot joints.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
+        /// </remarks>
+        /// <param name="joints">The target joint values.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
+        /// <param name="speed">The speed in 0..1 interval.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task MoveToJointsAsync(IList<Joint> joints, string? armId = null, bool safe = true, decimal speed = 1) {
+            var response = await Session.client.MoveToJointsAsync(new MoveToJointsRequestArgs(Id, speed, joints.Select(j => j.ToOpenApiJointObject()).ToList(), safe, armId!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Moves the robot into orientation of action point. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature.
+        /// </remarks>
+        /// <param name="orientationId">The orientation ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
+        /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
+        /// <param name="speed">The speed in 0..1 interval.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task MoveToActionPointOrientationAsync(string orientationId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, "default", orientationId, null!, safe, linear, armId!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Moving robot {Id} to action point orientation failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Moves the robot into orientation of action point. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature.
+        /// </remarks>
+        /// <param name="orientation">The orientation.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
+        /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
+        /// <param name="speed">The speed in 0..1 interval.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointOrientationAsync(orientation.Id, "default", armId, safe, linear, speed);
         }
 
         /// <summary>
@@ -229,14 +309,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature.
         /// </remarks>
         /// <param name="orientationId">The orientation ID.</param>
-        /// <param name="endEffectorId">The end effector ID. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointOrientationAsync(string orientationId, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+        public async Task MoveToActionPointOrientationAsync(string orientationId, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, orientationId, null!, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to action point orientation failed.", response.Messages);
@@ -250,14 +330,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature.
         /// </remarks>
         /// <param name="orientation">The orientation.</param>
-        /// <param name="endEffectorId">The end effector ID. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             await MoveToActionPointOrientationAsync(orientation.Id, endEffectorId, armId, safe, linear, speed);
         }
 
@@ -268,15 +348,15 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature.
         /// </remarks>
         /// <param name="orientationId">The orientation ID.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointOrientationAsync(string orientationId, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointOrientationAsync(orientationId, endEffector?.Id ?? "default", armId, safe, linear, speed);
+        public async Task MoveToActionPointOrientationAsync(string orientationId, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointOrientationAsync(orientationId, endEffector.Id, armId, safe, linear, speed);
         }
 
         /// <summary>
@@ -286,15 +366,15 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature.
         /// </remarks>
         /// <param name="orientation">The orientation.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointOrientationAsync(orientation.Id, endEffector?.Id ?? "default", armId, safe, linear, speed);
+        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointOrientationAsync(orientation.Id, endEffector.Id, armId, safe, linear, speed);
         }
 
         /// <summary>
@@ -304,14 +384,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
         /// </remarks>
         /// <param name="jointsId">The joints ID.</param>
-        /// <param name="endEffectorId">The end effector ID. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointJointsAsync(string jointsId, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+        public async Task MoveToActionPointJointsAsync(string jointsId, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, null!, jointsId, safe, linear, armId!));
             if (!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to action point joints failed.", response.Messages);
@@ -325,14 +405,14 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
         /// </remarks>
         /// <param name="joints">The joints.</param>
-        /// <param name="endEffectorId">The end effector ID. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The end effector ID.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointJointsAsync(JointsManager joints, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+        public async Task MoveToActionPointJointsAsync(JointsManager joints, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
             await MoveToActionPointJointsAsync(joints.Id, endEffectorId, armId, safe, linear, speed);
         }
 
@@ -343,15 +423,15 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
         /// </remarks>
         /// <param name="jointsId">The joints ID.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointJointsAsync(string jointsId, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointJointsAsync(jointsId, endEffector?.Id ?? "default", armId, safe, linear, speed);
+        public async Task MoveToActionPointJointsAsync(string jointsId, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointJointsAsync(jointsId, endEffector.Id, armId, safe, linear, speed);
         }
 
         /// <summary>
@@ -361,16 +441,51 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
         /// </remarks>
         /// <param name="joints">The joints.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointJointsAsync(JointsManager joints, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointJointsAsync(joints.Id, endEffector?.Id ?? "default", armId, safe, linear, speed);
+        public async Task MoveToActionPointJointsAsync(JointsManager joints, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointJointsAsync(joints.Id, endEffector.Id, armId, safe, linear, speed);
         }
+
+        /// <summary>
+        /// Moves the robot into joints of action point. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
+        /// </remarks>
+        /// <param name="jointsId">The joints ID.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
+        /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
+        /// <param name="speed">The speed in 0..1 interval.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task MoveToActionPointJointsAsync(string jointsId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointJointsAsync(jointsId, "default", armId, safe, linear, speed);
+        }
+
+        /// <summary>
+        /// Moves the robot into joints of action point. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature. See <c>MoveToJoints</c> feature flag in object type's robot meta of this action object.
+        /// </remarks>
+        /// <param name="joints">The joints.</param>
+        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
+        /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
+        /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
+        /// <param name="speed">The speed in 0..1 interval.</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task MoveToActionPointJointsAsync(JointsManager joints, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointJointsAsync(joints.Id, "default", armId, safe, linear, speed);
+        }
+
 
         /// <summary>
         /// Sets the robot's end effector perpendicular to world.
@@ -414,7 +529,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         }
 
         /// <summary>
-        /// Sets the robot's end effector perpendicular to world using the default end effector.
+        /// Sets the robot's end effector perpendicular to world. Uses the default end effector.
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature.
@@ -609,7 +724,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <returns>The calculated joints and their values.</returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<IList<Joint>> GetInverseKinematicsAsync(string endEffectorId, Pose pose, IList<Joint>? startingJoints = null, bool avoidCollisions = true, string? armId = null) {
-            var joints = (startingJoints ?? Data.Joints)?.Select(j => j.ToOpenApiJointObject())?.ToList();
+            var joints = (startingJoints ?? Data.Joints)?.Select(j => j.ToOpenApiJointObject()).ToList();
             var response = await Session.client.InverseKinematicsAsync(new InverseKinematicsRequestArgs(Id, endEffectorId, pose, joints!, avoidCollisions, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting inverse kinematics for robot {Id} failed.", response.Messages);
@@ -786,14 +901,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 .Where(p => p.Name != parameter.Name && p.Type != parameter.Type)
                 .Append(parameter)
                 .ToList();
-            await LockAsync();
-            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, newParameters));
-            if(!response.Result) {
-                await TryUnlockAsync();
-                throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
-            }
-
-            await UnlockAsync();
+            await UpdateParametersAsync(newParameters);
         }
 
         /// <summary>
@@ -802,33 +910,89 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <param name="parameter">The new parameter.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddParameterAsync(Parameter parameter) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, Data.Meta.Parameters.Append(parameter).ToList()));
-            if(!response.Result) {
-                await TryUnlockAsync();
-                throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
-            }
-
-            await UnlockAsync();
+            await UpdateParametersAsync(Data.Meta.Parameters.Append(parameter).ToList());
         }
 
         /// <summary>
         /// Removes a parameter from an action object.
         /// </summary>
-        /// <param name="parameter">The removed parameter.</param>
+        /// <param name="parameter">The parameter to remove.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveParameterAsync(Parameter parameter) {
             var newParameters = Data.Meta.Parameters
                 .Where(p => p.Name != parameter.Name && p.Type != parameter.Type)
                 .ToList();
-            await LockAsync();
-            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, newParameters));
-            if(!response.Result) {
-                await TryUnlockAsync();
-                throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
+            await UpdateParametersAsync(newParameters);
+        }
+
+        /// <summary>
+        /// Removes a parameter from an action object.
+        /// </summary>
+        /// <param name="parameterName">The name of parameter to remove.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task RemoveParameterAsync(string parameterName) {
+            var param = Data.Meta.Parameters.FirstOrDefault(p => p.Name == parameterName);
+            if (param == null) {
+                throw new InvalidOperationException($"The parameter with name '{parameterName}' was not found in the client data.");
             }
 
-            await UnlockAsync();
+            await RemoveParameterAsync();
+        }
+
+        /// <summary>
+        /// Gets possible values of action object parameters.
+        /// </summary>
+        /// <remarks>
+        /// This RPC should only be called if the parameter has <c>DynamicValue</c> flag in its metadata
+        /// Values of parent parameters (also listed in metadata) should be provided.
+        /// </remarks>
+        /// <returns>The possible values for the parameter.</returns>
+        /// <param name="parameter">The parameter.</param>
+        /// <param name="parentParameters">The parent parameters</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task<IList<string>> GetParameterValuesAsync(Parameter parameter, IList<Parameter>? parentParameters = null) {
+            parentParameters ??= new List<Parameter>();
+            var response = await Session.client.GetActionParameterValuesAsync(new ActionParamValuesRequestArgs(Id, parameter.Name, parentParameters.Select(s => s.ToIdValue()).ToList()));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Getting parameter values for action object {Id} failed.", response.Messages);
+            }
+
+            return response.Data;
+        }
+
+        /// <summary>
+        /// Gets possible values of action object parameters.
+        /// </summary>
+        /// <remarks>
+        /// This RPC should only be called if the parameter has <c>DynamicValue</c> flag in its metadata
+        /// Values of parent parameters (also listed in metadata) should be provided.
+        /// </remarks>
+        /// <returns>The possible values for the parameter.</returns>
+        /// <param name="parameter">The parameter name.</param>
+        /// <param name="parentParameters">The parent parameters</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task<IList<string>> GetParameterValuesAsync(string parameter, IList<Parameter>? parentParameters = null) {
+            parentParameters ??= new List<Parameter>();
+            var response = await Session.client.GetActionParameterValuesAsync(new ActionParamValuesRequestArgs(Id, parameter, parentParameters.Select(s => s.ToIdValue()).ToList()));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Getting parameter values for action object {Id} failed.", response.Messages);
+            }
+
+            return response.Data;
+        }
+
+        /// <summary>
+        /// Stops the current movement action of a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online and the action object a robot with corresponding feature.
+        /// </remarks>
+        public async Task StopAsync() {
+            var response = await Session.client.StopRobotAsync(new StopRobotRequestArgs(Id));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Stopping robot {Id} failed.", response.Messages);
+            }
         }
 
         /// <summary>
@@ -839,7 +1003,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// in edge cases (the library not being able to subscribe on registration
         /// due to locked object type).
         /// </remarks>
-        public async Task ReloadRobotArmsAndEefPose() {
+        public async Task ReloadRobotArmsAndEefPoseAsync() {
             if (ObjectType.Data.RobotMeta?.MultiArm ?? false) {
                 var armsResponse = await Session.client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
                 // Do not throw, it may be single-armed... despite the property
@@ -874,7 +1038,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// in edge cases (the library not being able to subscribe on registration
         /// due to locked object type).
         /// </remarks>
-        public async Task ReloadRobotJoints() {
+        public async Task ReloadRobotJointsAsync() {
             var jointsResponse = await Session.client.GetRobotJointsAsync(new GetRobotJointsRequestArgs(Id));
             if(jointsResponse.Result) {
                 Data.Joints = jointsResponse.Data.Select(j => j.MapToCustomJointObject()).ToList();
@@ -920,13 +1084,16 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.SceneActionObjectRemoved += OnSceneActionObjectRemoved;
             Session.client.RobotJointsUpdated += OnRobotJointsUpdated;
             Session.client.RobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
+            Session.client.ProcessState += OnProcessState;
         }
+
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
             Session.client.SceneActionObjectUpdated -= OnSceneActionObjectUpdated;
             Session.client.SceneActionObjectRemoved -= OnSceneActionObjectRemoved;
             Session.client.RobotJointsUpdated -= OnRobotJointsUpdated;
             Session.client.RobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
+            Session.client.ProcessState -= OnProcessState;
         }
 
         private void OnSceneActionObjectUpdated(object sender, SceneActionObjectEventArgs e) {
@@ -957,6 +1124,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             }
         }
 
+        private void OnProcessState(object sender, ProcessStateEventArgs e) {
+            if (e.Data.Id == Id) {
+                ProcessStateChanged?.Invoke(this, new ProcessStateChangedEventArgs(e.Data.State.MapToCustomProcessStateEnum(), e.Data.Message));
+            }
+        }
     }
 }
 

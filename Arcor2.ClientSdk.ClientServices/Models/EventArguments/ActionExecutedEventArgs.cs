@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Arcor2.ClientSdk.ClientServices.Models.EventArguments {
     /// <summary>
-    /// Event args for action execution result.
+    /// Event args for project action execution result.
     /// </summary>
     public class ActionExecutedEventArgs : EventArgs {
         /// <summary>
@@ -17,7 +17,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models.EventArguments {
         public IList<string> Results { get; }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="ActionExecutedEventArgs"/> class.
+        /// Initializes a new instance of <see cref="ActionStartingEventArgs"/> class.
         /// </summary>
         public ActionExecutedEventArgs(IList<string> results, string? error = null) {
             Results = results;

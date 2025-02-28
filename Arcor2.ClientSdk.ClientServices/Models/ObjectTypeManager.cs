@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Models.Extras;
@@ -34,7 +35,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     return parentType.IsTypeOf(objectType);
                 }
                 else {
-                    Session.logger?.LogWarning($"A object type '{objectType.Data.Meta.Type}' references non-existing parent '{Data.Meta.Base}'.");
+                    Session.logger?.LogWarning($"An object type '{objectType.Data.Meta.Type}' references non-existing parent '{Data.Meta.Base}'.");
                     return false;
                 }
             }
@@ -52,15 +53,34 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public bool IsCollisionObject() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "CollisionObject"));
 
         /// <summary>
+        /// Determines if object is a CollisionObject subtype.
+        /// </summary>
+        public bool IsCamera() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "Camera"));
+
+        /// <summary>
+        /// Gets scenes which have action object of this object type.
+        /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task<IList<SceneManager>> GetUsingScenesAsync() {
+            var result = await Session.client.GetObjectTypeUsageAsync(new IdArgs(Id));
+            if (result.Result == false) {
+                throw new Arcor2Exception($"Getting scene usage of object type {Id} failed.", result.Messages);
+            }
+
+            return result.Data.Select(id => Session.Scenes.First(s => s.Id == id)).ToList();
+        }
+
+        /// <summary>
         /// Deletes this object type.
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task DeleteAsync() {
             var result = await Session.client.RemoveObjectTypeAsync(Id);
-            if (result.Result == false) {
-                throw new Arcor2Exception($"Failed to delete object type {Id}.", result.Messages);
+            if(result.Result == false) {
+                throw new Arcor2Exception($"Deleting object type {Id} failed.", result.Messages);
             }
         }
+
 
         /// <summary>
         /// Updates object model.
@@ -74,7 +94,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     new UpdateObjectModelRequestArgs(Id, model.ToOpenApiObjectModel(Id)));
             if(result.Result == false) {
                 await TryUnlockAsync();
-                throw new Arcor2Exception($"Failed to update model of an object type {Id}.", result.Messages);
+                throw new Arcor2Exception($"Updating model of an object type {Id} failed.", result.Messages);
             }
 
             await UnlockAsync();

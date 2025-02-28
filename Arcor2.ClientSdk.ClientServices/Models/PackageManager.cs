@@ -24,7 +24,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The state of the package.
         /// </summary>
         // Realistically will never be undefined if user can use it (unless returned by the server).
-        public PackageState State { get; set; } = PackageState.Undefined;
+        public PackageState State { get; private set; } = PackageState.Undefined;
 
         private ProjectManager? cachedProject;
 
@@ -86,7 +86,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Renames the package.
         /// </summary>
         /// <param name="newName">The new name.</param>
-        /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
             var response = await Session.client.RenamePackageAsync(new RenamePackageRequestArgs(Id, newName));
@@ -100,7 +99,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// </summary>
         /// <param name="startPaused">Should the package start paused?</param>
         /// <param name="breakPoints">A list of breakpoints</param>
-        /// TODO: Are thy just action IDs? Confirm
+        /// <remarks>
+        /// The session must be in the menu.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RunAsync(bool startPaused, List<string>? breakPoints = null) {
             var response = await Session.client.RunPackageAsync(new RunPackageRequestArgs(Id, startPaused, breakPoints ?? new List<string>()));
@@ -112,6 +113,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Stops the package.
         /// </summary>
+        /// <remarks>
+        /// The package must be opened and in the <see cref="PackageState.Running"/> state.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StopAsync() {
             var response = await Session.client.StopPackageAsync();
@@ -123,6 +127,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Pauses the package.
         /// </summary>
+        /// <remarks>
+        /// The package must be opened and in the <see cref="PackageState.Running"/> state.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task PauseAsync() {
             var response = await Session.client.PausePackageAsync();
@@ -134,6 +141,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Resumes the package.
         /// </summary>
+        /// <remarks>
+        /// The package must be opened and in the <see cref="PackageState.Paused"/> state.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task ResumeAsync() {
             var response = await Session.client.ResumePackageAsync();
@@ -141,6 +151,21 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                 throw new Arcor2Exception($"Resuming package {Id} failed.", response.Messages);
             }
         }
+
+        /// <summary>
+        /// Resumes the execution, executes the next action, and pauses it again.
+        /// </summary>
+        /// <remarks>
+        /// The package must be opened and in the <see cref="PackageState.Paused"/> state.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task StepAsync() {
+            var response = await Session.client.StepActionAsync();
+            if(!response.Result) {
+                throw new Arcor2Exception($"Stepping an action for package {Id} failed.", response.Messages);
+            }
+        }
+
 
         internal void UpdateAccordingToNewObject(PackageSummary package) {
             if(Id != package.Id) {
@@ -168,6 +193,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.PackageUpdated += OnPackageUpdated;
             Session.client.PackageRemoved += OnPackageRemoved;
             Session.client.PackageState += OnPackageState;
+            Session.client.PackageException += OnPackageException;
         }
 
         protected override void UnregisterHandlers() {

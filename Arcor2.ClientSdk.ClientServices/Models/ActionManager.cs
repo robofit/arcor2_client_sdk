@@ -21,20 +21,32 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// Is the action currently executing?
         /// </summary>
+        /// <remarks>
+        /// This flag is set only for project execution (see <see cref="Executing"/>, <see cref="Executed"/>, and <see cref="Cancelled"/>).
+        /// </remarks>
         public bool IsExecuting { get; private set; }
 
         /// <summary>
-        /// Raised when action starts executing.
+        /// Raised when action starts executing in a project.
         /// </summary>
         public event EventHandler? Executing;
         /// <summary>
-        /// Raised when action finished executing.
+        /// Raised when action finished executing in a project.
         /// </summary>
         public event EventHandler<ActionExecutedEventArgs>? Executed;
         /// <summary>
-        /// Raised when action execution was cancelled.
+        /// Raised when action execution was cancelled in a project.
         /// </summary>
         public event EventHandler? Cancelled;
+
+        /// <summary>
+        /// Raised before action is execute in a package.
+        /// </summary>
+        public event EventHandler<ActionStartingEventArgs>? Starting;
+        /// <summary>
+        /// Raised after action finished executed in a package.
+        /// </summary>
+        public event EventHandler<ActionFinishedEventArgs>? Finished; 
 
         /// <summary>
         /// Gets the action definition from object type.
@@ -178,6 +190,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.ActionExecution += OnActionExecution;
             Session.client.ActionCancelled += OnActionCancelled;
             Session.client.ActionResult += OnActionResult;
+            Session.client.ActionStateBefore += OnActionStateBefore;
+            Session.client.ActionStateAfter += OnActionStateAfter;
         }
 
         protected override void UnregisterHandlers() {
@@ -188,6 +202,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
             Session.client.ActionExecution -= OnActionExecution;
             Session.client.ActionCancelled -= OnActionCancelled;
             Session.client.ActionResult -= OnActionResult;
+            Session.client.ActionStateBefore -= OnActionStateBefore;
+            Session.client.ActionStateAfter -= OnActionStateAfter;
         }
 
         private void OnActionRemoved(object sender, BareActionEventArgs e) {
@@ -218,6 +234,9 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnActionResult(object sender, ActionResultEventArgs e) {
             if(e.Data.ActionId == Id) {
+                if(!IsExecuting) {
+                    Session.logger?.LogWarning($"Action {Id} received ActionResult event when its {nameof(IsExecuting)} property was false.");
+                }
                 IsExecuting = false;
                 Executed?.Invoke(this, new ActionExecutedEventArgs(e.Data.Results, e.Data.Error));
             }
@@ -233,8 +252,24 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         private void OnActionExecution(object sender, ActionExecutionEventArgs e) {
             if(e.Data.ActionId == Id) {
+                if(IsExecuting) {
+                    Session.logger?.LogWarning($"Action {Id} received ActionExecution event when its {nameof(IsExecuting)} property was true.");
+                }
                 IsExecuting = true;
                 Executing?.Invoke(this, EventArgs.Empty);
+            }
+        }
+        private void OnActionStateAfter(object sender, ActionStateAfterEventArgs e) {
+            if(e.Data.ActionId == Id) {
+                IsExecuting = false;
+                Finished?.Invoke(this, new ActionFinishedEventArgs(e.Data.Results));
+            }
+        }
+
+        private void OnActionStateBefore(object sender, ActionStateBeforeEventArgs e) {
+            if(e.Data.ActionId == Id) {
+                IsExecuting = true;
+                Starting?.Invoke(this, new ActionStartingEventArgs(e.Data.Parameters));
             }
         }
     }

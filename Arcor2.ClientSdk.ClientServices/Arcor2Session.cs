@@ -555,8 +555,8 @@ namespace Arcor2.ClientSdk.ClientServices {
                 if(NavigationId == id && !(bool) wasRemoved) {
                     var actionObject = (ActionObjectManager) sender;
                     try {
-                        await actionObject.ReloadRobotArmsAndEefPose();
-                        await actionObject.ReloadRobotJoints();
+                        await actionObject.ReloadRobotArmsAndEefPoseAsync();
+                        await actionObject.ReloadRobotJointsAsync();
                         await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
                         await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
                         logger?.LogInfo($"Successfully retried subscription to robot {robot.Id}.");

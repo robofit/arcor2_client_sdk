@@ -102,7 +102,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
                     $"Can't update an JointsManager ({Id}) using an joints data object ({joints.Id}) with different ID.");
             }
 
-            UpdateAccordingToNewObject(joints);
+            UpdateData(joints);
         }
 
         protected override void RegisterHandlers() {

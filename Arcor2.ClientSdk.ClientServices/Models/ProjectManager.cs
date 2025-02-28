@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -154,6 +155,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Updates the description of the project.
         /// </summary>
+        /// <param name="newDescription">The new description.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateDescriptionAsync(string newDescription) {
             var response = await Session.client.UpdateProjectDescriptionAsync(new UpdateProjectDescriptionRequestArgs(Id, newDescription));
@@ -165,6 +167,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Loads the project fully without opening it.
         /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
         public async Task LoadAsync() {
             var response = await Session.client.GetProjectAsync(new IdArgs(Id));
             if(!response.Result) {
@@ -176,6 +179,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Duplicates the project.
         /// </summary>
+        /// <param name="newName">The new name.</param>
+        /// <exception cref="Arcor2Exception"></exception>
         public async Task DuplicateAsync(string newName) {
             var response = await Session.client.DuplicateProjectAsync(new CopyProjectRequestArgs(Id, newName));
             if(!response.Result) {
@@ -186,6 +191,8 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Sets if the project should contain logic.
         /// </summary>
+        /// <param name="hasLogic">Should logic be enabled?</param>
+        /// <exception cref="Arcor2Exception"></exception>
         public async Task SetHasLogicAsync(bool hasLogic) {
             var response = await Session.client.UpdateProjectHasLogicAsync(new UpdateProjectHasLogicRequestArgs(Id, hasLogic));
             if(!response.Result) {
@@ -196,10 +203,25 @@ namespace Arcor2.ClientSdk.ClientServices.Models
         /// <summary>
         /// Builds the project into package.
         /// </summary>
+        /// <param name="packageName">The package name.</param>
+        /// <exception cref="Arcor2Exception"></exception>
         public async Task BuildIntoPackageAsync(string packageName) {
             var response = await Session.client.BuildProjectAsync(new BuildProjectRequestArgs(Id, packageName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Building project {Id} into package failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Builds the project into a temporary package and runs it.
+        /// </summary>
+        /// <param name="startPaused">Should the package start paused?</param>
+        /// <param name="breakPoints">A list of breakpoints</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task BuildIntoTemporaryPackageAndRunAsync(bool startPaused = true, List<string>? breakPoints = null) {
+            var response = await Session.client.RunTemporaryPackageAsync(new TemporaryPackageRequestArgs(startPaused, breakPoints!));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Building project {Id} into temporary package failed.", response.Messages);
             }
         }
 
