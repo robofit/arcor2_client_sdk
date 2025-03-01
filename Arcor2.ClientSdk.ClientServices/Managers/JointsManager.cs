@@ -32,14 +32,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="joints">A new list of joint values.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateAsync(List<Joint> joints) {
-            await LockAsync(ActionPoint.Id);
-            var response = await Session.client.UpdateActionPointJointsAsync(new UpdateActionPointJointsRequestArgs(Id, joints));
+            await LibraryLockAsync(ActionPoint.Id);
+            var response = await Session.Client.UpdateActionPointJointsAsync(new UpdateActionPointJointsRequestArgs(Id, joints));
             if(!response.Result) {
                 await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Updating joints {Id} for action point {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync(ActionPoint.Id);
+            await LibraryUnlockAsync(ActionPoint.Id);
         }
 
         /// <summary>
@@ -50,14 +50,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateUsingRobotAsync() {
-            await LockAsync(ActionPoint.Id);
-            var response = await Session.client.UpdateActionPointJointsUsingRobotAsync(new UpdateActionPointJointsUsingRobotRequestArgs(Id));
+            await LibraryLockAsync(ActionPoint.Id);
+            var response = await Session.Client.UpdateActionPointJointsUsingRobotAsync(new UpdateActionPointJointsUsingRobotRequestArgs(Id));
             if(!response.Result) {
                 await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Updating joints {Id} for action point {Id} using robot failed.", response.Messages);
             }
 
-            await UnlockAsync(ActionPoint.Id);
+            await LibraryUnlockAsync(ActionPoint.Id);
         }
 
         /// <summary>
@@ -65,13 +65,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            await LockAsync(ActionPoint.Id);
-            var response = await Session.client.RemoveActionPointJointsAsync(new RemoveActionPointJointsRequestArgs(Id));
+            await LibraryLockAsync(ActionPoint.Id);
+            var response = await Session.Client.RemoveActionPointJointsAsync(new RemoveActionPointJointsRequestArgs(Id));
             if(!response.Result) {
                 await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Removing joints {Id} failed.", response.Messages);
             }
-            await UnlockAsync(ActionPoint.Id);
+            await LibraryUnlockAsync(ActionPoint.Id);
         }
 
         /// <summary>
@@ -81,14 +81,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
-            await LockAsync(ActionPoint.Id);
-            var response = await Session.client.RenameActionPointJointsAsync(new RenameActionPointJointsRequestArgs(Id, newName));
+            await LibraryLockAsync(ActionPoint.Id);
+            var response = await Session.Client.RenameActionPointJointsAsync(new RenameActionPointJointsRequestArgs(Id, newName));
             if(!response.Result) {
                 await TryUnlockAsync(ActionPoint.Id);
                 throw new Arcor2Exception($"Renaming joints {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync(ActionPoint.Id);
+            await LibraryUnlockAsync(ActionPoint.Id);
         }
 
         /// <summary>
@@ -107,16 +107,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.JointsUpdated += OnJointsUpdated;
-            Session.client.JointsBaseUpdated += OnJointsBaseUpdated;
-            Session.client.JointsRemoved += OnJointsRemoved;
+            Session.Client.JointsUpdated += OnJointsUpdated;
+            Session.Client.JointsBaseUpdated += OnJointsBaseUpdated;
+            Session.Client.JointsRemoved += OnJointsRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.JointsUpdated -= OnJointsUpdated;
-            Session.client.JointsBaseUpdated -= OnJointsBaseUpdated;
-            Session.client.JointsRemoved -= OnJointsRemoved;
+            Session.Client.JointsUpdated -= OnJointsUpdated;
+            Session.Client.JointsBaseUpdated -= OnJointsBaseUpdated;
+            Session.Client.JointsRemoved -= OnJointsRemoved;
         }
 
         private void OnJointsRemoved(object sender, JointsEventArgs e) {

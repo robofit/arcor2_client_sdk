@@ -33,14 +33,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="newOrientation">The new orientation.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateAsync(Orientation newOrientation) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionPointOrientationAsync(new UpdateActionPointOrientationRequestArgs(Id, newOrientation));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateActionPointOrientationAsync(new UpdateActionPointOrientationRequestArgs(Id, newOrientation));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating orientation {Id} for action point {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -54,14 +54,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionPointOrientationUsingRobotAsync(new UpdateActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateActionPointOrientationUsingRobotAsync(new UpdateActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating orientation {Id} for action point {Id} using robot failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveActionPointOrientationAsync(new RemoveActionPointOrientationRequestArgs(Id));
+            var response = await Session.Client.RemoveActionPointOrientationAsync(new RemoveActionPointOrientationRequestArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing orientation {Id} failed.", response.Messages);
             }
@@ -110,14 +110,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
-            await LockAsync();
-            var response = await Session.client.RenameActionPointOrientationAsync(new RenameActionPointOrientationRequestArgs(Id, newName));
+            await LibraryLockAsync();
+            var response = await Session.Client.RenameActionPointOrientationAsync(new RenameActionPointOrientationRequestArgs(Id, newName));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Renaming orientation {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -136,16 +136,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.OrientationUpdated += OnOrientationUpdated;
-            Session.client.OrientationBaseUpdated += OnOrientationBaseUpdated;
-            Session.client.OrientationRemoved += OnOrientationRemoved;
+            Session.Client.OrientationUpdated += OnOrientationUpdated;
+            Session.Client.OrientationBaseUpdated += OnOrientationBaseUpdated;
+            Session.Client.OrientationRemoved += OnOrientationRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.OrientationUpdated -= OnOrientationUpdated;
-            Session.client.OrientationBaseUpdated -= OnOrientationBaseUpdated;
-            Session.client.OrientationRemoved -= OnOrientationRemoved;
+            Session.Client.OrientationUpdated -= OnOrientationUpdated;
+            Session.Client.OrientationBaseUpdated -= OnOrientationBaseUpdated;
+            Session.Client.OrientationRemoved -= OnOrientationRemoved;
         }
 
         private void OnOrientationRemoved(object sender, OrientationEventArgs e) {

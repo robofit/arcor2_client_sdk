@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -58,9 +59,22 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task LockAsync(bool lockTree = false) {
-            var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
+            var @lock = await Session.Client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Locks the resource represented by this instance if auto-lock mode is enabled.
+        /// </summary>
+        /// <exception cref="Arcor2Exception"></exception>
+        internal async Task LibraryLockAsync(bool lockTree = false) {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock) {
+                var @lock = await Session.Client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
+                if(!@lock.Result) {
+                    throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
+                }
             }
         }
 
@@ -68,18 +82,40 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// Unlocks the resource represented by this instance.
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task UnlockAsync() {
-            var @lock = await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+        internal async Task UnlockAsync() {
+            var @lock = await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Unlocking object {Id} failed.", @lock.Messages);
             }
         }
 
         /// <summary>
-        /// Unlocks a resource, but doesn't throw on failure.
+        /// Unlocks the resource represented by this instance if auto-lock mode is enabled.
         /// </summary>
-        public async Task TryUnlockAsync() {
-            await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+        /// <exception cref="Arcor2Exception"></exception>
+        internal async Task LibraryUnlockAsync() {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock) {
+                var @lock = await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+                if(!@lock.Result) {
+                    throw new Arcor2Exception($"Unlocking object {Id} failed.", @lock.Messages);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Unlocks the resource represented by this instance. Doesn't throw on failure if auto-lock mode is enabled.
+        /// </summary>
+        internal async Task TryUnlockAsync() {
+            await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+        }
+
+        /// <summary>
+        /// Unlocks the resource represented by this instance if auto-lock mode is enabled. Doesn't throw on failure if auto-lock mode is enabled
+        /// </summary>
+        internal async Task TryLibraryUnlockAsync() {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock) {
+                await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
+            }
         }
 
         /// <summary>
@@ -87,8 +123,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ObjectsLocked += OnObjectsLocked;
-            Session.client.ObjectsUnlocked += OnObjectsUnlocked;
+            Session.Client.ObjectsLocked += OnObjectsLocked;
+            Session.Client.ObjectsUnlocked += OnObjectsUnlocked;
         }
 
         /// <summary>
@@ -96,14 +132,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ObjectsLocked -= OnObjectsLocked;
-            Session.client.ObjectsUnlocked -= OnObjectsUnlocked;
+            Session.Client.ObjectsLocked -= OnObjectsLocked;
+            Session.Client.ObjectsUnlocked -= OnObjectsUnlocked;
         }
 
         private void OnObjectsLocked(object sender, ObjectsLockEventArgs e) {
-            if (e.Data.ObjectIds.Contains(Id)) {
-                if (IsLocked) {
-                    Session.logger?.LogWarning($"The object {Id} received lock event message while already locked.");
+            if(e.Data.ObjectIds.Contains(Id)) {
+                if(IsLocked) {
+                    Session.Logger?.LogWarning($"The object {Id} received lock event message while already locked.");
                 }
                 IsLocked = true;
                 LockOwner = e.Data.Owner;
@@ -114,7 +150,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnObjectsUnlocked(object sender, ObjectsLockEventArgs e) {
             if(e.Data.ObjectIds.Contains(Id)) {
                 if(!IsLocked) {
-                    Session.logger?.LogWarning($"The object {Id} received unlock event message while already unlocked.");
+                    Session.Logger?.LogWarning($"The object {Id} received unlock event message while already unlocked.");
                 }
                 IsLocked = false;
                 LockOwner = null;

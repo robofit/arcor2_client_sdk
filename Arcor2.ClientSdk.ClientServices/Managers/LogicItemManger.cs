@@ -52,7 +52,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateAsync(string startId, string endId, ProjectLogicIf? condition = null) {
-            var response = await Session.client.UpdateLogicItemAsync(new UpdateLogicItemRequestArgs(Id, startId, endId, condition!));
+            var response = await Session.Client.UpdateLogicItemAsync(new UpdateLogicItemRequestArgs(Id, startId, endId, condition!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Updating logic item {Id} failed.", response.Messages);
             }
@@ -78,7 +78,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveLogicItemAsync(new RemoveLogicItemRequestArgs(Id));
+            var response = await Session.Client.RemoveLogicItemAsync(new RemoveLogicItemRequestArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing logic item {Id} failed.", response.Messages);
             }
@@ -101,14 +101,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.LogicItemUpdated += OnLogicItemUpdated;
-            Session.client.LogicItemRemoved += OnLogicItemRemoved;
+            Session.Client.LogicItemUpdated += OnLogicItemUpdated;
+            Session.Client.LogicItemRemoved += OnLogicItemRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.LogicItemUpdated -= OnLogicItemUpdated;
-            Session.client.LogicItemRemoved -= OnLogicItemRemoved;
+            Session.Client.LogicItemUpdated -= OnLogicItemUpdated;
+            Session.Client.LogicItemRemoved -= OnLogicItemRemoved;
         }
 
         private void OnLogicItemRemoved(object sender, LogicItemChangedEventArgs e) {

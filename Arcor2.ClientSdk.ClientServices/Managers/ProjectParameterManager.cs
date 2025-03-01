@@ -26,8 +26,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="value">The new value</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateValueAsync(string value) {
-            await LockAsync();
-            var response = await Session.client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, Data.Name, value));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, Data.Name, value));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
             }
@@ -41,8 +41,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="name">The new name.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateNameAsync(string name) {
-            await LockAsync();
-            var response = await Session.client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, name, Data.Value));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, name, Data.Value));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
             }
@@ -54,7 +54,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveProjectParameterAsync(new RemoveProjectParameterRequestArgs(Id));
+            var response = await Session.Client.RemoveProjectParameterAsync(new RemoveProjectParameterRequestArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
             }
@@ -75,14 +75,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ProjectParameterUpdated += OnProjectParameterUpdated;
-            Session.client.ProjectParameterRemoved += OnProjectParameterRemoved;
+            Session.Client.ProjectParameterUpdated += OnProjectParameterUpdated;
+            Session.Client.ProjectParameterRemoved += OnProjectParameterRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ProjectParameterUpdated -= OnProjectParameterUpdated;
-            Session.client.ProjectParameterRemoved -= OnProjectParameterRemoved;
+            Session.Client.ProjectParameterUpdated -= OnProjectParameterUpdated;
+            Session.Client.ProjectParameterRemoved -= OnProjectParameterRemoved;
         }
 
         private void OnProjectParameterRemoved(object sender, ProjectParameterEventArgs e) {

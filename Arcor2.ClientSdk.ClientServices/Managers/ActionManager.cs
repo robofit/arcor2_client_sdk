@@ -87,14 +87,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="flows">Updated list of flows.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateAsync(List<Flow> flows, List<ActionParameter> parameters) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionAsync(new UpdateActionRequestArgs(Id, parameters, flows));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateActionAsync(new UpdateActionRequestArgs(Id, parameters, flows));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating action {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -120,7 +120,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveActionAsync(new IdArgs(Id));
+            var response = await Session.Client.RemoveActionAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing action {Id} failed.", response.Messages);
             }
@@ -134,7 +134,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task ExecuteAsync() {
-            var response = await Session.client.ExecuteActionAsync(new ExecuteActionRequestArgs(Id));
+            var response = await Session.Client.ExecuteActionAsync(new ExecuteActionRequestArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Executing action {Id} failed.", response.Messages);
             }
@@ -149,7 +149,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CancelAsync() {
-            var response = await Session.client.CancelActionAsync();
+            var response = await Session.Client.CancelActionAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Cancelling action failed.", response.Messages);
             }
@@ -162,8 +162,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
-            await LockAsync();
-            var response = await Session.client.RenameActionAsync(new RenameActionRequestArgs(Id, newName));
+            await LibraryLockAsync();
+            var response = await Session.Client.RenameActionAsync(new RenameActionRequestArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Renaming action point {Id} failed.", response.Messages);
             }
@@ -185,26 +185,26 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ActionUpdated += OnActionUpdated;
-            Session.client.ActionBaseUpdated += OnActionBaseUpdated;
-            Session.client.ActionRemoved += OnActionRemoved;
-            Session.client.ActionExecution += OnActionExecution;
-            Session.client.ActionCancelled += OnActionCancelled;
-            Session.client.ActionResult += OnActionResult;
-            Session.client.ActionStateBefore += OnActionStateBefore;
-            Session.client.ActionStateAfter += OnActionStateAfter;
+            Session.Client.ActionUpdated += OnActionUpdated;
+            Session.Client.ActionBaseUpdated += OnActionBaseUpdated;
+            Session.Client.ActionRemoved += OnActionRemoved;
+            Session.Client.ActionExecution += OnActionExecution;
+            Session.Client.ActionCancelled += OnActionCancelled;
+            Session.Client.ActionResult += OnActionResult;
+            Session.Client.ActionStateBefore += OnActionStateBefore;
+            Session.Client.ActionStateAfter += OnActionStateAfter;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ActionUpdated -= OnActionUpdated;
-            Session.client.ActionBaseUpdated -= OnActionBaseUpdated;
-            Session.client.ActionRemoved -= OnActionRemoved;
-            Session.client.ActionExecution -= OnActionExecution;
-            Session.client.ActionCancelled -= OnActionCancelled;
-            Session.client.ActionResult -= OnActionResult;
-            Session.client.ActionStateBefore -= OnActionStateBefore;
-            Session.client.ActionStateAfter -= OnActionStateAfter;
+            Session.Client.ActionUpdated -= OnActionUpdated;
+            Session.Client.ActionBaseUpdated -= OnActionBaseUpdated;
+            Session.Client.ActionRemoved -= OnActionRemoved;
+            Session.Client.ActionExecution -= OnActionExecution;
+            Session.Client.ActionCancelled -= OnActionCancelled;
+            Session.Client.ActionResult -= OnActionResult;
+            Session.Client.ActionStateBefore -= OnActionStateBefore;
+            Session.Client.ActionStateAfter -= OnActionStateAfter;
         }
 
         private void OnActionRemoved(object sender, BareActionEventArgs e) {
@@ -236,7 +236,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnActionResult(object sender, ActionResultEventArgs e) {
             if(e.Data.ActionId == Id) {
                 if(!IsExecuting) {
-                    Session.logger?.LogWarning($"Action {Id} received ActionResult event when its {nameof(IsExecuting)} property was false.");
+                    Session.Logger?.LogWarning($"Action {Id} received ActionResult event when its {nameof(IsExecuting)} property was false.");
                 }
                 IsExecuting = false;
                 Executed?.Invoke(this, new ActionExecutedEventArgs(e.Data.Results, e.Data.Error));
@@ -254,7 +254,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnActionExecution(object sender, ActionExecutionEventArgs e) {
             if(e.Data.ActionId == Id) {
                 if(IsExecuting) {
-                    Session.logger?.LogWarning($"Action {Id} received ActionExecution event when its {nameof(IsExecuting)} property was true.");
+                    Session.Logger?.LogWarning($"Action {Id} received ActionExecution event when its {nameof(IsExecuting)} property was true.");
                 }
                 IsExecuting = true;
                 Executing?.Invoke(this, EventArgs.Empty);

@@ -36,7 +36,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     return parentType.IsTypeOf(objectType);
                 }
                 else {
-                    Session.logger?.LogWarning($"An object type '{objectType.Data.Meta.Type}' references non-existing parent '{Data.Meta.Base}'.");
+                    Session.Logger?.LogWarning($"An object type '{objectType.Data.Meta.Type}' references non-existing parent '{Data.Meta.Base}'.");
                     return false;
                 }
             }
@@ -63,7 +63,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<IList<SceneManager>> GetUsingScenesAsync() {
-            var result = await Session.client.GetObjectTypeUsageAsync(new IdArgs(Id));
+            var result = await Session.Client.GetObjectTypeUsageAsync(new IdArgs(Id));
             if (result.Result == false) {
                 throw new Arcor2Exception($"Getting scene usage of object type {Id} failed.", result.Messages);
             }
@@ -76,7 +76,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task DeleteAsync() {
-            var result = await Session.client.RemoveObjectTypeAsync(Id);
+            var result = await Session.Client.RemoveObjectTypeAsync(Id);
             if(result.Result == false) {
                 throw new Arcor2Exception($"Deleting object type {Id} failed.", result.Messages);
             }
@@ -89,16 +89,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="model">New object model.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateObjectModel(CollisionModel model) {
-            await LockAsync();
+            await LibraryLockAsync();
             var result =
-                await Session.client.UpdateObjectTypeModelAsync(
+                await Session.Client.UpdateObjectTypeModelAsync(
                     new UpdateObjectModelRequestArgs(Id, model.ToOpenApiObjectModel(Id)));
             if(result.Result == false) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating model of an object type {Id} failed.", result.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -109,13 +109,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task ReloadActionsAsync() {
-            var actions = await Session.client.GetActionsAsync(new TypeArgs(Id));
+            var actions = await Session.Client.GetActionsAsync(new TypeArgs(Id));
             if(actions.Result) {
                 Data.Actions = actions.Data;
                 OnUpdated();
             }
             else {
-                Session.logger?.LogWarning(
+                Session.Logger?.LogWarning(
                     $"The server returned an error when fetching actions for {Id} object type. Leaving it blank. Error messages: " +
                     string.Join(",", actions.Messages));
             }
@@ -139,14 +139,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ObjectTypeUpdated += OnObjectTypeUpdated;
-            Session.client.ObjectTypeRemoved += OnObjectTypeRemoved;
+            Session.Client.ObjectTypeUpdated += OnObjectTypeUpdated;
+            Session.Client.ObjectTypeRemoved += OnObjectTypeRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ObjectTypeUpdated -= OnObjectTypeUpdated;
-            Session.client.ObjectTypeRemoved -= OnObjectTypeRemoved;
+            Session.Client.ObjectTypeUpdated -= OnObjectTypeUpdated;
+            Session.Client.ObjectTypeRemoved -= OnObjectTypeRemoved;
         }
 
         private void OnObjectTypeRemoved(object sender, ObjectTypesEventArgs args) {

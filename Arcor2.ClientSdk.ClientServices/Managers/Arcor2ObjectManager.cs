@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Managers {
@@ -72,26 +73,30 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         /// <summary>
-        /// Locks a resource.
+        /// Locks a resource if auto-lock mode is enabled.
         /// </summary>
         /// <param name="id">The ID of the resource.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        protected internal async Task LockAsync(string id) {
-            var @lock = await Session.client.WriteLockAsync(new WriteLockRequestArgs(id));
-            if(!@lock.Result) {
-                throw new Arcor2Exception($"Locking object {id} failed.", @lock.Messages);
+        protected internal async Task LibraryLockAsync(string id) {
+            if (Session.Settings.LockingMode == LockingMode.AutoLock) {
+                var @lock = await Session.Client.WriteLockAsync(new WriteLockRequestArgs(id));
+                if (!@lock.Result) {
+                    throw new Arcor2Exception($"Locking object {id} failed.", @lock.Messages);
+                }
             }
         }
 
         /// <summary>
-        /// Unlocks a resource.
+        /// Unlocks a resource if auto-lock mode is enabled.
         /// </summary>
         /// <param name="id">The ID of the resource.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        protected internal async Task UnlockAsync(string id) {
-            var @lock = await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(id));
-            if(!@lock.Result) {
-                throw new Arcor2Exception($"Unlocking object {id} failed.", @lock.Messages);
+        protected internal async Task LibraryUnlockAsync(string id) {
+            if (Session.Settings.LockingMode == LockingMode.AutoLock) {
+                var @lock = await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(id));
+                if (!@lock.Result) {
+                    throw new Arcor2Exception($"Unlocking object {id} failed.", @lock.Messages);
+                }
             }
         }
 
@@ -100,7 +105,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <param name="id">The ID of the resource.</param>
         protected internal async Task TryUnlockAsync(string id) {
-            await Session.client.WriteUnlockAsync(new WriteUnlockRequestArgs(id));
+            await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(id));
         }
 
         /// <summary>

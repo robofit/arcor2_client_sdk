@@ -70,7 +70,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="force">If <c>true</c>, the operation will ignore any warnings.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync(bool force = false) {
-            var response = await Session.client.RemoveActionObjectFromSceneAsync(new RemoveFromSceneRequestArgs(Id, force));
+            var response = await Session.Client.RemoveActionObjectFromSceneAsync(new RemoveFromSceneRequestArgs(Id, force));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing action object {Id} failed.", response.Messages);
             }
@@ -82,14 +82,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="pose">The pose.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdatePoseAsync(Pose pose) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionObjectPoseAsync(new UpdateObjectPoseRequestArgs(Id, pose));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateActionObjectPoseAsync(new UpdateObjectPoseRequestArgs(Id, pose));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating pose of action object {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -109,14 +109,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StepPositionAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
-            await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
+            await LibraryLockAsync();
+            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -136,14 +136,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StepPositionAsync(Axis axis, decimal step, EndEffector? endEffector = null, string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
-            await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
+            await LibraryLockAsync();
+            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -163,14 +163,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StepOrientationAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
-            await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
+            await LibraryLockAsync();
+            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -190,14 +190,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StepOrientationAsync(Axis axis, decimal step, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
-            await LockAsync();
-            var response = await Session.client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId!));
+            await LibraryLockAsync();
+            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId!));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -214,7 +214,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToPoseAsync(Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
+            var response = await Session.Client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
@@ -235,7 +235,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToPoseAsync(string endEffectorId, Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffectorId, speed, pose.Position, pose.Orientation, safe, linear, armId!));
+            var response = await Session.Client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffectorId, speed, pose.Position, pose.Orientation, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
@@ -257,7 +257,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToPoseAsync(EndEffector? endEffector, Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ?? "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
+            var response = await Session.Client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ?? "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
@@ -276,7 +276,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToJointsAsync(IList<Joint> joints, string? armId = null, bool safe = true, decimal speed = 1) {
-            var response = await Session.client.MoveToJointsAsync(new MoveToJointsRequestArgs(Id, speed, joints.Select(j => j.ToOpenApiJointObject()).ToList(), safe, armId!));
+            var response = await Session.Client.MoveToJointsAsync(new MoveToJointsRequestArgs(Id, speed, joints.Select(j => j.ToOpenApiJointObject()).ToList(), safe, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
@@ -296,7 +296,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToActionPointOrientationAsync(string orientationId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, "default", orientationId, null!, safe, linear, armId!));
+            var response = await Session.Client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, "default", orientationId, null!, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to action point orientation failed.", response.Messages);
             }
@@ -334,7 +334,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToActionPointOrientationAsync(string orientationId, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, orientationId, null!, safe, linear, armId!));
+            var response = await Session.Client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, orientationId, null!, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to action point orientation failed.", response.Messages);
             }
@@ -409,7 +409,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task MoveToActionPointJointsAsync(string jointsId, string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, null!, jointsId, safe, linear, armId!));
+            var response = await Session.Client.MoveToActionPointAsync(new MoveToActionPointRequestArgs(Id, speed, endEffectorId, null!, jointsId, safe, linear, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to action point joints failed.", response.Messages);
             }
@@ -518,14 +518,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task SetEndEffectorPerpendicularToWorldAsync(string endEffectorId, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await LockAsync();
-            var response = await Session.client.SetEndEffectorPerpendicularToWorldAsync(new SetEefPerpendicularToWorldRequestArgs(Id, endEffectorId, safe, speed, linear, armId!));
+            await LibraryLockAsync();
+            var response = await Session.Client.SetEndEffectorPerpendicularToWorldAsync(new SetEefPerpendicularToWorldRequestArgs(Id, endEffectorId, safe, speed, linear, armId!));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Setting robot {Id} eef perpendicular to world failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -574,13 +574,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task SetHandTeachingModeAsync(bool enable = true, string? armId = null) {
-            await LockAsync();
-            var response = await Session.client.SetHandTeachingModeAsync(new HandTeachingModeRequestArgs(Id, enable, armId!));
+            await LibraryLockAsync();
+            var response = await Session.Client.SetHandTeachingModeAsync(new HandTeachingModeRequestArgs(Id, enable, armId!));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Setting hand teaching mode for robot {Id} failed.", response.Messages);
             }
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -609,7 +609,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns>The calculated pose.</returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<Pose> GetForwardKinematicsAsync(string endEffectorId, IList<Joint> joints, string? armId = null) {
-            var response = await Session.client.ForwardKinematicsAsync(new ForwardKinematicsRequestArgs(Id, endEffectorId, joints.Select(j => j.ToOpenApiJointObject()).ToList(), armId!));
+            var response = await Session.Client.ForwardKinematicsAsync(new ForwardKinematicsRequestArgs(Id, endEffectorId, joints.Select(j => j.ToOpenApiJointObject()).ToList(), armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting forward kinematics for robot {Id} failed.", response.Messages);
             }
@@ -643,7 +643,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<Pose> GetForwardKinematicsAsync(string endEffectorId, string? armId = null) {
             var joints = Data.Joints!.Select(j => j.ToOpenApiJointObject()).ToList();
-            var response = await Session.client.ForwardKinematicsAsync(new ForwardKinematicsRequestArgs(Id, endEffectorId, joints, armId!));
+            var response = await Session.Client.ForwardKinematicsAsync(new ForwardKinematicsRequestArgs(Id, endEffectorId, joints, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting forward kinematics for robot {Id} failed.", response.Messages);
             }
@@ -691,7 +691,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         public async Task<IList<Joint>> GetInverseKinematicsAsync(string endEffectorId, bool avoidCollisions = true, string? armId = null) {
             var pose = Data.EefPoses!.First(e => e.Id == endEffectorId).Pose!;
             var joints = Data.Joints!.Select(j => j.ToOpenApiJointObject()).ToList();
-            var response = await Session.client.InverseKinematicsAsync(new InverseKinematicsRequestArgs(Id, endEffectorId, pose, joints, avoidCollisions, armId!));
+            var response = await Session.Client.InverseKinematicsAsync(new InverseKinematicsRequestArgs(Id, endEffectorId, pose, joints, avoidCollisions, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting inverse kinematics for robot {Id} failed.", response.Messages);
             }
@@ -743,7 +743,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<IList<Joint>> GetInverseKinematicsAsync(string endEffectorId, Pose pose, IList<Joint>? startingJoints = null, bool avoidCollisions = true, string? armId = null) {
             var joints = (startingJoints ?? Data.Joints)?.Select(j => j.ToOpenApiJointObject()).ToList();
-            var response = await Session.client.InverseKinematicsAsync(new InverseKinematicsRequestArgs(Id, endEffectorId, pose, joints!, avoidCollisions, armId!));
+            var response = await Session.Client.InverseKinematicsAsync(new InverseKinematicsRequestArgs(Id, endEffectorId, pose, joints!, avoidCollisions, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting inverse kinematics for robot {Id} failed.", response.Messages);
             }
@@ -794,14 +794,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="moveToCalibrationPose">Should the robot move to the calibration pose? By default, <c>true</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CalibrateRobotAsync(string cameraActionObjectId, bool moveToCalibrationPose = true) {
-            await LockAsync();
-            var response = await Session.client.CalibrateRobotAsync(new CalibrateRobotRequestArgs(Id, cameraActionObjectId, moveToCalibrationPose));
+            await LibraryLockAsync();
+            var response = await Session.Client.CalibrateRobotAsync(new CalibrateRobotRequestArgs(Id, cameraActionObjectId, moveToCalibrationPose));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Calibrating robot {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -825,13 +825,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CalibrateCameraAsync() {
-            await LockAsync();
-            var response = await Session.client.CalibrateCameraAsync(new CalibrateCameraRequestArgs(Id));
+            await LibraryLockAsync();
+            var response = await Session.Client.CalibrateCameraAsync(new CalibrateCameraRequestArgs(Id));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Calibrating camera {Id} failed.", response.Messages);
             }
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -846,13 +846,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         [Obsolete("Not implemented as of ARServer 1.5.0.")]
         public async Task<byte[]> GetCameraColorImageAsync() {
-            await LockAsync();
-            var response = await Session.client.GetCameraColorImageAsync(new CameraColorImageRequestArgs(Id));
+            await LibraryLockAsync();
+            var response = await Session.Client.GetCameraColorImageAsync(new CameraColorImageRequestArgs(Id));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Getting camera color image {Id} failed.", response.Messages);
             }
-            await UnlockAsync();
+            await LibraryUnlockAsync();
 
             var imageBytes = Encoding.GetEncoding("iso-8859-1").GetBytes(response.Data);
             return imageBytes;
@@ -868,13 +868,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns>A <see cref="CameraParameters"/> object containing the intrinsic parameters of the camera's color sensor.</returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<CameraParameters> GetCameraColorParametersAsync() {
-            await LockAsync();
-            var response = await Session.client.GetCameraColorParametersAsync(new CameraColorParametersRequestArgs(Id));
+            await LibraryLockAsync();
+            var response = await Session.Client.GetCameraColorParametersAsync(new CameraColorParametersRequestArgs(Id));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Getting camera color parameters {Id} failed.", response.Messages);
             }
-            await UnlockAsync();
+            await LibraryUnlockAsync();
             return response.Data;
         }
 
@@ -884,8 +884,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="newName">New name.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
-            await LockAsync();
-            var response = await Session.client.RenameActionObjectAsync(new RenameArgs(Id, newName));
+            await LibraryLockAsync();
+            var response = await Session.Client.RenameActionObjectAsync(new RenameArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Renaming action object {Id} failed.", response.Messages);
             }
@@ -897,14 +897,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="parameters">The new list of parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateParametersAsync(ICollection<Parameter> parameters) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, parameters.ToList()));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateActionObjectParametersAsync(new UpdateObjectParametersRequestArgs(Id, parameters.ToList()));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating parameters of action object {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -968,7 +968,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<IList<string>> GetParameterValuesAsync(Parameter parameter, IList<Parameter>? parentParameters = null) {
             parentParameters ??= new List<Parameter>();
-            var response = await Session.client.GetActionParameterValuesAsync(new ActionParamValuesRequestArgs(Id, parameter.Name, parentParameters.Select(s => s.ToIdValue()).ToList()));
+            var response = await Session.Client.GetActionParameterValuesAsync(new ActionParamValuesRequestArgs(Id, parameter.Name, parentParameters.Select(s => s.ToIdValue()).ToList()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting parameter values for action object {Id} failed.", response.Messages);
             }
@@ -989,7 +989,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<IList<string>> GetParameterValuesAsync(string parameter, IList<Parameter>? parentParameters = null) {
             parentParameters ??= new List<Parameter>();
-            var response = await Session.client.GetActionParameterValuesAsync(new ActionParamValuesRequestArgs(Id, parameter, parentParameters.Select(s => s.ToIdValue()).ToList()));
+            var response = await Session.Client.GetActionParameterValuesAsync(new ActionParamValuesRequestArgs(Id, parameter, parentParameters.Select(s => s.ToIdValue()).ToList()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Getting parameter values for action object {Id} failed.", response.Messages);
             }
@@ -1004,7 +1004,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// The scene must be online and the action object a robot with corresponding feature.
         /// </remarks>
         public async Task StopAsync() {
-            var response = await Session.client.StopRobotAsync(new StopRobotRequestArgs(Id));
+            var response = await Session.Client.StopRobotAsync(new StopRobotRequestArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Stopping robot {Id} failed.", response.Messages);
             }
@@ -1023,7 +1023,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdatePoseUsingRobotAsync(string robotId, string endEffectorId, string? armId = null, Pivot pivot = Pivot.Middle ) {
-            var response = await Session.client.UpdateObjectPoseUsingRobotAsync(new UpdateObjectPoseUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!), pivot.MapToOpenApiPivotEnum()));
+            var response = await Session.Client.UpdateObjectPoseUsingRobotAsync(new UpdateObjectPoseUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!), pivot.MapToOpenApiPivotEnum()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Updating pose of action object {Id} using robot failed.", response.Messages);
             }
@@ -1103,7 +1103,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StartObjectAimingAsync(string robotId, string endEffectorId, string? armId = null) {
-            var response = await Session.client.ObjectAimingStartAsync(new ObjectAimingStartRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
+            var response = await Session.Client.ObjectAimingStartAsync(new ObjectAimingStartRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Starting object aiming process for action object {Id} failed.", response.Messages);
             }
@@ -1164,7 +1164,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CancelObjectAimingAsync() {
-            var response = await Session.client.ObjectAimingCancelAsync();
+            var response = await Session.Client.ObjectAimingCancelAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Cancelling object aiming process for action object {Id} failed.", response.Messages);
             }
@@ -1175,7 +1175,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task FinishObjectAimingAsync() {
-            var response = await Session.client.ObjectAimingDoneAsync();
+            var response = await Session.Client.ObjectAimingDoneAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Finishing object aiming process for action object {Id} failed.", response.Messages);
             }
@@ -1186,7 +1186,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddPointForObjectAimingAsync(int pointId) {
-            var response = await Session.client.ObjectAimingAddPointAsync(new ObjectAimingAddPointRequestArgs(pointId));
+            var response = await Session.Client.ObjectAimingAddPointAsync(new ObjectAimingAddPointRequestArgs(pointId));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding point index for object aiming process for action object {Id} failed.", response.Messages);
             }
@@ -1202,21 +1202,21 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         public async Task ReloadRobotArmsAndEefPoseAsync() {
             if(ObjectType.Data.RobotMeta?.MultiArm ?? false) {
-                var armsResponse = await Session.client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
+                var armsResponse = await Session.Client.GetRobotArmsAsync(new GetRobotArmsRequestArgs(Id));
                 // Do not throw, it may be single-armed... despite the property
                 if(armsResponse.Result) {
                     Data.Arms = armsResponse.Data;
                 }
             }
 
-            var eefResponse = await Session.client.GetRobotEndEffectorsAsync(new GetEndEffectorsRequestArgs(Id));
+            var eefResponse = await Session.Client.GetRobotEndEffectorsAsync(new GetEndEffectorsRequestArgs(Id));
             if(!eefResponse.Result) {
                 throw new Arcor2Exception($"Getting end effectors for action object {Id} failed.", eefResponse.Messages);
             }
 
             var endEffectors = eefResponse.Data.Select(id => new EndEffector(id)).ToList();
             foreach(var endEffector in endEffectors) {
-                var poseResponse = await Session.client.GetEndEffectorPoseAsync(new GetEndEffectorPoseRequestArgs(Id, endEffector.Id, endEffector.ArmId!));
+                var poseResponse = await Session.Client.GetEndEffectorPoseAsync(new GetEndEffectorPoseRequestArgs(Id, endEffector.Id, endEffector.ArmId!));
                 if(!eefResponse.Result) {
                     throw new Arcor2Exception($"Could not get end effector '{endEffector.Id}' pose for action object {Id}.", eefResponse.Messages);
                 }
@@ -1236,7 +1236,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// due to locked object type).
         /// </remarks>
         public async Task ReloadRobotJointsAsync() {
-            var jointsResponse = await Session.client.GetRobotJointsAsync(new GetRobotJointsRequestArgs(Id));
+            var jointsResponse = await Session.Client.GetRobotJointsAsync(new GetRobotJointsRequestArgs(Id));
             if(jointsResponse.Result) {
                 Data.Joints = jointsResponse.Data.Select(j => j.MapToCustomJointObject()).ToList();
                 OnUpdated();
@@ -1255,7 +1255,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="enabled">Toggle on/off.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RegisterForUpdatesAsync(RobotUpdateType type, bool enabled = true) {
-            var response = await Session.client.RegisterForRobotEventAsync(new RegisterForRobotEventRequestArgs(Id, send: true, what: type.MapToOpenApiWhatEnum()));
+            var response = await Session.Client.RegisterForRobotEventAsync(new RegisterForRobotEventRequestArgs(Id, send: true, what: type.MapToOpenApiWhatEnum()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Registering for robot updates for action object {Id} failed.", response.Messages);
             }
@@ -1277,28 +1277,28 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.SceneActionObjectUpdated += OnSceneActionObjectUpdated;
-            Session.client.SceneActionObjectRemoved += OnSceneActionObjectRemoved;
-            Session.client.RobotJointsUpdated += OnRobotJointsUpdated;
-            Session.client.RobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
-            Session.client.ProcessState += OnProcessState;
-            Session.client.RobotMoveToPose += OnRobotMoveToPose;
-            Session.client.RobotMoveToJoints += OnRobotMoveToJoints;
-            Session.client.RobotMoveToActionPointJoints += OnRobotMoveToActionPointJoints;
-            Session.client.RobotMoveToActionPointOrientation += OnRobotMoveToActionPointOrientation;
+            Session.Client.SceneActionObjectUpdated += OnSceneActionObjectUpdated;
+            Session.Client.SceneActionObjectRemoved += OnSceneActionObjectRemoved;
+            Session.Client.RobotJointsUpdated += OnRobotJointsUpdated;
+            Session.Client.RobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
+            Session.Client.ProcessState += OnProcessState;
+            Session.Client.RobotMoveToPose += OnRobotMoveToPose;
+            Session.Client.RobotMoveToJoints += OnRobotMoveToJoints;
+            Session.Client.RobotMoveToActionPointJoints += OnRobotMoveToActionPointJoints;
+            Session.Client.RobotMoveToActionPointOrientation += OnRobotMoveToActionPointOrientation;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.SceneActionObjectUpdated -= OnSceneActionObjectUpdated;
-            Session.client.SceneActionObjectRemoved -= OnSceneActionObjectRemoved;
-            Session.client.RobotJointsUpdated -= OnRobotJointsUpdated;
-            Session.client.RobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
-            Session.client.ProcessState -= OnProcessState;
-            Session.client.RobotMoveToPose -= OnRobotMoveToPose;
-            Session.client.RobotMoveToJoints -= OnRobotMoveToJoints;
-            Session.client.RobotMoveToActionPointJoints -= OnRobotMoveToActionPointJoints;
-            Session.client.RobotMoveToActionPointOrientation -= OnRobotMoveToActionPointOrientation;
+            Session.Client.SceneActionObjectUpdated -= OnSceneActionObjectUpdated;
+            Session.Client.SceneActionObjectRemoved -= OnSceneActionObjectRemoved;
+            Session.Client.RobotJointsUpdated -= OnRobotJointsUpdated;
+            Session.Client.RobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
+            Session.Client.ProcessState -= OnProcessState;
+            Session.Client.RobotMoveToPose -= OnRobotMoveToPose;
+            Session.Client.RobotMoveToJoints -= OnRobotMoveToJoints;
+            Session.Client.RobotMoveToActionPointJoints -= OnRobotMoveToActionPointJoints;
+            Session.Client.RobotMoveToActionPointOrientation -= OnRobotMoveToActionPointOrientation;
         }
 
         private void OnSceneActionObjectUpdated(object sender, SceneActionObjectEventArgs e) {
@@ -1346,7 +1346,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     .SelectMany(a => a.Orientations, (a, o) => o)
                     .FirstOrDefault(o => o.Id == e.Data.OrientationId);
                 if(orientation == null) {
-                    Session.logger?.LogError($"Could not get OrientationManager ({e.Data.OrientationId}) for RobotMoveToActionPointOrientation.");
+                    Session.Logger?.LogError($"Could not get OrientationManager ({e.Data.OrientationId}) for RobotMoveToActionPointOrientation.");
                     return;
                 }
 
@@ -1371,7 +1371,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     .SelectMany(a => a.Joints, (a, o) => o)
                     .FirstOrDefault(o => o.Id == e.Data.JointsId);
                 if(joints == null) {
-                    Session.logger?.LogError($"Could not get JointsManager ({e.Data.JointsId}) for RobotMoveToActionPointJoints.");
+                    Session.Logger?.LogError($"Could not get JointsManager ({e.Data.JointsId}) for RobotMoveToActionPointJoints.");
                     return;
                 }
 

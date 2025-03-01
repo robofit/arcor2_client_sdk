@@ -12,23 +12,7 @@ using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using PackageStateEventArgs = Arcor2.ClientSdk.Communication.PackageStateEventArgs;
 
-// Some information about architecture of this package:
-//
-// 1. The class, Arcor2Session, serves as the main object of the session and generally provides method similar to things you would find in an actual menu including connection management.
-// 2. It also holds a collection of different Arcor2ObjectManagers, which represent another functional entities (Scene, ActionPoint, etc...), which then manage themselves through their lifetime.
-//  2.1 The Arcor2Session class should only care about events and RPCs not delegable to other, more specific, Manager.
-//      For example, server creating new instances of Scene or ObjectType is not delegable to any other Manager.
-//      But an existing Manager is capable of updating its data, updating its own "sub-Managers" (e.g. SceneManager adding ActionObjectManager to its collection),
-//      or even removing itself from the parent collection, and disposing itself. Imagine this whole structure as a tree, where parents add nodes, and the nodes modify and delete themselves.
-//      This is not a dogma though, for example, if we can't statically deduct if event is addition or update to our internal DB
-//      (this is the case for OpenScene and such [Handled here], as it can be sent before or after Scenes are loaded). Similarly, SceneBaseUpdate may be both rename (update) or for some reason
-//      the result of duplication (addition) [Handled in both SceneManager and here].
-//  2.2 The Arcor2Session instance is injected into ALL Managers. It provides them with the ability to use the client, logger, or verify some global state.
-//  2.3 Always make sure Manager instances are properly disposed, they will otherwise at best leak a lot of memory (exponentially). At worst, they will cause unwanted behavior.
-//  2.4 Managers (see abstract type Arcor2ObjectManager) all have a distinct ID, corresponding to the managed ARCOR2 resource, injected during construction. This ID is immutable (= don't reuse instances).
-
-namespace Arcor2.ClientSdk.ClientServices
-{
+namespace Arcor2.ClientSdk.ClientServices {
 
     /// <summary>
     /// Class used for session management and communication with ARCOR2 server.
@@ -38,8 +22,9 @@ namespace Arcor2.ClientSdk.ClientServices
         private bool disposed;
         // For storing the package state, because we receive PackageState before PackageInfo, and thus must store it. 
         private readonly Stack<PackageStateData> unopenedPackageStates = new Stack<PackageStateData>();
-        internal readonly Arcor2Client client;
-        internal readonly IArcor2Logger? logger;
+        internal readonly Arcor2Client Client;
+        internal readonly IArcor2Logger? Logger;
+        internal readonly Arcor2SessionSettings Settings;
 
         /// <summary>
         /// The registered username. 
@@ -117,53 +102,57 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <summary>
         /// Initializes a new instance of <see cref="Arcor2Session"/> class.
         /// </summary>
+        /// <param name="settings">The session settings.</param>
         /// <param name="logger">A logger instance.</param>
-        public Arcor2Session(IArcor2Logger? logger = null) {
-            this.logger = logger;
-            client = new Arcor2Client(new Arcor2ClientSettings(), this.logger);
+        public Arcor2Session(Arcor2SessionSettings? settings = null, IArcor2Logger? logger = null) {
+            Logger = logger;
+            Settings = settings ?? new Arcor2SessionSettings();
+            Client = new Arcor2Client(new Arcor2ClientSettings(), Logger);
 
-            client.ConnectionOpened += (sender, args) => {
+            Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
                 ConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
-            client.ConnectionClosed += (sender, args) => {
+            Client.ConnectionClosed += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Closed;
                 ConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
-            client.ConnectionError += ConnectionError;
+            Client.ConnectionError += ConnectionError;
             RegisterHandlers();
         }
 
         /// <summary>
         /// Initializes a new instance of <see cref="Arcor2Session"/> class.
         /// </summary>
+        /// <param name="settings">The session settings.</param>
         /// <param name="websocket">A WebSocket object implementing the <see cref="IWebSocket"/> interface.</param>
         /// <param name="logger">A logger instance.</param>
         /// <exception cref="InvalidOperationException">If the provided WebSocket instance is not in the <see cref="WebSocketState.None"/> state.</exception>
-        public Arcor2Session(IWebSocket websocket, IArcor2Logger? logger = null) {
+        public Arcor2Session(IWebSocket websocket, Arcor2SessionSettings? settings = null, IArcor2Logger? logger = null) {
             if(websocket.State != WebSocketState.None) {
                 throw new InvalidOperationException("The socket instance must be in the 'None' state.");
             }
 
-            this.logger = logger;
-            client = new Arcor2Client(websocket, new Arcor2ClientSettings(), this.logger);
+            Logger = logger;
+            Settings = settings ?? new Arcor2SessionSettings();
+            Client = new Arcor2Client(websocket, new Arcor2ClientSettings(), Logger);
 
-            client.ConnectionOpened += (sender, args) => {
+            Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
                 ConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
-            client.ConnectionClosed += (sender, args) => {
+            Client.ConnectionClosed += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Closed;
                 ConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
-            client.ConnectionError += ConnectionError;
+            Client.ConnectionError += ConnectionError;
         }
 
         /// <summary>
         /// Retrieves the underlying <see cref="Arcor2Client"/> instance.
         /// </summary>
         /// <returns></returns>
-        public Arcor2Client GetUnderlyingArcor2Client() => client;
+        public Arcor2Client GetUnderlyingArcor2Client() => Client;
 
         /// <summary>
         /// Establishes a connection to ARCOR2 server.
@@ -176,7 +165,7 @@ namespace Arcor2.ClientSdk.ClientServices
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
             }
-            await client.ConnectAsync(domain, port);
+            await Client.ConnectAsync(domain, port);
         }
 
         /// <summary>
@@ -190,7 +179,7 @@ namespace Arcor2.ClientSdk.ClientServices
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
             }
-            await client.ConnectAsync(uri);
+            await Client.ConnectAsync(uri);
         }
 
         /// <summary>
@@ -201,7 +190,7 @@ namespace Arcor2.ClientSdk.ClientServices
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
             }
-            await client.CloseAsync();
+            await Client.CloseAsync();
             Dispose();
         }
 
@@ -212,21 +201,21 @@ namespace Arcor2.ClientSdk.ClientServices
         /// Practically idempotent version of <see cref="CloseAsync"/>.
         /// </remarks>
         public void Dispose() {
-            if (ConnectionState != Arcor2SessionState.Closed && ConnectionState != Arcor2SessionState.None) {
-                client.CloseAsync().GetAwaiter().GetResult();
+            if(ConnectionState != Arcor2SessionState.Closed && ConnectionState != Arcor2SessionState.None) {
+                Client.CloseAsync().GetAwaiter().GetResult();
             }
 
             UnregisterHandlers();
-            foreach (var scene in Scenes) {
+            foreach(var scene in Scenes) {
                 scene.Dispose();
             }
-            foreach (var project in Projects) {
+            foreach(var project in Projects) {
                 project.Dispose();
             }
-            foreach (var package in Packages) {
+            foreach(var package in Packages) {
                 package.Dispose();
             }
-            foreach (var objectType in ObjectTypes) {
+            foreach(var objectType in ObjectTypes) {
                 objectType.Dispose();
             }
 
@@ -241,7 +230,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <exception cref="Arcor2Exception" />
         /// <exception cref="Arcor2ConnectionException" />
         /// <exception cref="InvalidOperationException"></exception>
-        public async Task<SystemInfoResponseData> InitializeAsync(bool skipLoadingData = false) {
+        public async Task<SystemInfoResponseData> InitializeAsync() {
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
             }
@@ -250,14 +239,14 @@ namespace Arcor2.ClientSdk.ClientServices
                 throw new InvalidOperationException("Session can be initialized only once.");
             }
 
-            var systemInfoResult = await client.GetSystemInfoAsync();
+            var systemInfoResult = await Client.GetSystemInfoAsync();
             if(!systemInfoResult.Result) {
                 throw new Arcor2Exception("Getting server information failed.", systemInfoResult.Messages);
             }
 
             ConnectionState = Arcor2SessionState.Initialized;
 
-            if(!skipLoadingData) {
+            if(Settings.LoadData) {
                 await ReloadObjectTypesAsync();
                 await ReloadScenesAsync();
                 await ReloadProjectsAsync();
@@ -275,7 +264,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <param name="username">The username.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RegisterAndSubscribeAsync(string username) {
-            var registrationResult = await client.RegisterUserAsync(new RegisterUserRequestArgs(username));
+            var registrationResult = await Client.RegisterUserAsync(new RegisterUserRequestArgs(username));
             if(!registrationResult.Result) {
                 throw new Arcor2Exception("User registration failed.", registrationResult.Messages);
             }
@@ -292,7 +281,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadScenesAsync() {
-            var sceneResponse = await client.ListScenesAsync();
+            var sceneResponse = await Client.ListScenesAsync();
             if(!sceneResponse.Result) {
                 throw new Arcor2Exception("Loading scenes failed.", sceneResponse.Messages);
             }
@@ -328,7 +317,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadProjectsAsync() {
-            var projectResponse = await client.ListProjectsAsync();
+            var projectResponse = await Client.ListProjectsAsync();
             if(!projectResponse.Result) {
                 throw new Arcor2Exception("Loading projects failed.", projectResponse.Messages);
             }
@@ -359,7 +348,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadPackagesAsync() {
-            var packageResponse = await client.ListPackagesAsync();
+            var packageResponse = await Client.ListPackagesAsync();
             if(!packageResponse.Result) {
                 throw new Arcor2Exception("Loading packages failed.", packageResponse.Messages);
             }
@@ -383,12 +372,12 @@ namespace Arcor2.ClientSdk.ClientServices
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         private async Task ReloadObjectTypesAsync() {
-            var objectTypesResponse = await client.GetObjectTypesAsync();
+            var objectTypesResponse = await Client.GetObjectTypesAsync();
             if(!objectTypesResponse.Result) {
                 throw new Arcor2Exception("Loading object types failed.", objectTypesResponse.Messages);
             }
 
-            var robotMetaResponse = await client.GetRobotMetaAsync();
+            var robotMetaResponse = await Client.GetRobotMetaAsync();
             if(!robotMetaResponse.Result) {
                 throw new Arcor2Exception("Getting robot meta failed.", robotMetaResponse.Messages);
             }
@@ -427,7 +416,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <param name="description">The description for the scene.</param>
         /// <exception cref="Arcor2Exception" />
         public async Task CreateSceneAsync(string name, string description = "") {
-            var response = await client.AddNewSceneAsync(new NewSceneRequestArgs(name, description));
+            var response = await Client.AddNewSceneAsync(new NewSceneRequestArgs(name, description));
             if(!response.Result) {
                 throw new Arcor2Exception("Creating a new scene failed.", response.Messages);
             }
@@ -443,7 +432,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CreateProjectAsync(SceneManager scene, string name, string description = "", bool hasLogic = true) {
-            var response = await client.AddNewProjectAsync(new NewProjectRequestArgs(scene.Id, name, description, hasLogic));
+            var response = await Client.AddNewProjectAsync(new NewProjectRequestArgs(scene.Id, name, description, hasLogic));
             if(!response.Result) {
                 throw new Arcor2Exception("Creating a new project failed.", response.Messages);
             }
@@ -459,7 +448,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CreateProjectAsync(string sceneId, string name, string description = "", bool hasLogic = true) {
-            var response = await client.AddNewProjectAsync(new NewProjectRequestArgs(sceneId, name, description, hasLogic));
+            var response = await Client.AddNewProjectAsync(new NewProjectRequestArgs(sceneId, name, description, hasLogic));
             if(!response.Result) {
                 throw new Arcor2Exception("Creating a new project failed.", response.Messages);
             }
@@ -471,7 +460,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <param name="meta">The metadata of the object type.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CreateObjectTypeAsync(ObjectTypeMeta meta) {
-            var response = await client.AddNewObjectTypeAsync(meta);
+            var response = await Client.AddNewObjectTypeAsync(meta);
             if(!response.Result) {
                 throw new Arcor2Exception("Adding a new object type failed.", response.Messages);
             }
@@ -485,7 +474,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UploadPackageAsync(string packageId, string encodedPackage) {
-            var response = await client.UploadPackageAsync(new UploadPackageRequestArgs(packageId, encodedPackage));
+            var response = await Client.UploadPackageAsync(new UploadPackageRequestArgs(packageId, encodedPackage));
             if(!response.Result) {
                 throw new Arcor2Exception($"Upload package {packageId} failed.", response.Messages);
             }
@@ -501,7 +490,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<EstimatedPose> EstimateCameraPoseAsync(CameraParameters cameraParameters, byte[] image, bool inverse = false) {
             var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
-            var response = await client.GetCameraPoseAsync(new GetCameraPoseRequestArgs(cameraParameters, encodedImage, inverse));
+            var response = await Client.GetCameraPoseAsync(new GetCameraPoseRequestArgs(cameraParameters, encodedImage, inverse));
             if(!response.Result) {
                 throw new Arcor2Exception($"Estimating camera pose failed.", response.Messages);
             }
@@ -518,7 +507,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <exception cref="Arcor2Exception"></exception>
         public async Task<List<MarkerCorners>> EstimateMarkerCornersAsync(CameraParameters cameraParameters, byte[] image) {
             var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
-            var response = await client.GetMarkersCornersAsync(new MarkersCornersRequestArgs(cameraParameters, encodedImage));
+            var response = await Client.GetMarkersCornersAsync(new MarkersCornersRequestArgs(cameraParameters, encodedImage));
             if(!response.Result) {
                 throw new Arcor2Exception($"Estimating marker corners failed.", response.Messages);
             }
@@ -556,7 +545,7 @@ namespace Arcor2.ClientSdk.ClientServices
                             }
                             else {
                                 // Now we can assume it was really an error.
-                                logger?.LogError($"Robot {robot.Id} couldn't be subscribed for updates on registration.");
+                                Logger?.LogError($"Robot {robot.Id} couldn't be subscribed for updates on registration.");
                             }
                         }
                     }
@@ -568,7 +557,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// Configures one time event that resubscribes to robot events on unlock.
         /// </summary>
         private void ConfigureResubscriptionOnUnlock(ActionObjectManager robot) {
-            logger?.LogInfo($"Robot {robot.Id} was locked on registration. Retrying on unlock.");
+            Logger?.LogInfo($"Robot {robot.Id} was locked on registration. Retrying on unlock.");
             EventHandler setRemoveFlag = null!;
             EventHandler<LockEventArgs> resubscribeOnUnlock = null!;
 
@@ -590,10 +579,10 @@ namespace Arcor2.ClientSdk.ClientServices
                         await actionObject.ReloadRobotJointsAsync();
                         await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
                         await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
-                        logger?.LogInfo($"Successfully retried subscription to robot {robot.Id}.");
+                        Logger?.LogInfo($"Successfully retried subscription to robot {robot.Id}.");
                     }
                     catch(Arcor2Exception ex) {
-                        logger?.LogError($"Failed retried subscription to robot {robot.Id} with \"{ex.Message}\".");
+                        Logger?.LogError($"Failed retried subscription to robot {robot.Id} with \"{ex.Message}\".");
                     }
                     // ReSharper disable once AccessToModifiedClosure
                     actionObject.Unlocked -= resubscribeOnUnlock;
@@ -605,38 +594,38 @@ namespace Arcor2.ClientSdk.ClientServices
 
         private void RegisterHandlers() {
             // Navigation
-            client.ShowMainScreen += OnShowMainScreen;
-            client.SceneOpened += OnSceneOpened;
-            client.SceneClosed += OnSceneClosed;
-            client.ProjectOpened += OnProjectOpened;
-            client.ProjectClosed += OnProjectClosed;
+            Client.ShowMainScreen += OnShowMainScreen;
+            Client.SceneOpened += OnSceneOpened;
+            Client.SceneClosed += OnSceneClosed;
+            Client.ProjectOpened += OnProjectOpened;
+            Client.ProjectClosed += OnProjectClosed;
 
             // Addition of sub-entities
-            client.ObjectTypeAdded += OnObjectTypeAdded;
-            client.SceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
-            client.ProjectBaseUpdated += OnProjectBaseUpdated; // Duplication uses this
-            client.PackageAdded += OnPackageAdded;
+            Client.ObjectTypeAdded += OnObjectTypeAdded;
+            Client.SceneBaseUpdated += OnSceneBaseUpdated; // Duplication uses this
+            Client.ProjectBaseUpdated += OnProjectBaseUpdated; // Duplication uses this
+            Client.PackageAdded += OnPackageAdded;
 
-            client.PackageState += OnPackageState;
-            client.PackageInfo += OnPackageInfo;
+            Client.PackageState += OnPackageState;
+            Client.PackageInfo += OnPackageInfo;
         }
 
         private void UnregisterHandlers() {
             // Navigation
-            client.ShowMainScreen -= OnShowMainScreen;
-            client.SceneOpened -= OnSceneOpened;
-            client.SceneClosed -= OnSceneClosed;
-            client.ProjectOpened -= OnProjectOpened;
-            client.ProjectClosed -= OnProjectClosed;
+            Client.ShowMainScreen -= OnShowMainScreen;
+            Client.SceneOpened -= OnSceneOpened;
+            Client.SceneClosed -= OnSceneClosed;
+            Client.ProjectOpened -= OnProjectOpened;
+            Client.ProjectClosed -= OnProjectClosed;
 
             // Addition of sub-entities
-            client.ObjectTypeAdded -= OnObjectTypeAdded;
-            client.SceneBaseUpdated -= OnSceneBaseUpdated; // Duplication uses this
-            client.ProjectBaseUpdated -= OnProjectBaseUpdated; // Duplication uses this
-            client.PackageAdded -= OnPackageAdded;
+            Client.ObjectTypeAdded -= OnObjectTypeAdded;
+            Client.SceneBaseUpdated -= OnSceneBaseUpdated; // Duplication uses this
+            Client.ProjectBaseUpdated -= OnProjectBaseUpdated; // Duplication uses this
+            Client.PackageAdded -= OnPackageAdded;
 
-            client.PackageState -= OnPackageState;
-            client.PackageInfo -= OnPackageInfo;
+            Client.PackageState -= OnPackageState;
+            Client.PackageInfo -= OnPackageInfo;
         }
 
         private void OnPackageAdded(object sender, PackageChangedEventArgs e) {

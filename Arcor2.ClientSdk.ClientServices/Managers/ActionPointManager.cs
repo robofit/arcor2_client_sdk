@@ -68,7 +68,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="position">The position of duplicated action point.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task DuplicateAsync(Position position) {
-            var response = await Session.client.DuplicateActionPointAsync(new CopyActionPointRequestArgs(Id, position));
+            var response = await Session.Client.DuplicateActionPointAsync(new CopyActionPointRequestArgs(Id, position));
             if(!response.Result) {
                 throw new Arcor2Exception($"Duplicating action point {Id} failed.", response.Messages);
             }
@@ -91,8 +91,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="newParentId">The ID of the new parent.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateParentAsync(string newParentId) {
-            await LockAsync();
-            var response = await Session.client.UpdateActionPointParentAsync(new UpdateActionPointParentRequestArgs(Id, newParentId));
+            await LibraryLockAsync();
+            var response = await Session.Client.UpdateActionPointParentAsync(new UpdateActionPointParentRequestArgs(Id, newParentId));
             if(!response.Result) {
                 throw new Arcor2Exception($"Updating parent for action point {Id} failed.", response.Messages);
             }
@@ -131,14 +131,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="newPosition">The new position.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdatePositionAsync(Position newPosition) {
-            await LockAsync(true);
-            var response = await Session.client.UpdateActionPointPositionAsync(new UpdateActionPointPositionRequestArgs(Id, newPosition));
+            await LibraryLockAsync(true);
+            var response = await Session.Client.UpdateActionPointPositionAsync(new UpdateActionPointPositionRequestArgs(Id, newPosition));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating position for action point {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -152,14 +152,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null) {
-            await LockAsync(true);
-            var response = await Session.client.UpdateActionPointUsingRobotAsync(new UpdateActionPointUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
+            await LibraryLockAsync(true);
+            var response = await Session.Client.UpdateActionPointUsingRobotAsync(new UpdateActionPointUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!)));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating action point {Id} using robot failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -197,8 +197,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
-            await LockAsync();
-            var response = await Session.client.RenameActionPointAsync(new RenameActionPointRequestArgs(Id, newName));
+            await LibraryLockAsync();
+            var response = await Session.Client.RenameActionPointAsync(new RenameActionPointRequestArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Renaming action point {Id} failed.", response.Messages);
             }
@@ -210,7 +210,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveActionPointAsync(new IdArgs(Id));
+            var response = await Session.Client.RemoveActionPointAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing action point {Id} failed.", response.Messages);
             }
@@ -261,7 +261,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionAsync(string name, string type, List<Flow> flows, List<ActionParameter> parameters) {
-            var response = await Session.client.AddActionAsync(new AddActionRequestArgs(Id, name, type, parameters, flows));
+            var response = await Session.Client.AddActionAsync(new AddActionRequestArgs(Id, name, type, parameters, flows));
             if(!response.Result) {
                 throw new Arcor2Exception($"Creating new action for action point {Id} failed.", response.Messages);
             }
@@ -275,14 +275,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOrientationAsync(Orientation orientation, string name = "default") {
-            await LockAsync();
-            var response = await Session.client.AddActionPointOrientationAsync(new AddActionPointOrientationRequestArgs(Id, orientation, name));
+            await LibraryLockAsync();
+            var response = await Session.Client.AddActionPointOrientationAsync(new AddActionPointOrientationRequestArgs(Id, orientation, name));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Creating new orientation for action point {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -297,14 +297,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="name">The name of the orientation.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOrientationUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null, string name = "default") {
-            await LockAsync();
-            var response = await Session.client.AddActionPointOrientationUsingRobotAsync(new AddActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!), name));
+            await LibraryLockAsync();
+            var response = await Session.Client.AddActionPointOrientationUsingRobotAsync(new AddActionPointOrientationUsingRobotRequestArgs(Id, new RobotArg(robotId, endEffectorId, armId!), name));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Creating new orientation using robot for action point {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -349,14 +349,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="name">The name of the joints.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddJointsUsingRobotAsync(string robotId, string endEffectorId = "default", string? armId = null, string name = "default") {
-            await LockAsync();
-            var response = await Session.client.AddActionPointJointsUsingRobotAsync(new AddActionPointJointsUsingRobotRequestArgs(Id, robotId, name, armId!, endEffectorId));
+            await LibraryLockAsync();
+            var response = await Session.Client.AddActionPointJointsUsingRobotAsync(new AddActionPointJointsUsingRobotRequestArgs(Id, robotId, name, armId!, endEffectorId));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Creating new joints using robot for action point {Id} failed.", response.Messages);
             }
 
-            await UnlockAsync();
+            await LibraryUnlockAsync();
         }
 
         /// <summary>
@@ -429,22 +429,22 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ActionPointUpdated += OnActionPointUpdated;
-            Session.client.ActionPointBaseUpdated += OnActionPointBaseUpdated;
-            Session.client.ActionPointRemoved += OnActionPointRemoved;
-            Session.client.ActionAdded += OnActionAdded;
-            Session.client.OrientationAdded += OnOrientationAdded;
-            Session.client.JointsAdded += OnJointsAdded;
+            Session.Client.ActionPointUpdated += OnActionPointUpdated;
+            Session.Client.ActionPointBaseUpdated += OnActionPointBaseUpdated;
+            Session.Client.ActionPointRemoved += OnActionPointRemoved;
+            Session.Client.ActionAdded += OnActionAdded;
+            Session.Client.OrientationAdded += OnOrientationAdded;
+            Session.Client.JointsAdded += OnJointsAdded;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ActionPointUpdated -= OnActionPointUpdated;
-            Session.client.ActionPointBaseUpdated -= OnActionPointBaseUpdated;
-            Session.client.ActionPointRemoved -= OnActionPointRemoved;
-            Session.client.ActionAdded -= OnActionAdded;
-            Session.client.OrientationAdded -= OnOrientationAdded;
-            Session.client.JointsAdded -= OnJointsAdded;
+            Session.Client.ActionPointUpdated -= OnActionPointUpdated;
+            Session.Client.ActionPointBaseUpdated -= OnActionPointBaseUpdated;
+            Session.Client.ActionPointRemoved -= OnActionPointRemoved;
+            Session.Client.ActionAdded -= OnActionAdded;
+            Session.Client.OrientationAdded -= OnOrientationAdded;
+            Session.Client.JointsAdded -= OnJointsAdded;
         }
 
         private void OnJointsAdded(object sender, JointsEventArgs e) {

@@ -76,7 +76,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemovePackageAsync(new IdArgs(Id));
+            var response = await Session.Client.RemovePackageAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing joints {Id} failed.", response.Messages);
             }
@@ -88,7 +88,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="newName">The new name.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RenameAsync(string newName) {
-            var response = await Session.client.RenamePackageAsync(new RenamePackageRequestArgs(Id, newName));
+            var response = await Session.Client.RenamePackageAsync(new RenamePackageRequestArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Renaming package {Id} failed.", response.Messages);
             }
@@ -104,7 +104,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="breakPoints">A list of breakpoints (action point IDs). The package will pause before executing them.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RunAsync(List<string> breakPoints, bool startPaused) {
-            var response = await Session.client.RunPackageAsync(new RunPackageRequestArgs(Id, startPaused, breakPoints));
+            var response = await Session.Client.RunPackageAsync(new RunPackageRequestArgs(Id, startPaused, breakPoints));
             if(!response.Result) {
                 throw new Arcor2Exception($"Running package {Id} failed.", response.Messages);
             }
@@ -144,7 +144,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StopAsync() {
-            var response = await Session.client.StopPackageAsync();
+            var response = await Session.Client.StopPackageAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Stopping package {Id} failed.", response.Messages);
             }
@@ -158,7 +158,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task PauseAsync() {
-            var response = await Session.client.PausePackageAsync();
+            var response = await Session.Client.PausePackageAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Pausing package {Id} failed.", response.Messages);
             }
@@ -172,7 +172,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task ResumeAsync() {
-            var response = await Session.client.ResumePackageAsync();
+            var response = await Session.Client.ResumePackageAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Resuming package {Id} failed.", response.Messages);
             }
@@ -186,7 +186,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StepAsync() {
-            var response = await Session.client.StepActionAsync();
+            var response = await Session.Client.StepActionAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Stepping an action for package {Id} failed.", response.Messages);
             }
@@ -216,18 +216,18 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.PackageUpdated += OnPackageUpdated;
-            Session.client.PackageRemoved += OnPackageRemoved;
-            Session.client.PackageState += OnPackageState;
-            Session.client.PackageException += OnPackageException;
+            Session.Client.PackageUpdated += OnPackageUpdated;
+            Session.Client.PackageRemoved += OnPackageRemoved;
+            Session.Client.PackageState += OnPackageState;
+            Session.Client.PackageException += OnPackageException;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.PackageUpdated -= OnPackageUpdated;
-            Session.client.PackageRemoved -= OnPackageRemoved;
-            Session.client.PackageState -= OnPackageState;
-            Session.client.PackageException -= OnPackageException;
+            Session.Client.PackageUpdated -= OnPackageUpdated;
+            Session.Client.PackageRemoved -= OnPackageRemoved;
+            Session.Client.PackageState -= OnPackageState;
+            Session.Client.PackageException -= OnPackageException;
         }
 
         private void OnPackageRemoved(object sender, PackageChangedEventArgs e) {

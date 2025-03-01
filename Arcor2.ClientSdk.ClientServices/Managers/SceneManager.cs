@@ -77,7 +77,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(ObjectTypeManager objectType, string name, Pose pose) {
             var parameters = objectType.Data.Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
-            var response = await Session.client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, objectType.Id, pose, parameters));
+            var response = await Session.Client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, objectType.Id, pose, parameters));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new action object {objectType.Id} to scene {Id} failed.", response.Messages);
             }
@@ -92,7 +92,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(string type, string name, Pose pose) {
             var parameters = Session.ObjectTypes.First(o => o.Id == type).Data.Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
-            var response = await Session.client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose, parameters));
+            var response = await Session.Client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose, parameters));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new action object {type} to scene {Id} failed.", response.Messages);
             }
@@ -107,7 +107,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="parameters">A collection of parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(ObjectTypeManager objectType, string name, Pose pose, ICollection<Parameter> parameters) {
-            var response = await Session.client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, objectType.Id, pose, parameters.ToList()));
+            var response = await Session.Client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, objectType.Id, pose, parameters.ToList()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new action object {objectType.Id} to scene {Id} failed.", response.Messages);
             }
@@ -122,7 +122,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="parameters">A collection of parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(string type, string name, Pose pose, ICollection<Parameter> parameters) {
-            var response = await Session.client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose, parameters.ToList()));
+            var response = await Session.Client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose, parameters.ToList()));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new action object {type} to scene {Id} failed.", response.Messages);
             }
@@ -137,7 +137,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionBoxAsync(string name, Pose pose, BoxCollisionModel box) {
             // We use custom models for this, due to very confusing ID parameter, which has to match name.
-            var response = await Session.client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, box.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, box.ToOpenApiObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new box virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -151,7 +151,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="cylinder">The cylinder parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionCylinderAsync(string name, Pose pose, CylinderCollisionModel cylinder) {
-            var response = await Session.client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, cylinder.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, cylinder.ToOpenApiObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new cylinder virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -165,7 +165,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="sphere">The sphere parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionSphereAsync(string name, Pose pose, SphereCollisionModel sphere) { ;
-            var response = await Session.client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, sphere.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, sphere.ToOpenApiObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new sphere virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -179,7 +179,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="mesh">The mesh parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionMeshAsync(string name, Pose pose, MeshCollisionModel mesh) {
-            var response = await Session.client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, mesh.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, mesh.ToOpenApiObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new mesh virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -191,8 +191,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="newName">New name for the scene.</param>
         /// <exception cref="Arcor2Exception" />
         public async Task RenameAsync(string newName) {
-            await LockAsync();
-            var response = await Session.client.RenameSceneAsync(new RenameArgs(Id, newName));
+            await LibraryLockAsync();
+            var response = await Session.Client.RenameSceneAsync(new RenameArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Renaming scene {Id} failed.", response.Messages);
             }
@@ -211,7 +211,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task OpenAsync() {
-            var response = await Session.client.OpenSceneAsync(new IdArgs(Id));
+            var response = await Session.Client.OpenSceneAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Opening scene {Id} failed.", response.Messages);
             }
@@ -226,7 +226,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="force">If true, the scene will be closed even with unsaved changes, etc... </param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CloseAsync(bool force = false) {
-            var response = await Session.client.CloseSceneAsync(new CloseSceneRequestArgs(force));
+            var response = await Session.Client.CloseSceneAsync(new CloseSceneRequestArgs(force));
             if(!response.Result) {
                 throw new Arcor2Exception($"Closing scene {Id} failed.", response.Messages);
             }
@@ -240,7 +240,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task SaveAsync() {
-            var response = await Session.client.SaveSceneAsync();
+            var response = await Session.Client.SaveSceneAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Saving scene {Id} failed.", response.Messages);
             }
@@ -254,7 +254,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveSceneAsync(new IdArgs(Id));
+            var response = await Session.Client.RemoveSceneAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing scene {Id} failed.", response.Messages);
             }
@@ -265,7 +265,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateDescriptionAsync(string newDescription) {
-            var response = await Session.client.UpdateSceneDescriptionAsync(new UpdateSceneDescriptionRequestArgs(Id, newDescription));
+            var response = await Session.Client.UpdateSceneDescriptionAsync(new UpdateSceneDescriptionRequestArgs(Id, newDescription));
             if(!response.Result) {
                 throw new Arcor2Exception($"Updating description of scene {Id} failed.", response.Messages);
             }
@@ -279,7 +279,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StartAsync() {
-            var response = await Session.client.StartSceneAsync();
+            var response = await Session.Client.StartSceneAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Starting scene {Id} failed.", response.Messages);
             }
@@ -293,7 +293,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task StopAsync() {
-            var response = await Session.client.StopSceneAsync();
+            var response = await Session.Client.StopSceneAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Stopping of scene {Id} failed.", response.Messages);
             }
@@ -304,7 +304,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task LoadAsync() {
-            var response = await Session.client.GetSceneAsync(new IdArgs(Id));
+            var response = await Session.Client.GetSceneAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Loading scene {Id} failed.", response.Messages);
             }
@@ -315,7 +315,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// Duplicates the scene.
         /// </summary>
         public async Task DuplicateAsync(string newName) {
-            var response = await Session.client.DuplicateSceneAsync(new CopySceneRequestArgs(Id, newName));
+            var response = await Session.Client.DuplicateSceneAsync(new CopySceneRequestArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Duplicating scene {Id} failed.", response.Messages);
             }
@@ -386,20 +386,20 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.SceneSaved += Saved;
-            Session.client.SceneRemoved += OnSceneRemoved;
-            Session.client.SceneBaseUpdated += OnSceneBaseUpdated;
-            Session.client.SceneState += OnSceneState;
-            Session.client.SceneActionObjectAdded += OnSceneActionObjectAdded;
+            Session.Client.SceneSaved += Saved;
+            Session.Client.SceneRemoved += OnSceneRemoved;
+            Session.Client.SceneBaseUpdated += OnSceneBaseUpdated;
+            Session.Client.SceneState += OnSceneState;
+            Session.Client.SceneActionObjectAdded += OnSceneActionObjectAdded;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.SceneSaved -= Saved;
-            Session.client.SceneRemoved -= OnSceneRemoved;
-            Session.client.SceneBaseUpdated -= OnSceneBaseUpdated;
-            Session.client.SceneState -= OnSceneState;
-            Session.client.SceneActionObjectAdded -= OnSceneActionObjectAdded;
+            Session.Client.SceneSaved -= Saved;
+            Session.Client.SceneRemoved -= OnSceneRemoved;
+            Session.Client.SceneBaseUpdated -= OnSceneBaseUpdated;
+            Session.Client.SceneState -= OnSceneState;
+            Session.Client.SceneActionObjectAdded -= OnSceneActionObjectAdded;
         }
 
         public new void Dispose() {
@@ -437,7 +437,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnSceneActionObjectAdded(object sender, SceneActionObjectEventArgs e) {
             if(IsOpen) {
                 if(ActionObjects == null) {
-                    Session.logger?.LogError($"While adding new action object, the currently opened scene ({Id}) had non-initialized (null) action object collection. Possible inconsistent state.");
+                    Session.Logger?.LogError($"While adding new action object, the currently opened scene ({Id}) had non-initialized (null) action object collection. Possible inconsistent state.");
                 }
                 ActionObjects?.Add(new ActionObjectManager(Session, this, e.SceneObject));
             }

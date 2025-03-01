@@ -83,8 +83,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="newName">New name for the project.</param>
         /// <exception cref="Arcor2Exception" />
         public async Task RenameAsync(string newName) {
-            await LockAsync();
-            var response = await Session.client.RenameProjectAsync(new RenameProjectRequestArgs(Id, newName));
+            await LibraryLockAsync();
+            var response = await Session.Client.RenameProjectAsync(new RenameProjectRequestArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Renaming project {Id} failed.", response.Messages);
             }
@@ -103,7 +103,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task OpenAsync() {
-            var response = await Session.client.OpenProjectAsync(new IdArgs(Id));
+            var response = await Session.Client.OpenProjectAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Opening project {Id} failed.", response.Messages);
             }
@@ -118,7 +118,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="force">If true, the project will be closed even with unsaved changes, etc... </param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task CloseAsync(bool force = false) {
-            var response = await Session.client.CloseProjectAsync(new CloseProjectRequestArgs(force));
+            var response = await Session.Client.CloseProjectAsync(new CloseProjectRequestArgs(force));
             if(!response.Result) {
                 throw new Arcor2Exception($"Closing project {Id} failed.", response.Messages);
             }
@@ -132,7 +132,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task SaveAsync() {
-            var response = await Session.client.SaveProjectAsync();
+            var response = await Session.Client.SaveProjectAsync();
             if(!response.Result) {
                 throw new Arcor2Exception($"Saving project {Id} failed.", response.Messages);
             }
@@ -146,7 +146,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            var response = await Session.client.RemoveProjectAsync(new IdArgs(Id));
+            var response = await Session.Client.RemoveProjectAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Removing project {Id} failed.", response.Messages);
             }
@@ -158,7 +158,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="newDescription">The new description.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateDescriptionAsync(string newDescription) {
-            var response = await Session.client.UpdateProjectDescriptionAsync(new UpdateProjectDescriptionRequestArgs(Id, newDescription));
+            var response = await Session.Client.UpdateProjectDescriptionAsync(new UpdateProjectDescriptionRequestArgs(Id, newDescription));
             if(!response.Result) {
                 throw new Arcor2Exception($"Updating description of project {Id} failed.", response.Messages);
             }
@@ -169,7 +169,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task LoadAsync() {
-            var response = await Session.client.GetProjectAsync(new IdArgs(Id));
+            var response = await Session.Client.GetProjectAsync(new IdArgs(Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Loading project {Id} failed.", response.Messages);
             }
@@ -182,7 +182,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="newName">The new name.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task DuplicateAsync(string newName) {
-            var response = await Session.client.DuplicateProjectAsync(new CopyProjectRequestArgs(Id, newName));
+            var response = await Session.Client.DuplicateProjectAsync(new CopyProjectRequestArgs(Id, newName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Duplicating project {Id} failed.", response.Messages);
             }
@@ -194,7 +194,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="hasLogic">Should logic be enabled?</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task SetHasLogicAsync(bool hasLogic) {
-            var response = await Session.client.UpdateProjectHasLogicAsync(new UpdateProjectHasLogicRequestArgs(Id, hasLogic));
+            var response = await Session.Client.UpdateProjectHasLogicAsync(new UpdateProjectHasLogicRequestArgs(Id, hasLogic));
             if(!response.Result) {
                 throw new Arcor2Exception($"Setting HasLogic for project {Id} failed.", response.Messages);
             }
@@ -206,7 +206,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="packageName">The package name.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task BuildIntoPackageAsync(string packageName) {
-            var response = await Session.client.BuildProjectAsync(new BuildProjectRequestArgs(Id, packageName));
+            var response = await Session.Client.BuildProjectAsync(new BuildProjectRequestArgs(Id, packageName));
             if(!response.Result) {
                 throw new Arcor2Exception($"Building project {Id} into package failed.", response.Messages);
             }
@@ -222,7 +222,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="breakPoints">A list of breakpoints (action point IDs). The package will pause before executing them.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task BuildIntoTemporaryPackageAndRunAsync(List<string> breakPoints, bool startPaused = true) {
-            var response = await Session.client.RunTemporaryPackageAsync(new TemporaryPackageRequestArgs(startPaused, breakPoints));
+            var response = await Session.Client.RunTemporaryPackageAsync(new TemporaryPackageRequestArgs(startPaused, breakPoints));
             if(!response.Result) {
                 throw new Arcor2Exception($"Building project {Id} into temporary package failed.", response.Messages);
             }
@@ -262,7 +262,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddProjectParameterAsync(string name, string type, string value) {
-            var response = await Session.client.AddProjectParameterAsync(new AddProjectParameterRequestArgs(name, type, value));
+            var response = await Session.Client.AddProjectParameterAsync(new AddProjectParameterRequestArgs(name, type, value));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
@@ -275,7 +275,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="position">The position of the action point.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionPointAsync(string name, Position position) {
-            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, string.Empty));
+            var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, string.Empty));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
@@ -289,7 +289,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="parent">The parent action point.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionPointAsync(string name, Position position, ActionPointManager parent) {
-            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
+            var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
@@ -303,7 +303,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="parent">The parent action object.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionPointAsync(string name, Position position, ActionObjectManager parent) {
-            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
+            var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
@@ -321,7 +321,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionPointUsingRobotAsync(string name, string robotId, string endEffectorId = "default", string? armId = null) {
-            var response = await Session.client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(robotId, endEffectorId, name, armId!));
+            var response = await Session.Client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(robotId, endEffectorId, name, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
             }
@@ -339,7 +339,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null) {
-            var response = await Session.client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(actionObject.Id, endEffectorId, name, armId!));
+            var response = await Session.Client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(actionObject.Id, endEffectorId, name, armId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
             }
@@ -368,7 +368,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="parentId">The ID of the parent object.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionPointAsync(string name, Position position, string parentId) {
-            var response = await Session.client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parentId));
+            var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parentId));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
             }
@@ -384,13 +384,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOverrideAsync(string actionObjectId, Parameter parameter) {
-            await LockAsync(actionObjectId);
-            var response = await Session.client.AddOverrideAsync(new AddOverrideRequestArgs(actionObjectId, parameter));
+            await LibraryLockAsync(actionObjectId);
+            var response = await Session.Client.AddOverrideAsync(new AddOverrideRequestArgs(actionObjectId, parameter));
             if(!response.Result) {
-                await TryUnlockAsync();
+                await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Adding project override for project {Id} failed.", response.Messages);
             }
-            await UnlockAsync(actionObjectId);
+            await LibraryUnlockAsync(actionObjectId);
         }
 
         /// <summary>
@@ -419,7 +419,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddLogicItem(string startId, string endId, ProjectLogicIf? condition = null) {
-            var response = await Session.client.AddLogicItemAsync(new AddLogicItemRequestArgs(startId, endId, condition!));
+            var response = await Session.Client.AddLogicItemAsync(new AddLogicItemRequestArgs(startId, endId, condition!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding logic item for project {Id} failed.", response.Messages);
             }
@@ -487,24 +487,24 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ProjectSaved += Saved;
-            Session.client.ProjectRemoved += OnProjectRemoved;
-            Session.client.ProjectBaseUpdated += OnProjectBaseUpdated;
-            Session.client.ProjectParameterAdded += OnProjectParameterAdded;
-            Session.client.ActionPointAdded += OnActionPointAdded;
-            Session.client.ProjectOverrideAdded += OnProjectOverrideAdded;
-            Session.client.LogicItemAdded += OnLogicItemAdded;
+            Session.Client.ProjectSaved += Saved;
+            Session.Client.ProjectRemoved += OnProjectRemoved;
+            Session.Client.ProjectBaseUpdated += OnProjectBaseUpdated;
+            Session.Client.ProjectParameterAdded += OnProjectParameterAdded;
+            Session.Client.ActionPointAdded += OnActionPointAdded;
+            Session.Client.ProjectOverrideAdded += OnProjectOverrideAdded;
+            Session.Client.LogicItemAdded += OnLogicItemAdded;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ProjectSaved -= Saved;
-            Session.client.ProjectRemoved -= OnProjectRemoved;
-            Session.client.ProjectBaseUpdated -= OnProjectBaseUpdated;
-            Session.client.ProjectParameterAdded -= OnProjectParameterAdded;
-            Session.client.ActionPointAdded -= OnActionPointAdded;
-            Session.client.ProjectOverrideAdded -= OnProjectOverrideAdded;
-            Session.client.LogicItemAdded -= OnLogicItemAdded;
+            Session.Client.ProjectSaved -= Saved;
+            Session.Client.ProjectRemoved -= OnProjectRemoved;
+            Session.Client.ProjectBaseUpdated -= OnProjectBaseUpdated;
+            Session.Client.ProjectParameterAdded -= OnProjectParameterAdded;
+            Session.Client.ActionPointAdded -= OnActionPointAdded;
+            Session.Client.ProjectOverrideAdded -= OnProjectOverrideAdded;
+            Session.Client.LogicItemAdded -= OnLogicItemAdded;
         }
 
         protected override void Dispose(bool disposing) {
@@ -548,7 +548,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnProjectParameterAdded(object sender, ProjectParameterEventArgs e) {
             if(IsOpen) {
                 if(Parameters == null) {
-                    Session.logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
+                    Session.Logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
                 }
 
                 Parameters?.Add(new ProjectParameterManager(Session, this, e.ProjectParameter));
@@ -558,7 +558,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnActionPointAdded(object sender, BareActionPointEventArgs e) {
             if(IsOpen) {
                 if(ActionPoints == null) {
-                    Session.logger?.LogError($"When adding a new action point, the action point collection for project {Id} was null.");
+                    Session.Logger?.LogError($"When adding a new action point, the action point collection for project {Id} was null.");
                 }
 
                 ActionPoints?.Add(new ActionPointManager(Session, this, e.ActionPoint));
@@ -568,7 +568,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnProjectOverrideAdded(object sender, ParameterEventArgs e) {
             if(IsOpen) {
                 if(Overrides == null) {
-                    Session.logger?.LogError($"When adding a new project override, the override collection for project {Id} was null.");
+                    Session.Logger?.LogError($"When adding a new project override, the override collection for project {Id} was null.");
                     return;
                 }
 
@@ -579,7 +579,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnLogicItemAdded(object sender, LogicItemChangedEventArgs e) {
             if(IsOpen) {
                 if(LogicItems == null) {
-                    Session.logger?.LogError($"When adding a new logic item, the logic item collection for project {Id} was null.");
+                    Session.Logger?.LogError($"When adding a new logic item, the logic item collection for project {Id} was null.");
                     return;
                 }
 

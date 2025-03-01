@@ -46,13 +46,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateAsync(Parameter parameter) {
-            await LockAsync(Data.ActionObjectId);
-            var response = await Session.client.UpdateOverrideAsync(new UpdateOverrideRequestArgs(Data.ActionObjectId, parameter));
+            await LibraryLockAsync(Data.ActionObjectId);
+            var response = await Session.Client.UpdateOverrideAsync(new UpdateOverrideRequestArgs(Data.ActionObjectId, parameter));
             if (!response.Result)
             {
                 throw new Arcor2Exception($"Updating project override {parameter.Name} for action object {Data.ActionObjectId} in project {Project.Id} failed.", response.Messages);
             }
-            await UnlockAsync(Data.ActionObjectId);
+            await LibraryUnlockAsync(Data.ActionObjectId);
         }
 
         /// <summary>
@@ -66,13 +66,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task RemoveAsync() {
-            await LockAsync(Data.ActionObjectId);
-            var response = await Session.client.RemoveOverrideAsync(new DeleteOverrideRequestArgs(Data.ActionObjectId, Data.Parameter));
+            await LibraryLockAsync(Data.ActionObjectId);
+            var response = await Session.Client.RemoveOverrideAsync(new DeleteOverrideRequestArgs(Data.ActionObjectId, Data.Parameter));
             if (!response.Result)
             {
                 throw new Arcor2Exception($"Deleting project override {Data.Parameter.Name} for action object {Data.ActionObjectId} in project {Project.Id} failed.", response.Messages);
             }
-            await UnlockAsync(Data.ActionObjectId);
+            await LibraryUnlockAsync(Data.ActionObjectId);
         }
 
         internal void UpdateAccordingToNewObject(Parameter parameter)
@@ -83,14 +83,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.client.ProjectOverrideUpdated += OnProjectOverrideUpdated;
-            Session.client.ProjectOverrideRemoved += OnProjectOverrideRemoved;
+            Session.Client.ProjectOverrideUpdated += OnProjectOverrideUpdated;
+            Session.Client.ProjectOverrideRemoved += OnProjectOverrideRemoved;
         }
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.client.ProjectOverrideUpdated -= OnProjectOverrideUpdated;
-            Session.client.ProjectOverrideRemoved -= OnProjectOverrideRemoved;
+            Session.Client.ProjectOverrideUpdated -= OnProjectOverrideUpdated;
+            Session.Client.ProjectOverrideRemoved -= OnProjectOverrideRemoved;
         }
 
         private void OnProjectOverrideUpdated(object sender, ParameterEventArgs e) {
