@@ -1,10 +1,11 @@
 using Arcor2.ClientSdk.Communication.UnitTests.Mocks;
 
-namespace Arcor2.ClientSdk.Communication.UnitTests.Fixtures;
+namespace Arcor2.ClientSdk.Communication.UnitTests;
 
-public class Arcor2ClientFixture : IDisposable
+public class TestBase : IDisposable
 {
-    protected Arcor2Client Client = new(new MockWebSocket(), new Arcor2ClientSettings {
+    protected Arcor2Client Client = new(new MockWebSocket(), new Arcor2ClientSettings
+    {
         RpcTimeout = Timeout
     });
 
@@ -17,7 +18,7 @@ public class Arcor2ClientFixture : IDisposable
     // Too low values (<10) cause even valid tests to fail.
     private const int Timeout = 100;
 
-    public Arcor2ClientFixture()
+    public TestBase()
     {
         // Subscribe to events in the constructor
         Client.ConnectionOpened += (_, _) => ConnectionOpenedEventRaised = true;
@@ -27,7 +28,8 @@ public class Arcor2ClientFixture : IDisposable
     public void Dispose()
     {
         // Recreate the client
-        Client = new Arcor2Client(new MockWebSocket(), new Arcor2ClientSettings {
+        Client = new Arcor2Client(new MockWebSocket(), new Arcor2ClientSettings
+        {
             RpcTimeout = Timeout
         });
     }

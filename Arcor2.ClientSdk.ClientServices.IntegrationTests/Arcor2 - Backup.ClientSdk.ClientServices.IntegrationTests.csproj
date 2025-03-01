@@ -22,8 +22,4 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Arcor2.ClientSdk.ClientServices\Arcor2.ClientSdk.ClientServices.csproj" />
-  </ItemGroup>
-
 </Project>

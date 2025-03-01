@@ -56,9 +56,6 @@ public class MockWebSocket : IWebSocket {
 
     public void ReceiveMockMessage(string message) {
         ReceivedMessages.Enqueue(message);
-        OnMessage?.Invoke(this, new WebSocketMessageEventArgs {
-            MessageType = WebSocketMessageType.Text,
-            Data = Encoding.UTF8.GetBytes(message)
-        });
+        OnMessage?.Invoke(this, new WebSocketMessageEventArgs(Encoding.UTF8.GetBytes(message), WebSocketMessageType.Text));
     }
 }

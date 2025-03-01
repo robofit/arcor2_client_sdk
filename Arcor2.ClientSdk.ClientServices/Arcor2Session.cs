@@ -35,6 +35,7 @@ namespace Arcor2.ClientSdk.ClientServices
     /// This class mostly offers actions you could do from the main screen.
     /// </summary>
     public class Arcor2Session : IDisposable {
+        private bool disposed;
         // For storing the package state, because we receive PackageState before PackageInfo, and thus must store it. 
         private readonly Stack<PackageStateData> unopenedPackageStates = new Stack<PackageStateData>();
         internal readonly Arcor2Client client;
@@ -103,15 +104,15 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <summary>
         /// Raised when any connection-related error occurs.
         /// </summary>
-        public event EventHandler<Exception>? OnConnectionError;
+        public event EventHandler<Exception>? ConnectionError;
         /// <summary>
         /// Raised when connection is closed.
         /// </summary>
-        public event EventHandler? OnConnectionClosed;
+        public event EventHandler? ConnectionClosed;
         /// <summary>
         /// Raised when connection is successfully opened.
         /// </summary>
-        public event EventHandler? OnConnectionOpened;
+        public event EventHandler? ConnectionOpened;
 
         /// <summary>
         /// Initializes a new instance of <see cref="Arcor2Session"/> class.
@@ -123,13 +124,13 @@ namespace Arcor2.ClientSdk.ClientServices
 
             client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
-                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
             client.ConnectionClosed += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Closed;
-                OnConnectionClosed?.Invoke(this, EventArgs.Empty);
+                ConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
-            client.ConnectionError += OnConnectionError;
+            client.ConnectionError += ConnectionError;
             RegisterHandlers();
         }
 
@@ -149,13 +150,13 @@ namespace Arcor2.ClientSdk.ClientServices
 
             client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
-                OnConnectionOpened?.Invoke(this, EventArgs.Empty);
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
             };
             client.ConnectionClosed += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Closed;
-                OnConnectionClosed?.Invoke(this, EventArgs.Empty);
+                ConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
-            client.ConnectionError += OnConnectionError;
+            client.ConnectionError += ConnectionError;
         }
 
         /// <summary>
@@ -172,6 +173,9 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <exception cref="UriFormatException" />
         /// <exception cref="InvalidOperationException" />
         public async Task ConnectAsync(string domain, ushort port) {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
             await client.ConnectAsync(domain, port);
         }
 
@@ -183,6 +187,9 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <exception cref="InvalidOperationException" />
         /// <exception cref="Communication.Arcor2ConnectionException"> When inner WebSocket fails to connect.</exception>
         public async Task ConnectAsync(Uri uri) {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
             await client.ConnectAsync(uri);
         }
 
@@ -191,6 +198,9 @@ namespace Arcor2.ClientSdk.ClientServices
         /// </summary>
         /// <exception cref="InvalidOperationException">When closed in the <see cref="Arcor2SessionState.Closed"/>.</exception>
         public async Task CloseAsync() {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
             await client.CloseAsync();
             Dispose();
         }
@@ -202,7 +212,7 @@ namespace Arcor2.ClientSdk.ClientServices
         /// Practically idempotent version of <see cref="CloseAsync"/>.
         /// </remarks>
         public void Dispose() {
-            if (ConnectionState != Arcor2SessionState.Closed) {
+            if (ConnectionState != Arcor2SessionState.Closed && ConnectionState != Arcor2SessionState.None) {
                 client.CloseAsync().GetAwaiter().GetResult();
             }
 
@@ -219,6 +229,8 @@ namespace Arcor2.ClientSdk.ClientServices
             foreach (var objectType in ObjectTypes) {
                 objectType.Dispose();
             }
+
+            disposed = true;
         }
 
         /// <summary>
@@ -230,6 +242,10 @@ namespace Arcor2.ClientSdk.ClientServices
         /// <exception cref="Arcor2ConnectionException" />
         /// <exception cref="InvalidOperationException"></exception>
         public async Task<SystemInfoResponseData> InitializeAsync(bool skipLoadingData = false) {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
+
             if(ConnectionState != Arcor2SessionState.Open) {
                 throw new InvalidOperationException("Session can be initialized only once.");
             }

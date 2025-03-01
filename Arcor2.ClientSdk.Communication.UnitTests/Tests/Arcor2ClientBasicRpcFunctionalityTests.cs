@@ -1,21 +1,23 @@
-﻿using Arcor2.ClientSdk.Communication.Design;
+﻿using System.Collections;
+using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
-using Arcor2.ClientSdk.Communication.UnitTests.Fixtures;
 using Arcor2.ClientSdk.Communication.UnitTests.Mocks;
 using Newtonsoft.Json;
 
-namespace Arcor2.ClientSdk.Communication.UnitTests;
+namespace Arcor2.ClientSdk.Communication.UnitTests.Tests;
 
-public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
+public class Arcor2ClientBasicRpcFunctionalityTests : TestBase
+{
     [Fact]
-    public async Task RpcCall_Valid_Success() {
+    public async Task RpcCall_Valid_Success()
+    {
         // Send the request
-        await Client.ConnectAsync(ValidUri); 
+        await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
         var registerUserTask = Client.RegisterUserAsync(args);
 
-        Assert.Single(WebSocket.SentMessages);
+        Assert.Single((IEnumerable) WebSocket.SentMessages);
         var request = JsonConvert.DeserializeObject<RegisterUserRequest>(WebSocket.SentMessages.First());
         Assert.NotNull(request);
         Assert.Equal("RegisterUser", request.Request);
@@ -25,7 +27,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
         // Send the response
         var response = JsonConvert.SerializeObject(new RegisterUserResponse(request.Id, "RegisterUser", true, []));
         WebSocket.ReceiveMockMessage(response);
-        
+
         var result = await registerUserTask;
 
         Assert.NotNull(result);
@@ -34,14 +36,15 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_ServerReject_Success() {
+    public async Task RpcCall_ServerReject_Success()
+    {
         // Send the request
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
         var registerUserTask = Client.RegisterUserAsync(args);
 
-        Assert.Single(WebSocket.SentMessages);
+        Assert.Single((IEnumerable) WebSocket.SentMessages);
         var request = JsonConvert.DeserializeObject<RegisterUserRequest>(WebSocket.SentMessages.First());
         Assert.NotNull(request);
         Assert.Equal("RegisterUser", request.Request);
@@ -60,15 +63,17 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_NoResponse_ThrowsTimeout() {
-        await Client.ConnectAsync(ValidUri); 
+    public async Task RpcCall_NoResponse_ThrowsTimeout()
+    {
+        await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
         await Assert.ThrowsAsync<TimeoutException>(async () => await Client.RegisterUserAsync(args));
     }
 
     [Fact]
-    public async Task RpcCall_MismatchedIdResponse_ThrowsTimeout() {
+    public async Task RpcCall_MismatchedIdResponse_ThrowsTimeout()
+    {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
@@ -83,7 +88,8 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_MismatchedRpcResponseName_ThrowsTimeout() {
+    public async Task RpcCall_MismatchedRpcResponseName_ThrowsTimeout()
+    {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
@@ -97,12 +103,14 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_MismatchedRpcResponseNameAllowed_Success() {
-        var clientAllowedMismatch = new Arcor2Client<MockWebSocket>(new Arcor2ClientSettings {
+    public async Task RpcCall_MismatchedRpcResponseNameAllowed_Success()
+    {
+        var clientAllowedMismatch = new Arcor2Client(new MockWebSocket(), new Arcor2ClientSettings
+        {
             RpcTimeout = 100,
             ValidateRpcResponseName = false
         });
-        var websocketAllowedMismatch = clientAllowedMismatch.GetUnderlyingWebSocket();
+        var websocketAllowedMismatch = (clientAllowedMismatch.GetUnderlyingWebSocket() as MockWebSocket)!;
 
         await clientAllowedMismatch.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
@@ -118,7 +126,8 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_MalformedJsonResponse_ThrowsTimeout() {
+    public async Task RpcCall_MalformedJsonResponse_ThrowsTimeout()
+    {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
@@ -127,7 +136,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
         var request = JsonConvert.DeserializeObject<RegisterUserRequest>(WebSocket.SentMessages.First())!;
         var response = JsonConvert.SerializeObject(new RegisterUserResponse(request.Id, "RegisterUser", true, []));
         response = response[..3];
-        
+
         WebSocket.ReceiveMockMessage(response);
 
         await Assert.ThrowsAsync<TimeoutException>(async () => await registerUserTask);
@@ -136,7 +145,8 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_EmptyJsonResponse_ThrowsTimeout() {
+    public async Task RpcCall_EmptyJsonResponse_ThrowsTimeout()
+    {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
@@ -149,7 +159,8 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_EmptyStringResponse_ThrowsTimeout() {
+    public async Task RpcCall_EmptyStringResponse_ThrowsTimeout()
+    {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
@@ -162,7 +173,8 @@ public class Arcor2ClientBasicRpcFunctionalityTests : Arcor2ClientFixture {
     }
 
     [Fact]
-    public async Task RpcCall_ResponseOnlyId_ThrowsTimeout() {
+    public async Task RpcCall_ResponseOnlyId_ThrowsTimeout()
+    {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 

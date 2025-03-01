@@ -86,7 +86,7 @@ internal class Program {
 
         // Set up connection closed handler
         var shutdownTcs = new TaskCompletionSource<bool>();
-        Session.OnConnectionClosed += (_, _) => {
+        Session.ConnectionClosed += (_, _) => {
             ConsoleEx.WriteLinePrefix("Session closed.");
             shutdownTcs.TrySetResult(true);
             Environment.Exit(0);
