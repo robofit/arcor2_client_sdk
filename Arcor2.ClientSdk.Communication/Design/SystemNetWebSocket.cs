@@ -91,66 +91,143 @@ namespace Arcor2.ClientSdk.Communication.Design {
             try {
                 while(State == WebSocketState.Open) {
                     WebSocketReceiveResult result;
-                    do {
-                        // No lock needed, as this method can't be called directly.
-                        result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
-                        messageBuffer.AddRange(buffer.Array!.Take(result.Count));
-                    }
-                    while(!result.EndOfMessage);
-
-                    switch(result.MessageType) {
-                        case System.Net.WebSockets.WebSocketMessageType.Text:
+                    try {
+                        do {
+                            // No lock needed, as this method can't be called directly.
                             try {
-                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs(
+                                result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
+                            }
+                            catch(WebSocketException ex) {
+                                // Handle abrupt connection close from server gracefully
+                                OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                                    CloseStatus = WebSocketCloseStatus.ProtocolError,
+                                    CloseStatusDescription = "The remote party closed the WebSocket connection without completing the close handshake."
+                                });
+                                return;
+                            }
+                            catch(ObjectDisposedException ex) {
+                                // Socket was disposed, treat as graceful close
+                                OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                                    CloseStatus = WebSocketCloseStatus.NormalClosure,
+                                    CloseStatusDescription = "Connection was closed."
+                                });
+                                return; 
+                            }
 
-                                    messageBuffer.ToArray(),
-                                    WebSocketMessageType.Text
-                                ));
+                            if(result.Count == 0) {
+                                // This also means the server closed the session
+                                // But not gracefully... Too common to throw exception
+                                // So treat it as a graceful close
+                                try {
+                                    await CloseAsync();
+                                }
+                                catch { }
+                                OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                                    CloseStatus = result.CloseStatus.HasValue
+                                        ? (WebSocketCloseStatus) result.CloseStatus
+                                        : WebSocketCloseStatus.NormalClosure,
+                                    CloseStatusDescription = result.CloseStatusDescription
+                                });
+                                return; 
                             }
-                            catch {
-                                // Badly handled exception from client code. Swallow it to keep connection alive.
-                            }
-                            break;
-                        case System.Net.WebSockets.WebSocketMessageType.Binary:
-                            try {
-                                OnMessage?.Invoke(this, new WebSocketMessageEventArgs (
-                                    
-                                    messageBuffer.ToArray(),
-                                   WebSocketMessageType.Text
-                                ));
-                            }
-                            catch {
-                                // Badly handled exception from client code. Swallow it to keep connection alive.
-                            }
-                            break;
-                        case System.Net.WebSockets.WebSocketMessageType.Close:
-                            await CloseAsync();
-                            OnClose?.Invoke(this, new WebSocketCloseEventArgs {
-                                CloseStatus = (WebSocketCloseStatus) result.CloseStatus!,
-                                CloseStatusDescription = result.CloseStatusDescription
-                            });
-                            break;
+
+                            messageBuffer.AddRange(buffer.Array!.Take(result.Count));
+                        }
+                        while(!result.EndOfMessage);
+
+                        switch(result.MessageType) {
+                            case System.Net.WebSockets.WebSocketMessageType.Text:
+                                try {
+                                    OnMessage?.Invoke(this, new WebSocketMessageEventArgs(
+                                        messageBuffer.ToArray(),
+                                        WebSocketMessageType.Text
+                                    ));
+                                }
+                                catch { }
+                                break;
+                            case System.Net.WebSockets.WebSocketMessageType.Binary:
+                                try {
+                                    OnMessage?.Invoke(this, new WebSocketMessageEventArgs(
+                                        messageBuffer.ToArray(),
+                                       WebSocketMessageType.Text
+                                    ));
+                                }
+                                catch { }
+                                break;
+                            case System.Net.WebSockets.WebSocketMessageType.Close:
+                                try {
+                                    await CloseAsync();
+                                }
+                                catch { }
+                                OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                                    CloseStatus = result.CloseStatus.HasValue
+                                        ? (WebSocketCloseStatus) result.CloseStatus
+                                        : WebSocketCloseStatus.NormalClosure,
+                                    CloseStatusDescription = result.CloseStatusDescription
+                                });
+                                return;
+                        }
+
+                        messageBuffer.Clear();
                     }
+                    catch(Exception ex) {
+                        OnError?.Invoke(this, new WebSocketErrorEventArgs(ex));
 
-                    messageBuffer.Clear();
+                        try {
+                            await CloseAsync(WebSocketCloseStatus.InternalServerError, "An error occurred while receiving data.");
+                        }
+                        catch { }
+                        return; 
+                    }
                 }
             }
             catch(Exception ex) {
                 OnError?.Invoke(this, new WebSocketErrorEventArgs(ex));
                 OnClose?.Invoke(this, new WebSocketCloseEventArgs() {
-                    CloseStatus = WebSocketCloseStatus.Empty
+                    CloseStatus = WebSocketCloseStatus.ProtocolError,
+                    CloseStatusDescription = ex.Message
                 });
             }
             finally {
-                webSocket.Dispose();
+                try {
+                    webSocket.Dispose();
+                }
+                catch { }
             }
         }
 
         public async Task CloseAsync(WebSocketCloseStatus closeStatus = WebSocketCloseStatus.NormalClosure, string? statusDescription = null) {
-            if(State == WebSocketState.Open) {
-                await webSocket.CloseAsync((System.Net.WebSockets.WebSocketCloseStatus) closeStatus, statusDescription ?? string.Empty, CancellationToken.None);
-                webSocket.Dispose();
-                OnClose?.Invoke(this, new WebSocketCloseEventArgs { CloseStatus = closeStatus, CloseStatusDescription = statusDescription });
+            if(State == WebSocketState.Open || State == WebSocketState.Closing) {
+                try {
+                    await webSocket.CloseAsync((System.Net.WebSockets.WebSocketCloseStatus) closeStatus, statusDescription ?? string.Empty, CancellationToken.None);
+                    OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                        CloseStatus = closeStatus,
+                        CloseStatusDescription = statusDescription
+                    });
+                }
+                catch(WebSocketException) {
+                    // Socket might already be closed by the server
+                    // Treat as normal closure
+                    OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                        CloseStatus = WebSocketCloseStatus.NormalClosure,
+                        CloseStatusDescription = "Connection was already closed by the server"
+                    });
+                }
+                catch(ObjectDisposedException) {
+                    // Socket was disposed, treat as normal closure
+                    OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                        CloseStatus = WebSocketCloseStatus.NormalClosure,
+                        CloseStatusDescription = "Connection was already closed and disposed"
+                    });
+                }
+                catch(Exception ex) {
+                    // Handle other exceptions during close
+                    OnError?.Invoke(this, new WebSocketErrorEventArgs(ex));
+                    OnClose?.Invoke(this, new WebSocketCloseEventArgs {
+                        CloseStatus = WebSocketCloseStatus.ProtocolError,
+                        CloseStatusDescription = "Error during close: " + ex.Message
+                    });
+                }
             }
         }
 
