@@ -6,17 +6,20 @@ using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests;
 
-public class TestBase(Arcor2ServerFixture serverFixture, ITestOutputHelper output) : IAsyncLifetime, IClassFixture<Arcor2ServerFixture> {
+public class TestBase(ITestOutputHelper output) : IAsyncLifetime {
+    private Arcor2ServerFixture server;
     protected Arcor2Session Session { get; private set; } = null!;
     protected IArcor2Logger Logger { get; private set; }
-    protected Uri Uri => serverFixture.Uri;
-    protected string Host => serverFixture.Host;
-    protected ushort Port => serverFixture.Port;
+    protected Uri Uri => server.Uri;
+    protected string Host => server.Host;
+    protected ushort Port => server.Port;
 
     protected string RandomName() => Guid.NewGuid().ToString();
     public async Task InitializeAsync() {
         Logger = new TestLogger(output);
         Session = new Arcor2Session(logger: Logger);
+        server = new Arcor2ServerFixture(); 
+        await server.InitializeAsync();
         await Task.CompletedTask;
     }
 
@@ -31,7 +34,7 @@ public class TestBase(Arcor2ServerFixture serverFixture, ITestOutputHelper outpu
     }
 
     public async Task DisposeAsync() {
-        await Task.CompletedTask;
+        await server.DisposeAsync();
     }
 
     // Helpers

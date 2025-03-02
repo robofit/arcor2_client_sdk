@@ -15,11 +15,26 @@ The original `docker-compose.yml` file from the demo was faithfully adapted to w
 To support parallel test execution, both container names and ports are randomized.
 
 A major issue is balancing test isolation with the resource overhead of recreating the server for each test (which takes around a minute on a moderately powered machine). 
-The current approach reuses server instances across tests within the same class, with each test class receiving its own server instance.
+The chosen approach reuses server instances across tests within the same class, with each test class receiving its own server instance.
 However, care must be taken to ensure proper cleanup after each test, as leftover objects could interfere with subsequent tests and cascade issue.
 
-If issues arise with this configuration in a future, 
-the test setup can be easily modified to initialize per test by replacing IClassFixture<Arcor2ServerFixture> with direct initialization within the test setup.
+Nevertheless, **the current configuration uses one server instance per one test due to server bugs**.
+If the future state of the server allows it, 
+the test setup can be easily modified to initialize server per test class by replacing direct server initialization in constructor for `IClassFixture<Arcor2ServerFixture>` within the test setup.
+
+## What to Test
+
+**The tests are meant to validate the client library, not the server.**
+
+There is no need to test the server for obscure errors (e.g., recursive action point parents), as such tests do not contribute to the library's quality.
+This is because the client library does not perform any client-side validation for RPC parameters; it only provides comments indicating known limitations on them.
+The primary reason for this approach is that the server is in active development, and these constraints may change over time.
+The addded maintanance time in the future easily outwieghts the little practical value which they add.
+
+However, RPC parameter configurations that are and will always be unquestionably invalid (e.g., attempting to delete a non-existent scene) may be tested. 
+In such cases keep in mind that the library still merely propagates all server errors without additional processing.
+
+In the end, testing should focus on verifying that the library raises the expected events and correctly updates its internal state.
 
 ## Testing Format
 
@@ -47,8 +62,8 @@ public async Task UnitOrUseCases_ParametersOrState_ExpectedBehavior() {
 }
 ```
 
-RPC method invocations do not change state immediately, as the client updates its state only when the server broadcasts an event. 
-It is strongly recommended to use the `EventAwaiter` and `CollectionChangedAwaiter` classes to ensure the event was raised before proceeding.
+Note tht RPC method invocations do not change the inner state of the library immediately, as it updates its state only when the server broadcasts an event. 
+It is strongly recommended to use the existing `EventAwaiter` and `CollectionChangedAwaiter` classes to ensure events were raised before proceeding.
 
 ```
 // Create and register the awaiter before action

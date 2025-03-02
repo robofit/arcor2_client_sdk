@@ -1,12 +1,11 @@
 ﻿using System.Collections.Specialized;
 using Arcor2.ClientSdk.ClientServices.Enums;
-using Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionSceneTests(Arcor2ServerFixture serverFixture, ITestOutputHelper output) : TestBase(serverFixture, output) {
+public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output) {
     [Fact]
     public async Task Create_Valid_Creates() {
         await Setup();
@@ -114,7 +113,9 @@ public class Arcor2SessionSceneTests(Arcor2ServerFixture serverFixture, ITestOut
 
         }
         finally {
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
             await Session.Scenes.First().RemoveAsync();
+            await remove;
             await Teardown();
         }
     }
@@ -142,7 +143,9 @@ public class Arcor2SessionSceneTests(Arcor2ServerFixture serverFixture, ITestOut
 
         }
         finally {
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
             await Session.Scenes.First().RemoveAsync();
+            await remove;
             await Teardown();
         }
     }
@@ -171,6 +174,76 @@ public class Arcor2SessionSceneTests(Arcor2ServerFixture serverFixture, ITestOut
             Assert.Equal(NavigationState.MenuListOfScenes, Session.NavigationState);
         }
         finally {
+            await Teardown();
+        }
+    }
+
+
+
+    [Fact]
+    public async Task Rename_Valid_Renames() {
+        await Setup();
+        // Arrange
+        var addAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+        await Session.CreateSceneAsync(RandomName());
+        await addAwaiter;
+        await Session.Scenes.First().SaveAsync();
+        await Session.Scenes.First().CloseAsync();
+
+        var changedEventAwaiter = new EventAwaiter();
+        Session.Scenes.First().Updated += changedEventAwaiter.EventHandler;
+        var changedAwaiter = changedEventAwaiter.WaitForEventAsync();
+
+        var newName = RandomName();
+        try {
+            // Act
+            var record = await Record.ExceptionAsync(() => Session.Scenes.First().RenameAsync(newName));
+
+            // Assert
+            Assert.Null(record);
+            await changedAwaiter;
+            Assert.Single(Session.Scenes);
+            Assert.Equal(newName, Session.Scenes.First().Data.Name);
+
+        }
+        finally {
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            await Session.Scenes.First().RemoveAsync();
+            await remove;
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task UpdateDescription_Valid_Updates() {
+        await Setup();
+        // Arrange
+        var addAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+        await Session.CreateSceneAsync(RandomName());
+        await addAwaiter;
+        await Session.Scenes.First().SaveAsync();
+        await Session.Scenes.First().CloseAsync();
+
+        var changedEventAwaiter = new EventAwaiter();
+        Session.Scenes.First().Updated += changedEventAwaiter.EventHandler;
+        var changedAwaiter = changedEventAwaiter.WaitForEventAsync();
+
+        var newDesc = RandomName();
+        try {
+            // Act
+            var record = await Record.ExceptionAsync(() => Session.Scenes.First().UpdateDescriptionAsync(newDesc));
+
+            // Assert
+            Assert.Null(record);
+            await changedAwaiter;
+            Assert.Single(Session.Scenes);
+            Assert.Equal(newDesc, Session.Scenes.First().Data.Description);
+
+        }
+        finally {
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            await Session.Scenes.First().RemoveAsync();
+            await remove;
             await Teardown();
         }
     }
