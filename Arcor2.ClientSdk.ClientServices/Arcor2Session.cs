@@ -44,6 +44,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         public NavigationState NavigationState { get; set; } = NavigationState.None;
 
         /// <summary>
+        /// Raised when <see cref="NavigationState"/> changes.
+        /// </summary>
+        public event EventHandler<NavigationStateEventArgs>? NavigationStateChanged; 
+
+        /// <summary>
         /// The state of the session.
         /// </summary>
         public Arcor2SessionState ConnectionState { get; private set; } = Arcor2SessionState.None;
@@ -225,7 +230,6 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <summary>
         /// Initializes a session. Internally loads all object types, actions, scenes, project, etc..., and returns the server information.
         /// </summary>
-        /// <param name="skipLoadingData">If true, data objects such as scenes, projects, or object types won't be loaded and must be later loaded manually.</param>
         /// <returns>The server information.</returns>
         /// <exception cref="Arcor2Exception" />
         /// <exception cref="Arcor2ConnectionException" />
@@ -269,6 +273,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                 throw new Arcor2Exception("User registration failed.", registrationResult.Messages);
             }
             Username = username;
+            ConnectionState = Arcor2SessionState.Registered;
 
             await RegisterForActiveRobotEvents();
         }
@@ -289,14 +294,16 @@ namespace Arcor2.ClientSdk.ClientServices {
             var newScenes = sceneResponse.Data.Select(scene =>
                 new BareScene(scene.Name, scene.Description, scene.Created, scene.Modified, scene.Modified, scene.Id)).ToList();
 
-            // If we have unsaved opened scenes/projects, this call
-            // will not list this scene. So we can't remove unlisted ones.
-            // That should not be an issue though.
-            /*var scenesToRemove = Scenes.Where(oldScene => newScenes.All(newScene => newScene.Id != oldScene.Id)).ToList();
+            var scenesToRemove = Scenes
+                .Where(oldScene => newScenes.All(newScene => newScene.Id != oldScene.Id))
+              // New opened unsaved scene are not returned by this RPC... so check if there is one active
+                .Where(scene => NavigationState != NavigationState.Scene || scene.Id != NavigationId)
+                .ToList();
+
             foreach(var scene in scenesToRemove) {
-                scene.Dispose();
                 Scenes.Remove(scene);
-            }*/
+                scene.Dispose();
+            }
 
             foreach(var newScene in newScenes) {
                 var existingScene = Scenes.FirstOrDefault(s => s.Id == newScene.Id);
@@ -325,9 +332,16 @@ namespace Arcor2.ClientSdk.ClientServices {
             var newProjects = projectResponse.Data.Select(project =>
                 new BareProject(project.Name, project.SceneId, project.Description, project.HasLogic, project.Created, project.Modified, project.IntModified, project.Id)).ToList();
 
-            // If we have unsaved opened scenes/projects, this call
-            // will not list this scene. So we can't remove unlisted ones.
-            // That should not be an issue though.
+            var projectsToRemove = Projects
+                .Where(oldProject => newProjects.All(newProject => newProject.Id != oldProject.Id))
+                // New opened unsaved projects are not returned by this RPC... so check if there is one active
+                .Where(project => NavigationState != NavigationState.Project || project.Id != NavigationId)
+                .ToList();
+
+            foreach(var project in projectsToRemove) {
+                Projects.Remove(project);
+                project.Dispose();
+            }
 
             foreach(var newProject in newProjects) {
                 var existingProject = Projects.FirstOrDefault(p => p.Id == newProject.Id);
@@ -351,6 +365,17 @@ namespace Arcor2.ClientSdk.ClientServices {
             var packageResponse = await Client.ListPackagesAsync();
             if(!packageResponse.Result) {
                 throw new Arcor2Exception("Loading packages failed.", packageResponse.Messages);
+            }
+
+            var packagesToRemove = Packages
+                .Where(oldPackage => packageResponse.Data.All(newPackage => newPackage.Id != oldPackage.Id))
+                // New opened unsaved packages (e.g., temporary) are not returned by this RPC... so check if there is one active
+                .Where(package => NavigationState != NavigationState.Package || package.Id != NavigationId)
+                .ToList();
+
+            foreach(var package in packagesToRemove) {
+                Packages.Remove(package);
+                package.Dispose();
             }
 
             foreach(var package in packageResponse.Data) {
@@ -632,11 +657,14 @@ namespace Arcor2.ClientSdk.ClientServices {
             Packages.Add(new PackageManager(this, e.Data));
         }
 
-        private void OnProjectClosed(object sender, EventArgs e) {
+        private async void OnProjectClosed(object sender, EventArgs e) {
             // In the rare case the order is weird
             if(NavigationState == NavigationState.Project) {
                 NavigationState = NavigationState.ProjectClosed;
             }
+
+            await ReloadProjectsAsync();
+            NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
         private void OnProjectOpened(object sender, OpenProjectEventArgs e) {
@@ -659,13 +687,17 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             NavigationState = NavigationState.Project;
             NavigationId = e.Data.Project.Id;
+            NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
-        private void OnSceneClosed(object sender, EventArgs e) {
+        private async void OnSceneClosed(object sender, EventArgs e) {
             // In the rare case the order is weird
             if(NavigationState == NavigationState.Scene) {
                 NavigationState = NavigationState.SceneClosed;
             }
+
+            await ReloadScenesAsync();
+            NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
         private void OnSceneOpened(object sender, OpenSceneEventArgs e) {
@@ -680,16 +712,23 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             NavigationState = NavigationState.Scene;
             NavigationId = e.Data.Scene.Id;
+            NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
-        private void OnShowMainScreen(object sender, ShowMainScreenEventArgs e) {
+        private async void OnShowMainScreen(object sender, ShowMainScreenEventArgs e) {
             NavigationState = e.Data.What switch {
                 ShowMainScreenData.WhatEnum.ScenesList => NavigationState.MenuListOfScenes,
                 ShowMainScreenData.WhatEnum.ProjectsList => NavigationState.MenuListOfProjects,
                 ShowMainScreenData.WhatEnum.PackagesList => NavigationState.MenuListOfPackages,
                 _ => NavigationState
             };
+            if (NavigationState == NavigationState.MenuListOfPackages) {
+                // This will rid the list of temporary packages
+                await ReloadPackagesAsync();
+            }
+
             NavigationId = string.IsNullOrEmpty(e.Data.Highlight) ? null : e.Data.Highlight;
+            NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
         private void OnObjectTypeAdded(object sender, ObjectTypesEventArgs args) {
@@ -750,6 +789,7 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             NavigationState = NavigationState.Package;
             NavigationId = e.Data.PackageId;
+            NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
     }
 }

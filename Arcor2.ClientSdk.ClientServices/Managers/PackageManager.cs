@@ -137,7 +137,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         /// <summary>
-        /// Stops the package.
+        /// Stops and closes the package.
         /// </summary>
         /// <remarks>
         /// The package must be opened and in the <see cref="PackageState.Running"/> state.
