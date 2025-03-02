@@ -46,7 +46,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <summary>
         /// Raised when <see cref="NavigationState"/> changes.
         /// </summary>
-        public event EventHandler<NavigationStateEventArgs>? NavigationStateChanged; 
+        public event EventHandler<NavigationStateEventArgs>? NavigationStateChanged;
 
         /// <summary>
         /// The state of the session.
@@ -296,7 +296,7 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             var scenesToRemove = Scenes
                 .Where(oldScene => newScenes.All(newScene => newScene.Id != oldScene.Id))
-              // New opened unsaved scene are not returned by this RPC... so check if there is one active
+                // New opened unsaved scene are not returned by this RPC... so check if there is one active
                 .Where(scene => NavigationState != NavigationState.Scene || scene.Id != NavigationId)
                 .ToList();
 
@@ -600,11 +600,13 @@ namespace Arcor2.ClientSdk.ClientServices {
                 if(NavigationId == id && !(bool) wasRemoved) {
                     var actionObject = (ActionObjectManager) sender;
                     try {
-                        await actionObject.ReloadRobotArmsAndEefPoseAsync();
-                        await actionObject.ReloadRobotJointsAsync();
-                        await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
-                        await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
-                        Logger?.LogInfo($"Successfully retried subscription to robot {robot.Id}.");
+                        if(ConnectionState != Arcor2SessionState.Closed) {
+                            await actionObject.ReloadRobotArmsAndEefPoseAsync();
+                            await actionObject.ReloadRobotJointsAsync();
+                            await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Joints);
+                            await actionObject.RegisterForUpdatesAsync(RobotUpdateType.Pose);
+                            Logger?.LogInfo($"Successfully retried subscription to robot {robot.Id}.");
+                        }
                     }
                     catch(Arcor2Exception ex) {
                         Logger?.LogError($"Failed retried subscription to robot {robot.Id} with \"{ex.Message}\".");
@@ -663,7 +665,13 @@ namespace Arcor2.ClientSdk.ClientServices {
                 NavigationState = NavigationState.ProjectClosed;
             }
 
-            await ReloadProjectsAsync();
+            if(ConnectionState != Arcor2SessionState.Closed) {
+                try {
+                    await ReloadProjectsAsync();
+                }
+                catch { /*It is possible close can happen soon*/ }
+            }
+
             NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
@@ -696,7 +704,12 @@ namespace Arcor2.ClientSdk.ClientServices {
                 NavigationState = NavigationState.SceneClosed;
             }
 
-            await ReloadScenesAsync();
+            if(ConnectionState != Arcor2SessionState.Closed) {
+                try {
+                    await ReloadScenesAsync();
+                }
+                catch { /*It is possible close can happen soon*/ }
+            }
             NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 
@@ -722,9 +735,14 @@ namespace Arcor2.ClientSdk.ClientServices {
                 ShowMainScreenData.WhatEnum.PackagesList => NavigationState.MenuListOfPackages,
                 _ => NavigationState
             };
-            if (NavigationState == NavigationState.MenuListOfPackages) {
+            if(NavigationState == NavigationState.MenuListOfPackages) {
                 // This will rid the list of temporary packages
-                await ReloadPackagesAsync();
+                if(ConnectionState != Arcor2SessionState.Closed) {
+                    try {
+                        await ReloadPackagesAsync();
+                    }
+                    catch { /*It is possible close can happen soon*/ }
+                }
             }
 
             NavigationId = string.IsNullOrEmpty(e.Data.Highlight) ? null : e.Data.Highlight;
