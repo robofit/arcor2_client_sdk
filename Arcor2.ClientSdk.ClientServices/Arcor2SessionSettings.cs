@@ -1,7 +1,6 @@
 ﻿using Arcor2.ClientSdk.ClientServices.Enums;
 
-namespace Arcor2.ClientSdk.ClientServices
-{
+namespace Arcor2.ClientSdk.ClientServices {
     public class Arcor2SessionSettings {
         /// <summary>
         /// Determines the locking behavior of the library.

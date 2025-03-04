@@ -209,7 +209,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         private void OnActionRemoved(object sender, BareActionEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
-                if(e.Action.Id == Id) {
+                if(e.Data.Id == Id) {
                     RemoveData();
                     ActionPoint.Actions.Remove(this);
                     Dispose();
@@ -219,16 +219,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         private void OnActionBaseUpdated(object sender, ActionEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
-                if(e.Action.Id == Id) {
-                    UpdateData(e.Action);
+                if(e.Data.Id == Id) {
+                    UpdateData(e.Data);
                 }
             }
         }
 
         private void OnActionUpdated(object sender, ActionEventArgs e) {
             if(ActionPoint.Project.IsOpen) {
-                if(e.Action.Id == Id) {
-                    UpdateData(e.Action);
+                if(e.Data.Id == Id) {
+                    UpdateData(e.Data);
                 }
             }
         }

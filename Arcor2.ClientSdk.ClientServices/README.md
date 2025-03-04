@@ -3,7 +3,7 @@
 The `Arcor2.ClientSdk.ClientServices` is an ARCOR2 client library designed to be a complete business logic solution. In contrast to `Arcor2.ClientSdk.Communication`, this library
 fully holds the client state and offers wide range of helper methods.
 
-## Architecture
+## Basic Architecture
 
 The library is contrived as a tree of manager objects representing and managing some resource. 
 The root element is the `Arcor2Session` class, which offers connection methods, general and utility RPCs, and also maintains collection of scenes, projects, object types, and packages.
@@ -57,12 +57,36 @@ ProjectManager MANAGES ActionPointManager, ProjectParameterManager, ProjectOverr
 ActionPointManager MANAGES ActionManager, JointsManager, OrientationManager
 ```
 
-### RPCs
+## RPCs
 The session object and managers offer a wide range of different RPCs. 
-The library generally does not client-side check the parameters, but offers a commentary about the requirements in form of XAML comments.
+The library generally does not do client-side check the parameters, but offers a commentary about the requirements in a form of XAML comments.
 
 Each RPC can thus fail with two exceptions:
 - `Arcor2ConnectionException` - When connection-related error occurs. This should be handled high in the call-stack.
 - `Arcor2Exception` - When server denies the request. This represents a wide range of errors. The ARCOR2 server currently only offers human-readable error messages, but no concrete error codes. 
 
 Note that any changes by the RPCs take while to be reflected. The server needs to accept the request and sent an event to each client (see `Updated` event).
+
+## Locking
+
+The library automatically manages locks, except during the object aiming process, where users must manually acquire and release the lock.
+Locks are held for the shortest time necessary—often just for the duration of an operation—and are released immediately if an operation fails.
+
+If you need to manage locks manually, you can disable automatic locking by specifying `LockingMode` to `LockingMode.NoLocks` in the `Arcor2SessionSettings` when initializing the session.
+
+```
+var session = new Arcor2Session(settings: new Arcor2SessionSettings {
+    LockingMode = LockingMode.NoLocks
+});
+
+//...
+
+await objectManager.LockAsync();
+await objectManager.UpdateObjectModel(newBoxModel)
+await objectManager.UnlockAsync();
+```
+
+
+## Examples
+
+The library usage is practically showcased in included `Arcor2.ClientSdk.ClientServices.ConsoleTestApp` and `Arcor2.ClientSdk.ClientServices.IntegrationTests` projects

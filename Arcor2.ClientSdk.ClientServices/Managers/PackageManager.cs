@@ -230,7 +230,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             Session.Client.PackageException -= OnPackageException;
         }
 
-        private void OnPackageRemoved(object sender, PackageChangedEventArgs e) {
+        private void OnPackageRemoved(object sender, PackageEventArgs e) {
             if (e.Data.Id == Id) {
                 RemoveData();
                 Session.Packages.Remove(this);
@@ -238,7 +238,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             }
         }
 
-        private void OnPackageUpdated(object sender, PackageChangedEventArgs e) {
+        private void OnPackageUpdated(object sender, PackageEventArgs e) {
             if (e.Data.Id == Id) {
                 UpdateData(e.Data.PackageMeta);
             }

@@ -465,7 +465,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         private void OnActionPointRemoved(object sender, BareActionPointEventArgs e) {
             if (Project.IsOpen) {
-                if (e.ActionPoint.Id == Id) {
+                if (e.Data.Id == Id) {
                     RemoveData();
                     Project.ActionPoints!.Remove(this);
                     Dispose();
@@ -475,16 +475,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
         private void OnActionPointBaseUpdated(object sender, BareActionPointEventArgs e) {
             if (Project.IsOpen) {
-                if (e.ActionPoint.Id == Id) {
-                    UpdateData(e.ActionPoint);
+                if (e.Data.Id == Id) {
+                    UpdateData(e.Data);
                 }
             }
         }
 
         private void OnActionPointUpdated(object sender, BareActionPointEventArgs e) {
             if (Project.IsOpen) {
-                if (e.ActionPoint.Id == Id) {
-                    UpdateData(e.ActionPoint);
+                if (e.Data.Id == Id) {
+                    UpdateData(e.Data);
                 }
             }
         }
@@ -492,7 +492,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnActionAdded(object sender, ActionEventArgs e) {
             if (Project.IsOpen) {
                 if(e.ParentId == Id) {
-                    Actions.Add(new ActionManager(Session, this, e.Action));
+                    Actions.Add(new ActionManager(Session, this, e.Data));
                 }
             }
         }

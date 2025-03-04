@@ -10,13 +10,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Action = Arcor2.ClientSdk.Communication.OpenApi.Models.Action;
 
-namespace Arcor2.ClientSdk.Communication
-{
+namespace Arcor2.ClientSdk.Communication {
     /// <summary>
     /// Client for communication with ARCOR2 servers.
     /// </summary>
     public class Arcor2Client {
-        private readonly IWebSocket webSocket;
+        private IWebSocket webSocket;
 
         /// <summary>
         /// Represents a request waiting for corresponding response.
@@ -25,7 +24,7 @@ namespace Arcor2.ClientSdk.Communication
             public TaskCompletionSource<string> TaskCompletionSource { get; } = new TaskCompletionSource<string>();
             public CancellationTokenSource CancellationTokenSource { get; }
             // Holds the name of the expected RPC response
-            public string Signature { get; } 
+            public string Signature { get; }
 
             public PendingRequest(uint timeout, string signature) {
                 Signature = signature;
@@ -36,7 +35,7 @@ namespace Arcor2.ClientSdk.Communication
             }
         }
 
-        private readonly ConcurrentDictionary<int, PendingRequest> pendingRequests = new ConcurrentDictionary<int, PendingRequest>();
+        private ConcurrentDictionary<int, PendingRequest> pendingRequests = new ConcurrentDictionary<int, PendingRequest>();
 
         /// <summary>
         /// Holds the current available request ID for tracking request-response messages.
@@ -100,15 +99,15 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Raised when action object is added. 
         /// </summary>
-        public event EventHandler<SceneActionObjectEventArgs>? SceneActionObjectAdded;
+        public event EventHandler<ActionObjectEventArgs>? ActionObjectAdded;
         /// <summary>
         /// Raised when action object is removed.
         /// </summary>
-        public event EventHandler<SceneActionObjectEventArgs>? SceneActionObjectRemoved;
+        public event EventHandler<ActionObjectEventArgs>? ActionObjectRemoved;
         /// <summary>
         /// Raised when action object is updated (e.g. translated).
         /// </summary>
-        public event EventHandler<SceneActionObjectEventArgs>? SceneActionObjectUpdated;
+        public event EventHandler<ActionObjectEventArgs>? ActionObjectUpdated;
 
         /// <summary>
         /// Raised when action point is added.
@@ -160,15 +159,15 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Raised when logic item is added.
         /// </summary>
-        public event EventHandler<LogicItemChangedEventArgs>? LogicItemAdded;
+        public event EventHandler<LogicItemEventArgs>? LogicItemAdded;
         /// <summary>
         /// Raised when logic item is updated.
         /// </summary>
-        public event EventHandler<LogicItemChangedEventArgs>? LogicItemUpdated;
+        public event EventHandler<LogicItemEventArgs>? LogicItemUpdated;
         /// <summary>
         /// Raised when logic item is removed.
         /// </summary>
-        public event EventHandler<LogicItemChangedEventArgs>? LogicItemRemoved;
+        public event EventHandler<LogicItemEventArgs>? LogicItemRemoved;
 
         /// <summary>
         /// Raised when new action point orientation is added.
@@ -208,7 +207,7 @@ namespace Arcor2.ClientSdk.Communication
         /// Raised when new object type is added.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="SceneActionObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="ActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? ObjectTypeAdded;
@@ -216,7 +215,7 @@ namespace Arcor2.ClientSdk.Communication
         /// Raised when new object type is updated.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="SceneActionObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="ActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? ObjectTypeUpdated;
@@ -224,7 +223,7 @@ namespace Arcor2.ClientSdk.Communication
         /// Raised when new object type is removed.
         /// </summary>
         /// <remarks>
-        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="SceneActionObjectAdded"/> and related events.
+        /// Be careful that this event doesn't represent an instance of object type (action object) being added/removed from a scene - for that see <see cref="ActionObjectAdded"/> and related events.
         /// This event is rather used for signaling dynamic changes to the object type database (such as is the case with virtual objects <see cref="AddVirtualCollisionObjectToSceneAsync"/>).
         /// </remarks>
         public event EventHandler<ObjectTypesEventArgs>? ObjectTypeRemoved;
@@ -340,15 +339,15 @@ namespace Arcor2.ClientSdk.Communication
         /// <summary>
         /// Raised when new package is added.
         /// </summary>
-        public event EventHandler<PackageChangedEventArgs>? PackageAdded;
+        public event EventHandler<PackageEventArgs>? PackageAdded;
         /// <summary>
         /// Raised when package is updated (e.g. renamed)
         /// </summary>
-        public event EventHandler<PackageChangedEventArgs>? PackageUpdated;
+        public event EventHandler<PackageEventArgs>? PackageUpdated;
         /// <summary>
         /// Raised when package is removed.
         /// </summary>
-        public event EventHandler<PackageChangedEventArgs>? PackageRemoved;
+        public event EventHandler<PackageEventArgs>? PackageRemoved;
 
         /// <summary>
         /// Raised when package is initialized and ready to execute.
@@ -409,7 +408,7 @@ namespace Arcor2.ClientSdk.Communication
         /// <param name="logger">An instance of <see cref="IArcor2Logger"/>.</param>
         /// <exception cref="InvalidOperationException">If the provided WebSocket instance is not in the <see cref="WebSocketState.None"/> state.</exception>
         public Arcor2Client(IWebSocket websocket, Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) {
-            if (websocket.State != WebSocketState.None) {
+            if(websocket.State != WebSocketState.None) {
                 throw new InvalidOperationException("The socket instance must be in the 'None' state.");
             }
 
@@ -418,6 +417,65 @@ namespace Arcor2.ClientSdk.Communication
             jsonSettings = clientSettings.ParseJsonSerializerSettings();
             this.logger = logger ?? null;
 
+            webSocket.OnError += (_, args) => {
+                ConnectionError?.Invoke(this, args.Exception);
+                logger?.LogError($"A connection-related exception occured.\n{args}");
+            };
+            webSocket.OnClose += (_, args) => {
+                ConnectionClosed?.Invoke(this, args);
+                logger?.LogInfo("A connection with the ARCOR2 server was closed.");
+            };
+            webSocket.OnOpen += (_, __) => {
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
+                logger?.LogInfo("A connection with the ARCOR2 server was opened.");
+            };
+            webSocket.OnMessage += (_, args) => {
+                OnMessage(args);
+            };
+        }
+
+        /// <summary>
+        /// Resets the client state, allowing reconnection. Does not unregister event handlers or reset request ID.
+        /// </summary>
+        /// <remarks>
+        /// This method exists for compatibility support with architectures registering events only once at startup. Using new instance is recommended.
+        /// </remarks>
+        public void Reset() {
+            webSocket = new SystemNetWebSocket();
+            Uri = null;
+            pendingRequests = new ConcurrentDictionary<int, PendingRequest>();
+            webSocket.OnError += (_, args) => {
+                ConnectionError?.Invoke(this, args.Exception);
+                logger?.LogError($"A connection-related exception occured.\n{args}");
+            };
+            webSocket.OnClose += (_, args) => {
+                ConnectionClosed?.Invoke(this, args);
+                logger?.LogInfo("A connection with the ARCOR2 server was closed.");
+            };
+            webSocket.OnOpen += (_, __) => {
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
+                logger?.LogInfo("A connection with the ARCOR2 server was opened.");
+            };
+            webSocket.OnMessage += (_, args) => {
+                OnMessage(args);
+            };
+        }
+
+        /// <summary>
+        /// Resets the client state, allowing reconnection. Does not unregister event handlers or reset request ID.
+        /// </summary>
+        /// <param name="websocket">New WebSocket instance.</param>
+        /// <remarks>
+        /// This method exists for compatibility support with architectures registering events only once at startup. Using new instance is recommended.
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">If the provided WebSocket instance is not in the <see cref="WebSocketState.None"/> state.</exception>
+        public void Reset(IWebSocket websocket) {
+            if(websocket.State != WebSocketState.None) {
+                throw new InvalidOperationException("The socket instance must be in the 'None' state.");
+            }
+            webSocket = websocket;
+            Uri = null;
+            pendingRequests = new ConcurrentDictionary<int, PendingRequest>();
             webSocket.OnError += (_, args) => {
                 ConnectionError?.Invoke(this, args.Exception);
                 logger?.LogError($"A connection-related exception occured.\n{args}");
@@ -474,7 +532,7 @@ namespace Arcor2.ClientSdk.Communication
             try {
                 await webSocket.ConnectAsync(uri);
             }
-            catch (WebSocketConnectionException e) {
+            catch(WebSocketConnectionException e) {
                 throw new Arcor2ConnectionException("WebSocket failed to connect.", e);
             }
 
@@ -563,15 +621,15 @@ namespace Arcor2.ClientSdk.Communication
                     request = (string?) default
                 });
 
-                if (dispatch == null ||
+                if(dispatch == null ||
                     (dispatch.response == null && dispatch.request == null && dispatch.@event == null)) {
                     return;
                 }
 
                 // Handle responses
-                if (dispatch.response != null && dispatch.id != null && dispatch.id != 0) {
-                    if (pendingRequests.TryGetValue(dispatch.id.Value, out PendingRequest? pendingRequest)) {
-                        if (clientSettings.ValidateRpcResponseName && dispatch.response != pendingRequest.Signature) {
+                if(dispatch.response != null && dispatch.id != null && dispatch.id != 0) {
+                    if(pendingRequests.TryGetValue(dispatch.id.Value, out PendingRequest? pendingRequest)) {
+                        if(clientSettings.ValidateRpcResponseName && dispatch.response != pendingRequest.Signature) {
                             logger?.LogInfo(
                                 $"An ARCOR2 RPC response with matching ID was received, but the RPC name does not correspond to the request. Expected \"{pendingRequest.Signature}\", got \"{dispatch.response}\".");
                             pendingRequest.TaskCompletionSource.TrySetException(
@@ -583,8 +641,8 @@ namespace Arcor2.ClientSdk.Communication
                         }
                     }
                 }
-                else if (dispatch.@event != null) {
-                    switch (dispatch.@event) {
+                else if(dispatch.@event != null) {
+                    switch(dispatch.@event) {
                         case "SceneChanged":
                             HandleSceneChanged(data);
                             break;
@@ -705,10 +763,10 @@ namespace Arcor2.ClientSdk.Communication
                     }
                 }
             }
-            catch (JsonException ex) {
+            catch(JsonException ex) {
                 logger?.LogError($"A JSON Exception occured while deserializing received ARCOR2 message.\n{ex}");
             }
-            catch (Exception ex) {
+            catch(Exception ex) {
                 // Catch everything else, as we do not want the exception to bubble up to the WebSocket dispatcher
                 // and close the connection. This is to increase compatibility between different ARCOR2 server
                 // and client versions.
@@ -745,13 +803,13 @@ namespace Arcor2.ClientSdk.Communication
             var sceneObjectChanged = JsonConvert.DeserializeObject<SceneObjectChanged>(data, jsonSettings)!;
             switch(sceneObjectChanged.ChangeType) {
                 case SceneObjectChanged.ChangeTypeEnum.Add:
-                    SceneActionObjectAdded?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
+                    ActionObjectAdded?.Invoke(this, new ActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.Remove:
-                    SceneActionObjectRemoved?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
+                    ActionObjectRemoved?.Invoke(this, new ActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.Update:
-                    SceneActionObjectUpdated?.Invoke(this, new SceneActionObjectEventArgs(sceneObjectChanged.Data));
+                    ActionObjectUpdated?.Invoke(this, new ActionObjectEventArgs(sceneObjectChanged.Data));
                     break;
                 case SceneObjectChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("SceneObjectChanged base update should never occur.");
@@ -785,16 +843,16 @@ namespace Arcor2.ClientSdk.Communication
             var overrideUpdated = JsonConvert.DeserializeObject<OverrideUpdated>(data, jsonSettings)!;
 
             switch(overrideUpdated.ChangeType) {
-                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.Add:
+                case OverrideUpdated.ChangeTypeEnum.Add:
                     ProjectOverrideAdded?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
                     break;
-                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.Remove:
+                case OverrideUpdated.ChangeTypeEnum.Remove:
                     ProjectOverrideRemoved?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
                     break;
-                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.Update:
+                case OverrideUpdated.ChangeTypeEnum.Update:
                     ProjectOverrideUpdated?.Invoke(this, new ParameterEventArgs(overrideUpdated.Data, overrideUpdated.ParentId));
                     break;
-                case OpenApi.Models.OverrideUpdated.ChangeTypeEnum.UpdateBase:
+                case OverrideUpdated.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("OverrideUpdated base update should never occur.");
                 default:
                     throw new NotImplementedException("Unknown change type for 'OverrideUpdated' event.");
@@ -835,13 +893,13 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(logicItemChanged.ChangeType) {
                 case LogicItemChanged.ChangeTypeEnum.Add:
-                    LogicItemAdded?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
+                    LogicItemAdded?.Invoke(this, new LogicItemEventArgs(logicItemChanged.Data));
                     break;
                 case LogicItemChanged.ChangeTypeEnum.Remove:
-                    LogicItemRemoved?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
+                    LogicItemRemoved?.Invoke(this, new LogicItemEventArgs(logicItemChanged.Data));
                     break;
                 case LogicItemChanged.ChangeTypeEnum.Update:
-                    LogicItemUpdated?.Invoke(this, new LogicItemChangedEventArgs(logicItemChanged.Data));
+                    LogicItemUpdated?.Invoke(this, new LogicItemEventArgs(logicItemChanged.Data));
                     break;
                 case LogicItemChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("LogicItemChanged base update should never occur.");
@@ -1087,13 +1145,13 @@ namespace Arcor2.ClientSdk.Communication
 
             switch(packageChanged.ChangeType) {
                 case PackageChanged.ChangeTypeEnum.Add:
-                    PackageAdded?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    PackageAdded?.Invoke(this, new PackageEventArgs(packageChanged.Data));
                     break;
                 case PackageChanged.ChangeTypeEnum.Update:
-                    PackageUpdated?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    PackageUpdated?.Invoke(this, new PackageEventArgs(packageChanged.Data));
                     break;
                 case PackageChanged.ChangeTypeEnum.Remove:
-                    PackageRemoved?.Invoke(this, new PackageChangedEventArgs(packageChanged.Data));
+                    PackageRemoved?.Invoke(this, new PackageEventArgs(packageChanged.Data));
                     break;
                 case PackageChanged.ChangeTypeEnum.UpdateBase:
                     throw new NotImplementedException("PackageChanged base update should never occur.");

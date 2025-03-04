@@ -6,36 +6,41 @@ using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output) {
+
+public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(output) {
     [Fact]
     public async Task Create_Valid_Creates() {
         await Setup();
+        await SceneClosed();
         // Arrange
-        var addAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+        var addAwaiter = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
-        var sceneName = RandomName();
-        var sceneDesc = RandomName();
+        var projectName = RandomName();
+        var projectDesc = RandomName();
 
         try {
             // Act
-            var record = await Record.ExceptionAsync(() => Session.CreateSceneAsync(sceneName, sceneDesc));
+            var record = await Record.ExceptionAsync(() => Session.CreateProjectAsync(Session.Scenes.First(), projectName, projectDesc));
 
             // Assert
             Assert.Null(record);
             await addAwaiter;
-            Assert.Single([Session.Scenes.Count]);
-            var scene = Session.Scenes.First();
-            Assert.Equal(sceneName, scene.Data.Name);
-            Assert.Equal(sceneDesc, scene.Data.Description);
-            Assert.NotEmpty(scene.Data.Id);
-            Assert.Empty(scene.ActionObjects!);
+            Assert.Single([Session.Projects.Count]);
+            var project = Session.Projects.First();
+            Assert.Equal(projectName, project.Data.Name);
+            Assert.Equal(projectDesc, project.Data.Description);
+            Assert.NotEmpty(project.Data.Id);
+            Assert.Empty(project.ActionPoints!);
+            Assert.Empty(project.LogicItems!);
+            Assert.Empty(project.Overrides!);
 
             await navigationAwaiter;
-            Assert.Equal(NavigationState.Scene, Session.NavigationState);
-            Assert.Equal(scene.Id, Session.NavigationId);
+            Assert.Equal(NavigationState.Project, Session.NavigationState);
+            Assert.Equal(project.Id, Session.NavigationId);
         }
         finally {
-            await Session.Scenes.First().CloseAsync(true);
+            await Session.Projects.First().CloseAsync(true);
+            await DisposeSceneOpen();
             await Teardown();
         }
     }
@@ -44,20 +49,20 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
     public async Task Close_NotSavedNotForced_Throws() {
         await Setup();
         // Arrange
-        await SceneOpen();
+        await ProjectOpenObject();
 
         try {
             // Act
-            var record = await Record.ExceptionAsync(() => Session.Scenes.First().CloseAsync());
+            var record = await Record.ExceptionAsync(() => Session.Projects.First().CloseAsync());
 
             // Assert
             Assert.NotNull(record);
-            Assert.Single([Session.Scenes.Count]);
-            Assert.Equal(NavigationState.Scene, Session.NavigationState);
-            Assert.True(Session.Scenes.First().IsOpen);
+            Assert.Single([Session.Projects.Count]);
+            Assert.Equal(NavigationState.Project, Session.NavigationState);
+            Assert.True(Session.Projects.First().IsOpen);
         }
         finally {
-            await Session.Scenes.First().CloseAsync(true);
+            await DisposeProjectOpen();
             await Teardown();
         }
     }
@@ -67,23 +72,25 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
     public async Task Close_NotSavedForced_ClosesNotPersists() {
         await Setup();
         // Arrange
-        await SceneOpen();
+        await ProjectOpenObject();
+
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
 
         try {
-            var removeAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var removeAwaiter = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
             // Act
-            var record = await Record.ExceptionAsync(() => Session.Scenes.First().CloseAsync(true));
+            var record = await Record.ExceptionAsync(() => Session.Projects.First().CloseAsync(true));
 
             // Assert
             Assert.Null(record);
             await removeAwaiter;
-            Assert.Empty(Session.Scenes);
+            Assert.Empty(Session.Projects);
             await navigationAwaiter;
-            Assert.Equal(NavigationState.MenuListOfScenes, Session.NavigationState);
+            Assert.Equal(NavigationState.MenuListOfProjects, Session.NavigationState);
 
         }
         finally {
+            await DisposeSceneClosed();
             await Teardown();
         }
     }
@@ -92,13 +99,13 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
     public async Task Close_NotForcedAndSaved_Closes() {
         await Setup();
         // Arrange
-        await SceneOpen();
+        await ProjectOpenObject();
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
 
         try {
             // Act
-            await Session.Scenes.First().SaveAsync();
-            var record = await Record.ExceptionAsync(() => Session.Scenes.First().CloseAsync());
+            await Session.Projects.First().SaveAsync();
+            var record = await Record.ExceptionAsync(() => Session.Projects.First().CloseAsync());
 
             // Assert
             Assert.Null(record);
@@ -118,24 +125,24 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
     public async Task Close_ForcedAndSaved_Closes() {
         await Setup();
         // Arrange
-        await SceneOpen();
+        await ProjectOpenObject();
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
 
         try {
             // Act
-            await Session.Scenes.First().SaveAsync();
-            var record = await Record.ExceptionAsync(() => Session.Scenes.First().CloseAsync(true));
+            await Session.Projects.First().SaveAsync();
+            var record = await Record.ExceptionAsync(() => Session.Projects.First().CloseAsync(true));
 
             // Assert
             Assert.Null(record);
-            Assert.Single(Session.Scenes);
+            Assert.Single(Session.Projects);
             await navigationAwaiter;
-            Assert.Equal(NavigationState.MenuListOfScenes, Session.NavigationState);
+            Assert.Equal(NavigationState.MenuListOfPackages, Session.NavigationState);
             Assert.NotNull(Session.NavigationId);
 
         }
         finally {
-            await DisposeSceneClosed();
+            await DisposeProjectClosed();
             await Teardown();
         }
     }

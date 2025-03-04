@@ -96,7 +96,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnProjectOverrideUpdated(object sender, ParameterEventArgs e) {
             if (Project.IsOpen) {
                 if (e.ParentId == Data.ActionObjectId) {
-                    Data.Parameter = e.Parameter;
+                    Data.Parameter = e.Data;
                     OnUpdated();
                 }
             }

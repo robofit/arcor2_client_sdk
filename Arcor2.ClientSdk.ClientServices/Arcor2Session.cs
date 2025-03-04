@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.Managers;
+using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -482,9 +483,41 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <summary>
         /// Adds a new object type.
         /// </summary>
-        /// <param name="meta">The metadata of the object type.</param>
+        /// <param name="type">The object type ID.</param>
+        /// <param name="description">The description. By default, <c>null</c>.</param>
+        /// <param name="base">The object type ID of the parent object type. By default, Generic.</param>
+        /// <param name="model">The model of the object. By default, <c>null</c> meaning no model. Must be based on CollisionModel type.</param>
+        /// <param name="sceneParentObjectType">The required parent action object in scene. By default, <c>null</c> meaning no required parent.</param>
+        /// <param name="hasPose">When <c>true</c>, the object type will have a pose. By default, <c>false</c>.</param>
+        /// <param name="isAbstract">When <c>true</c>, the object type will be marked as abstract and can't be instantiated into action object. By default, <c>false</c>.</param>
+        /// <param name="isDisabled">When <c>true</c>, the object type won't be usable. By default, <c>false</c>.</param>
+        /// <param name="parameters">A list of parameter definitions.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task CreateObjectTypeAsync(ObjectTypeMeta meta) {
+        public async Task CreateObjectTypeAsync(string type, string @base = "Generic", string? description = null, CollisionModel? model = null, string? sceneParentObjectType = null, bool hasPose = false, bool isAbstract = false, bool isDisabled = false, List<ParameterMeta>? parameters =  null) {
+            var meta = new ObjectTypeMeta(type, description!, false, @base, model?.ToObjectModel(type)!, sceneParentObjectType!,
+                hasPose, isAbstract, isDisabled, null!, parameters ?? new List<ParameterMeta>());
+            var response = await Client.AddNewObjectTypeAsync(meta);
+            if(!response.Result) {
+                throw new Arcor2Exception("Adding a new object type failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new object type.
+        /// </summary>
+        /// <param name="type">The object type ID.</param>
+        /// <param name="description">The description. By default, <c>null</c>.</param>
+        /// <param name="base">The type of the parent object type. By default, Generic.</param>
+        /// <param name="model">The model of the object. By default, <c>null</c> meaning no model.</param>
+        /// <param name="sceneParentObjectType">The required parent action object in scene. By default, <c>null</c> meaning no required parent.</param>
+        /// <param name="hasPose">When <c>true</c>, the object type will have a pose. By default, <c>false</c>.</param>
+        /// <param name="isAbstract">When <c>true</c>, the object type will be marked as abstract and can't be instantiated into action object. By default, <c>false</c>.</param>
+        /// <param name="isDisabled">When <c>true</c>, the object type won't be usable. By default, <c>false</c>.</param>
+        /// <param name="parameters">A list of parameter definitions.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task CreateObjectTypeAsync(string type, ObjectTypeManager @base, string? description = null, CollisionModel? model = null, ObjectTypeManager? sceneParentObjectType = null, bool hasPose = false, bool isAbstract = false, bool isDisabled = false, List<ParameterMeta>? parameters = null) {
+            var meta = new ObjectTypeMeta(type, description!, false, @base.Id, model?.ToObjectModel(type)!, sceneParentObjectType?.Id ?? null!,
+                hasPose, isAbstract, isDisabled, null!, parameters ?? new List<ParameterMeta>());
             var response = await Client.AddNewObjectTypeAsync(meta);
             if(!response.Result) {
                 throw new Arcor2Exception("Adding a new object type failed.", response.Messages);
@@ -655,7 +688,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             Client.PackageInfo -= OnPackageInfo;
         }
 
-        private void OnPackageAdded(object sender, PackageChangedEventArgs e) {
+        private void OnPackageAdded(object sender, PackageEventArgs e) {
             Packages.Add(new PackageManager(this, e.Data));
         }
 
@@ -750,21 +783,21 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         private void OnObjectTypeAdded(object sender, ObjectTypesEventArgs args) {
-            foreach(var objectTypeMeta in args.ObjectTypes) {
+            foreach(var objectTypeMeta in args.Data) {
                 var objectType = new ObjectTypeManager(this, objectTypeMeta);
                 ObjectTypes.Add(objectType);
             }
         }
 
         private void OnSceneBaseUpdated(object sender, BareSceneEventArgs e) {
-            if(Scenes.All(s => s.Id != e.Scene.Id)) {
-                Scenes.Add(new SceneManager(this, e.Scene));
+            if(Scenes.All(s => s.Id != e.Data.Id)) {
+                Scenes.Add(new SceneManager(this, e.Data));
             }
         }
 
         private void OnProjectBaseUpdated(object sender, BareProjectEventArgs e) {
-            if(Projects.All(s => s.Id != e.Project.Id)) {
-                Projects.Add(new ProjectManager(this, e.Project));
+            if(Projects.All(s => s.Id != e.Data.Id)) {
+                Projects.Add(new ProjectManager(this, e.Data));
             }
         }
 

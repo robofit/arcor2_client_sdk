@@ -13,7 +13,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             X = x; Y = y; Z = z;
         }
 
-        internal override ObjectModel ToOpenApiObjectModel(string id)
+        public override ObjectModel ToObjectModel(string id)
         {
             return new ObjectModel(ObjectModel.TypeEnum.Box, new Box(id, X, Y, Z));
         }

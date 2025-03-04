@@ -1,5 +1,8 @@
-﻿using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using System.Collections.Specialized;
+using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
+using Arcor2.ClientSdk.Communication;
+using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
@@ -139,5 +142,37 @@ public class Arcor2SessionInitTests(ITestOutputHelper output) : TestBase(output)
 
         await Session.CloseAsync();
         await session2.CloseAsync();
+    }
+
+    [Fact]
+    public async Task UnderlyingClient_ValidRpc_Success() {
+        await Session.ConnectAsync(Uri);
+        var client = Session.GetUnderlyingArcor2Client();
+        var scenes = await client.ListScenesAsync();
+        Assert.NotNull(scenes);
+        await Session.CloseAsync();
+    }
+
+    [Fact]
+    public async Task UnderlyingClient_ValidRpcWithEvent_StateChanges() {
+        await Session.ConnectAsync(Uri);
+        var client = Session.GetUnderlyingArcor2Client();
+        try {
+            var openAwaiterEvent = new EventAwaiter<OpenSceneEventArgs>();
+            client.SceneOpened += openAwaiterEvent.EventHandler;
+            var openAwaiter = openAwaiterEvent.WaitForEventAsync();
+
+            await client.AddNewSceneAsync(new NewSceneRequestArgs(RandomName()));
+            
+            await openAwaiter;
+            Assert.Equal(NavigationState.Scene, Session.NavigationState);
+            Assert.Single(Session.Scenes);
+        }
+        finally {
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            await Session.Scenes.First().RemoveAsync();
+            await remove;
+            await Session.CloseAsync();
+        }
     }
 }

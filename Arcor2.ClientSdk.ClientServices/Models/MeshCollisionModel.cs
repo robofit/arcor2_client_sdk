@@ -14,7 +14,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             AssetId = assetId;
             Points = points.ToList();
         }
-        internal override ObjectModel ToOpenApiObjectModel(string id)
+        public override ObjectModel ToObjectModel(string id)
         {
             return new ObjectModel(ObjectModel.TypeEnum.Mesh, mesh: new Mesh(id, AssetId, Points));
         }

@@ -42,12 +42,12 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
         WebSocket.ReceiveMockMessage(sampleSceneRemovedEvent.ToJson());
 
         Assert.NotNull(raisedEventArgs);
-        Assert.Equal(sampleSceneRemovedEvent.Data.Name, raisedEventArgs.Scene.Name);
-        Assert.Equal(sampleSceneRemovedEvent.Data.Description, raisedEventArgs.Scene.Description);
-        Assert.Equal(sampleSceneRemovedEvent.Data.Created, raisedEventArgs.Scene.Created);
-        Assert.Equal(sampleSceneRemovedEvent.Data.Modified, raisedEventArgs.Scene.Modified);
-        Assert.Equal(sampleSceneRemovedEvent.Data.IntModified, raisedEventArgs.Scene.IntModified);
-        Assert.Equal(sampleSceneRemovedEvent.Data.Id, raisedEventArgs.Scene.Id);
+        Assert.Equal(sampleSceneRemovedEvent.Data.Name, raisedEventArgs.Data.Name);
+        Assert.Equal(sampleSceneRemovedEvent.Data.Description, raisedEventArgs.Data.Description);
+        Assert.Equal(sampleSceneRemovedEvent.Data.Created, raisedEventArgs.Data.Created);
+        Assert.Equal(sampleSceneRemovedEvent.Data.Modified, raisedEventArgs.Data.Modified);
+        Assert.Equal(sampleSceneRemovedEvent.Data.IntModified, raisedEventArgs.Data.IntModified);
+        Assert.Equal(sampleSceneRemovedEvent.Data.Id, raisedEventArgs.Data.Id);
     }
 
     [Fact]

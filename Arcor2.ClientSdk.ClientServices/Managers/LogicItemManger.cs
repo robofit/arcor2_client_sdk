@@ -111,7 +111,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             Session.Client.LogicItemRemoved -= OnLogicItemRemoved;
         }
 
-        private void OnLogicItemRemoved(object sender, LogicItemChangedEventArgs e) {
+        private void OnLogicItemRemoved(object sender, LogicItemEventArgs e) {
             if(Project.IsOpen) {
                 if(e.Data.Id == Id) {
                     RemoveData();
@@ -121,7 +121,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             }
         }
 
-        private void OnLogicItemUpdated(object sender, LogicItemChangedEventArgs e) {
+        private void OnLogicItemUpdated(object sender, LogicItemEventArgs e) {
             if(Project.IsOpen) {
                 if(e.Data.Id == Id) {
                     UpdateData(e.Data);

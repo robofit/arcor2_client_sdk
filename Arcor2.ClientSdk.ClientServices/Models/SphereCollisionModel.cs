@@ -10,7 +10,7 @@ namespace Arcor2.ClientSdk.ClientServices.Models
             Radius = radius;
         }
 
-        internal override ObjectModel ToOpenApiObjectModel(string id)
+        public override ObjectModel ToObjectModel(string id)
         {
             return new ObjectModel(ObjectModel.TypeEnum.Sphere, sphere: new Sphere(id, Radius));
         }

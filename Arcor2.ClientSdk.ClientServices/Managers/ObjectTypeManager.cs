@@ -86,13 +86,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <summary>
         /// Updates object model.
         /// </summary>
+        /// <remarks>
+        /// Can only be used in opened scene. Only model parameter changes are possible, the model must be of the same type.
+        /// </remarks>
         /// <param name="model">New object model.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateObjectModel(CollisionModel model) {
             await LibraryLockAsync();
             var result =
                 await Session.Client.UpdateObjectTypeModelAsync(
-                    new UpdateObjectModelRequestArgs(Id, model.ToOpenApiObjectModel(Id)));
+                    new UpdateObjectModelRequestArgs(Id, model.ToObjectModel(Id)));
             if(result.Result == false) {
                 await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Updating model of an object type {Id} failed.", result.Messages);
@@ -150,7 +153,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         private void OnObjectTypeRemoved(object sender, ObjectTypesEventArgs args) {
-            foreach (var objectTypeMeta in args.ObjectTypes) {
+            foreach (var objectTypeMeta in args.Data) {
                 if (Id == objectTypeMeta.Type) {
                     RemoveData();
                     Session.ObjectTypes.Remove(this);
@@ -160,7 +163,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         private void OnObjectTypeUpdated(object sender, ObjectTypesEventArgs args) {
-            foreach (var objectTypeMeta in args.ObjectTypes) {
+            foreach (var objectTypeMeta in args.Data) {
                 if (Id == objectTypeMeta.Type) {
                     OnUpdated();
                     Data.Meta = objectTypeMeta;

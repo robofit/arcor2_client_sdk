@@ -1,17 +1,26 @@
-﻿namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
+﻿using Arcor2.ClientSdk.ClientServices.Managers;
+
+namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 
 /// <summary>
 /// Helper class for testing events in xUnit
 /// </summary>
 /// <typeparam name="TEventArgs">Type of event arguments</typeparam>
-public class EventAwaiter<TEventArgs>
+public class EventAwaiter<TEventArgs>()
     where TEventArgs : EventArgs {
     private readonly TaskCompletionSource<TEventArgs> tcs = new();
     private readonly CancellationTokenSource cts = new();
+    private readonly Func<TEventArgs, bool>? predicate;
+
+    public EventAwaiter(Func<TEventArgs, bool> predicate) : this() {
+        this.predicate = predicate;
+    }
 
     public void EventHandler(object? sender, TEventArgs e) {
         try {
-            tcs.TrySetResult(e);
+            if (predicate == null || predicate(e)) {
+                tcs.TrySetResult(e);
+            }
         }
         catch(Exception ex) {
             tcs.TrySetException(ex);
@@ -76,5 +85,31 @@ public class EventAwaiter {
 
         await cts.CancelAsync();
         await tcs.Task;
+    }
+}
+
+public static class Arcor2ObjectExtensions {
+    public static EventAwaiter GetUpdatedAwaiter<T>(this Arcor2ObjectManager<T> manager) {
+        var awaiter = new EventAwaiter();
+        manager.Updated += awaiter.EventHandler;
+        return awaiter;
+    }
+
+    public static Task GetUpdatedAwaiterAndWait<T>(this Arcor2ObjectManager<T> manager) {
+        var awaiter = new EventAwaiter();
+        manager.Updated += awaiter.EventHandler;
+        return awaiter.WaitForEventAsync();
+    }
+
+    public static EventAwaiter GetRemovingAwaiter<T>(this Arcor2ObjectManager<T> manager) {
+        var awaiter = new EventAwaiter();
+        manager.Removing += awaiter.EventHandler;
+        return awaiter;
+    }
+
+    public static Task GetRemovingAwaiterAndWait<T>(this Arcor2ObjectManager<T> manager) {
+        var awaiter = new EventAwaiter();
+        manager.Removing += awaiter.EventHandler;
+        return awaiter.WaitForEventAsync();
     }
 }

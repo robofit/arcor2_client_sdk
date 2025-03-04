@@ -137,7 +137,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionBoxAsync(string name, Pose pose, BoxCollisionModel box) {
             // We use custom models for this, due to very confusing ID parameter, which has to match name.
-            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, box.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, box.ToObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new box virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -151,7 +151,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="cylinder">The cylinder parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionCylinderAsync(string name, Pose pose, CylinderCollisionModel cylinder) {
-            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, cylinder.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, cylinder.ToObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new cylinder virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -165,7 +165,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="sphere">The sphere parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionSphereAsync(string name, Pose pose, SphereCollisionModel sphere) { ;
-            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, sphere.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, sphere.ToObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new sphere virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -179,7 +179,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="mesh">The mesh parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionMeshAsync(string name, Pose pose, MeshCollisionModel mesh) {
-            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, mesh.ToOpenApiObjectModel(name)));
+            var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, mesh.ToObjectModel(name)));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding new mesh virtual collision action object to scene {Id} failed.", response.Messages);
             }
@@ -390,7 +390,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             Session.Client.SceneRemoved += OnSceneRemoved;
             Session.Client.SceneBaseUpdated += OnSceneBaseUpdated;
             Session.Client.SceneState += OnSceneState;
-            Session.Client.SceneActionObjectAdded += OnSceneActionObjectAdded;
+            Session.Client.ActionObjectAdded += OnActionObjectAdded;
         }
 
         protected override void UnregisterHandlers() {
@@ -399,7 +399,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             Session.Client.SceneRemoved -= OnSceneRemoved;
             Session.Client.SceneBaseUpdated -= OnSceneBaseUpdated;
             Session.Client.SceneState -= OnSceneState;
-            Session.Client.SceneActionObjectAdded -= OnSceneActionObjectAdded;
+            Session.Client.ActionObjectAdded -= OnActionObjectAdded;
         }
 
         public new void Dispose() {
@@ -412,13 +412,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         private void OnSceneBaseUpdated(object sender, BareSceneEventArgs e) {
-            if(e.Scene.Id == Id) {
-                UpdateData(e.Scene);
+            if(e.Data.Id == Id) {
+                UpdateData(e.Data);
             }
         }
 
         private void OnSceneRemoved(object sender, BareSceneEventArgs e) {
-            if(e.Scene.Id == Id) {
+            if(e.Data.Id == Id) {
                 RemoveData();
                 Session.Scenes.Remove(this);
                 Dispose();
@@ -434,12 +434,12 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                 }
             }
         }
-        private void OnSceneActionObjectAdded(object sender, SceneActionObjectEventArgs e) {
+        private void OnActionObjectAdded(object sender, ActionObjectEventArgs e) {
             if(IsOpen) {
                 if(ActionObjects == null) {
                     Session.Logger?.LogError($"While adding new action object, the currently opened scene ({Id}) had non-initialized (null) action object collection. Possible inconsistent state.");
                 }
-                ActionObjects?.Add(new ActionObjectManager(Session, this, e.SceneObject));
+                ActionObjects?.Add(new ActionObjectManager(Session, this, e.Data));
             }
         }
     }

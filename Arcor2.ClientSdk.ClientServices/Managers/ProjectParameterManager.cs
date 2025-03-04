@@ -86,7 +86,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         private void OnProjectParameterRemoved(object sender, ProjectParameterEventArgs e) {
-            if (e.ProjectParameter.Id == Id) {
+            if (e.Data.Id == Id) {
                 RemoveData();
                 Project.Parameters!.Remove(this);
                 Dispose();
@@ -94,8 +94,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         private void OnProjectParameterUpdated(object sender, ProjectParameterEventArgs e) {
-            if (e.ProjectParameter.Id == Id) {
-                UpdateData(e.ProjectParameter);
+            if (e.Data.Id == Id) {
+                UpdateData(e.Data);
             }
         }
     }

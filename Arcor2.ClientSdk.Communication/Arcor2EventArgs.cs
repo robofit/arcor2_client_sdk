@@ -35,42 +35,42 @@ namespace Arcor2.ClientSdk.Communication {
     }
 
     public class BareProjectEventArgs : EventArgs {
-        public BareProject Project { get; set; }
+        public BareProject Data { get; set; }
 
         public BareProjectEventArgs(BareProject project) {
-            Project = project;
+            Data = project;
         }
     }
 
     public class BareSceneEventArgs : EventArgs {
-        public BareScene Scene { get; set; }
+        public BareScene Data { get; set; }
 
         public BareSceneEventArgs(BareScene scene) {
-            Scene = scene;
+            Data = scene;
         }
     }
 
     public class BareActionEventArgs : ParentIdEventArgs {
-        public BareAction Action { get; set; }
+        public BareAction Data { get; set; }
 
         public BareActionEventArgs(BareAction action, string parentId = "") : base(parentId) {
-            Action = action;
+            Data = action;
         }
     }
 
     public class ActionEventArgs : ParentIdEventArgs {
-        public Action Action { get; set; }
+        public Action Data { get; set; }
 
         public ActionEventArgs(Action action, string parentId = "") : base(parentId) {
-            Action = action;
+            Data = action;
         }
     }
 
     public class BareActionPointEventArgs : EventArgs {
-        public BareActionPoint ActionPoint { get; set; }
+        public BareActionPoint Data { get; set; }
 
         public BareActionPointEventArgs(BareActionPoint actionPoint) {
-            ActionPoint = actionPoint;
+            Data = actionPoint;
         }
     }
 
@@ -82,7 +82,7 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class RobotJointsUpdatedEventArgs {
+    public class RobotJointsUpdatedEventArgs : EventArgs {
         public RobotJointsData Data { get; set; }
 
         public RobotJointsUpdatedEventArgs(RobotJointsData data) {
@@ -90,15 +90,15 @@ namespace Arcor2.ClientSdk.Communication {
         }
     }
 
-    public class LogicItemChangedEventArgs {
+    public class LogicItemEventArgs : EventArgs {
         public LogicItem Data { get; set; }
 
-        public LogicItemChangedEventArgs(LogicItem data) {
+        public LogicItemEventArgs(LogicItem data) {
             Data = data;
         }
     }
 
-    public class ShowMainScreenEventArgs {
+    public class ShowMainScreenEventArgs : EventArgs {
         public ShowMainScreenData Data { get; set; }
         public ShowMainScreenEventArgs(ShowMainScreenData data) {
             Data = data;
@@ -238,49 +238,49 @@ namespace Arcor2.ClientSdk.Communication {
 
     public class ParameterEventArgs : ParentIdEventArgs {
 
-        public Parameter Parameter { get; set; }
+        public Parameter Data { get; set; }
 
         public ParameterEventArgs(Parameter parameter, string parentId = "") : base(parentId) {
-            Parameter = parameter;
+            Data = parameter;
         }
     }
 
     public class ObjectTypesEventArgs : EventArgs {
-        public List<ObjectTypeMeta> ObjectTypes { get; set; }
+        public List<ObjectTypeMeta> Data { get; set; }
 
-        public ObjectTypesEventArgs(List<ObjectTypeMeta> objectTypes) {
-            ObjectTypes = objectTypes;
+        public ObjectTypesEventArgs(List<ObjectTypeMeta> data) {
+            Data = data;
         }
     }
 
     public class ProcessStateEventArgs : EventArgs {
         public ProcessStateData Data { get; set; }
 
-        public ProcessStateEventArgs(ProcessStateData data) {
-            Data = data;
+        public ProcessStateEventArgs(ProcessStateData processState) {
+            Data = processState;
         }
     }
 
     public class ProjectParameterEventArgs : EventArgs {
-        public ProjectParameter ProjectParameter { get; set; }
+        public ProjectParameter Data { get; set; }
 
-        public ProjectParameterEventArgs(ProjectParameter projectParameter) {
-            ProjectParameter = projectParameter;
+        public ProjectParameterEventArgs(ProjectParameter parameter) {
+            Data = parameter;
         }
     }
 
-    public class SceneActionObjectEventArgs : EventArgs {
-        public SceneObject SceneObject { get; set; }
+    public class ActionObjectEventArgs : EventArgs {
+        public SceneObject Data { get; set; }
 
-        public SceneActionObjectEventArgs(SceneObject sceneObject) {
-            SceneObject = sceneObject;
+        public ActionObjectEventArgs(SceneObject sceneObject) {
+            Data = sceneObject;
         }
     }
 
-    public class PackageChangedEventArgs : EventArgs {
+    public class PackageEventArgs : EventArgs {
         public PackageSummary Data { get; set; }
 
-        public PackageChangedEventArgs(PackageSummary data) {
+        public PackageEventArgs(PackageSummary data) {
             Data = data;
         }
     }

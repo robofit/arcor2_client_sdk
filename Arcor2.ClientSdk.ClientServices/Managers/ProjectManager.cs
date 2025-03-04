@@ -532,13 +532,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         private void OnProjectBaseUpdated(object sender, BareProjectEventArgs e) {
-            if(e.Project.Id == Id) {
-                UpdateData(e.Project);
+            if(e.Data.Id == Id) {
+                UpdateData(e.Data);
             }
         }
 
         private void OnProjectRemoved(object sender, BareProjectEventArgs e) {
-            if(e.Project.Id == Id) {
+            if(e.Data.Id == Id) {
                 RemoveData();
                 Session.Projects.Remove(this);
                 Dispose();
@@ -551,7 +551,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     Session.Logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
                 }
 
-                Parameters?.Add(new ProjectParameterManager(Session, this, e.ProjectParameter));
+                Parameters?.Add(new ProjectParameterManager(Session, this, e.Data));
             }
         }
 
@@ -561,7 +561,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     Session.Logger?.LogError($"When adding a new action point, the action point collection for project {Id} was null.");
                 }
 
-                ActionPoints?.Add(new ActionPointManager(Session, this, e.ActionPoint));
+                ActionPoints?.Add(new ActionPointManager(Session, this, e.Data));
             }
         }
 
@@ -572,11 +572,11 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     return;
                 }
 
-                Overrides.Add(new ProjectOverrideManager(Session, this, e.ParentId, e.Parameter));
+                Overrides.Add(new ProjectOverrideManager(Session, this, e.ParentId, e.Data));
             }
         }
 
-        private void OnLogicItemAdded(object sender, LogicItemChangedEventArgs e) {
+        private void OnLogicItemAdded(object sender, LogicItemEventArgs e) {
             if(IsOpen) {
                 if(LogicItems == null) {
                     Session.Logger?.LogError($"When adding a new logic item, the logic item collection for project {Id} was null.");

@@ -1277,8 +1277,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void RegisterHandlers() {
             base.RegisterHandlers();
-            Session.Client.SceneActionObjectUpdated += OnSceneActionObjectUpdated;
-            Session.Client.SceneActionObjectRemoved += OnSceneActionObjectRemoved;
+            Session.Client.ActionObjectUpdated += OnActionObjectUpdated;
+            Session.Client.ActionObjectRemoved += OnSceneActionObjectRemoved;
             Session.Client.RobotJointsUpdated += OnRobotJointsUpdated;
             Session.Client.RobotEndEffectorUpdated += OnRobotEndEffectorUpdated;
             Session.Client.ProcessState += OnProcessState;
@@ -1290,8 +1290,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
         protected override void UnregisterHandlers() {
             base.UnregisterHandlers();
-            Session.Client.SceneActionObjectUpdated -= OnSceneActionObjectUpdated;
-            Session.Client.SceneActionObjectRemoved -= OnSceneActionObjectRemoved;
+            Session.Client.ActionObjectUpdated -= OnActionObjectUpdated;
+            Session.Client.ActionObjectRemoved -= OnSceneActionObjectRemoved;
             Session.Client.RobotJointsUpdated -= OnRobotJointsUpdated;
             Session.Client.RobotEndEffectorUpdated -= OnRobotEndEffectorUpdated;
             Session.Client.ProcessState -= OnProcessState;
@@ -1301,15 +1301,15 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             Session.Client.RobotMoveToActionPointOrientation -= OnRobotMoveToActionPointOrientation;
         }
 
-        private void OnSceneActionObjectUpdated(object sender, SceneActionObjectEventArgs e) {
-            if(Id == e.SceneObject.Id) {
-                Data.Meta = e.SceneObject;
+        private void OnActionObjectUpdated(object sender, ActionObjectEventArgs e) {
+            if(Id == e.Data.Id) {
+                Data.Meta = e.Data;
                 OnUpdated();
             }
         }
 
-        private void OnSceneActionObjectRemoved(object sender, SceneActionObjectEventArgs e) {
-            if(Id == e.SceneObject.Id) {
+        private void OnSceneActionObjectRemoved(object sender, ActionObjectEventArgs e) {
+            if(Id == e.Data.Id) {
                 RemoveData();
                 Scene.ActionObjects?.Remove(this);
                 Dispose();
