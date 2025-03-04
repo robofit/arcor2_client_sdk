@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Arcor2.ClientSdk.ClientServices.Managers;
 
@@ -52,6 +53,37 @@ namespace Arcor2.ClientSdk.ClientServices.Extensions {
 
             // Return without disposed.
             return managers.Where(m => !disposeList.Contains(m)).ToList();
+        }
+
+        public static void UpdateListOfLockableArcor2Objects<TManager, TObject, T>(this ObservableCollection<TManager>? managers, IList<TObject> newObjects,
+            Func<TObject, string> id, Action<TManager, TObject> update, Func<TObject, TManager> creation)
+            where TManager : LockableArcor2ObjectManager<T> where T : class {
+            // This is mainly a convenience method for a very reoccurring problem, because
+            // we can't just replace the manager instances as a whole due to event registrations.
+            // We also can't touch the OpenApi models to introduce some structure, otherwise maintainability nightmare ensues.
+
+            managers ??= new ObservableCollection<TManager>();
+
+            // Update existing or create new
+            foreach(var @object in newObjects) {
+                var existingObject = managers.FirstOrDefault(a => a.Id == id(@object));
+                if(existingObject != null) {
+                    update(existingObject, @object);
+                }
+                else {
+                    managers.Add(creation(@object));
+                }
+            }
+
+            // Dispose missing
+            var disposeList = managers
+                .Where(a => newObjects.All(s => a.Id != id(s))).ToList();
+            foreach (var dispose in disposeList) {
+                managers.Remove(dispose);
+            }
+            foreach(var managerDispose in disposeList) {
+                managerDispose.Dispose();
+            }
         }
 
         /// <summary>

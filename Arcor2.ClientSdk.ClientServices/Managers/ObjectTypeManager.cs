@@ -156,7 +156,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             foreach (var objectTypeMeta in args.Data) {
                 if (Id == objectTypeMeta.Type) {
                     RemoveData();
-                    Session.ObjectTypes.Remove(this);
+                    Session.objectTypes.Remove(this);
                     Dispose();
                 }
             }

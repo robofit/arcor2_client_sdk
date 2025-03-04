@@ -233,7 +233,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnPackageRemoved(object sender, PackageEventArgs e) {
             if (e.Data.Id == Id) {
                 RemoveData();
-                Session.Packages.Remove(this);
+                Session.packages.Remove(this);
                 Dispose();
             }
         }

@@ -16,13 +16,15 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
     /// Manages lifetime of a scene.
     /// </summary>
     public class SceneManager : LockableArcor2ObjectManager<BareScene> {
+
+        internal ObservableCollection<ActionObjectManager>? actionObjects { get; }
         /// <summary>
         /// Collection of existing action objects.
         /// </summary>
         /// <value>
         /// A list of <see cref="ActionObjectManager"/>, <c>null</c> if not loaded.
         /// </value>
-        public ObservableCollection<ActionObjectManager>? ActionObjects { get; private set; }
+        public ReadOnlyObservableCollection<ActionObjectManager>? ActionObjects { get; }
 
         /// <summary>
         /// Gets if the scene is open.
@@ -58,7 +60,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="session">The session.</param>
         /// <param name="scene">Scene object.</param>
         internal SceneManager(Arcor2Session session, Scene scene) : base(session, scene.MapToBareScene(), scene.Id) {
-            ActionObjects = new ObservableCollection<ActionObjectManager>(scene.Objects.Select(o => new ActionObjectManager(session, this, o)));
+            actionObjects = new ObservableCollection<ActionObjectManager>(scene.Objects.Select(o => new ActionObjectManager(session, this, o)));
+            ActionObjects = new ReadOnlyObservableCollection<ActionObjectManager>(actionObjects);
         }
 
         /// <summary>
@@ -333,10 +336,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
 
             UpdateData(scene.MapToBareScene());
 
-            ActionObjects = new ObservableCollection<ActionObjectManager>(ActionObjects.UpdateListOfLockableArcor2Objects<ActionObjectManager, SceneObject, ActionObject>(scene.Objects,
+            ActionObjects.UpdateListOfLockableArcor2Objects<ActionObjectManager, SceneObject, ActionObject>(scene.Objects,
                 o => o.Id,
                 (manager, o) => manager.UpdateAccordingToNewObject(o),
-                o => new ActionObjectManager(Session, this, o)));
+                o => new ActionObjectManager(Session, this, o));
         }
 
         /// <summary>
@@ -420,7 +423,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnSceneRemoved(object sender, BareSceneEventArgs e) {
             if(e.Data.Id == Id) {
                 RemoveData();
-                Session.Scenes.Remove(this);
+                Session.scenes.Remove(this);
                 Dispose();
             }
         }
@@ -439,7 +442,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                 if(ActionObjects == null) {
                     Session.Logger?.LogError($"While adding new action object, the currently opened scene ({Id}) had non-initialized (null) action object collection. Possible inconsistent state.");
                 }
-                ActionObjects?.Add(new ActionObjectManager(Session, this, e.Data));
+                actionObjects?.Add(new ActionObjectManager(Session, this, e.Data));
             }
         }
     }

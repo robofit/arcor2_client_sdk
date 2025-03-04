@@ -15,25 +15,30 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
     /// Manages lifetime of a project.
     /// </summary>
     public class ProjectManager : LockableArcor2ObjectManager<BareProject> {
+
+        internal ObservableCollection<ProjectParameterManager>? parameters { get; }
         /// <summary>
         /// A collection of project parameters.
         /// </summary>
-        public ObservableCollection<ProjectParameterManager>? Parameters { get; private set; }
+        public ReadOnlyObservableCollection<ProjectParameterManager>? Parameters { get; }
 
+        internal ObservableCollection<ActionPointManager>? actionPoints { get; }
         /// <summary>
         /// A collection of action points.
         /// </summary>
-        public ObservableCollection<ActionPointManager>? ActionPoints { get; private set; }
+        public ReadOnlyObservableCollection<ActionPointManager>? ActionPoints { get; }
 
+        internal ObservableCollection<ProjectOverrideManager>? overrides { get; }
         /// <summary>
         /// A collection of project overrides.
         /// </summary>
-        public ObservableCollection<ProjectOverrideManager>? Overrides { get; private set; }
+        public ReadOnlyObservableCollection<ProjectOverrideManager>? Overrides { get; }
 
+        internal ObservableCollection<LogicItemManager>? logicItems { get; }
         /// <summary>
         /// A collection of logic items.
         /// </summary>
-        public ObservableCollection<LogicItemManager>? LogicItems { get; private set; }
+        public ReadOnlyObservableCollection<LogicItemManager>? LogicItems { get; }
 
         /// <summary>
         /// Gets if the project is open.
@@ -65,16 +70,20 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="session">The session.</param>
         /// <param name="project">Project object.</param>
         internal ProjectManager(Arcor2Session session, Project project) : base(session, project.MapToBareProject(), project.Id) {
-            Parameters = new ObservableCollection<ProjectParameterManager>(project.Parameters
+            parameters = new ObservableCollection<ProjectParameterManager>(project.Parameters
                 .Select(p => new ProjectParameterManager(Session, this, p)));
-            ActionPoints = new ObservableCollection<ActionPointManager>(project.ActionPoints
+            actionPoints = new ObservableCollection<ActionPointManager>(project.ActionPoints
                 .Select(a => new ActionPointManager(Session, this, a)));
             var flattenedOverrides =
                 project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
-            Overrides = new ObservableCollection<ProjectOverrideManager>(flattenedOverrides
+            overrides = new ObservableCollection<ProjectOverrideManager>(flattenedOverrides
                 .Select(o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)));
-            LogicItems = new ObservableCollection<LogicItemManager>(project.LogicItems.Select(l => new LogicItemManager(Session, this, l)));
+            logicItems = new ObservableCollection<LogicItemManager>(project.LogicItems.Select(l => new LogicItemManager(Session, this, l)));
             // Project functions are not really needed atm...
+            Parameters = new ReadOnlyObservableCollection<ProjectParameterManager>(parameters);
+            ActionPoints = new ReadOnlyObservableCollection<ActionPointManager>(actionPoints);
+            Overrides = new ReadOnlyObservableCollection<ProjectOverrideManager>(overrides);
+            LogicItems = new ReadOnlyObservableCollection<LogicItemManager>(logicItems);
         }
 
         /// <summary>
@@ -453,24 +462,24 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             }
 
             UpdateData(project.MapToBareProject());
-            Parameters = new ObservableCollection<ProjectParameterManager>(Parameters.UpdateListOfLockableArcor2Objects<ProjectParameterManager, ProjectParameter, ProjectParameter>(project.Parameters,
+            parameters.UpdateListOfLockableArcor2Objects<ProjectParameterManager, ProjectParameter, ProjectParameter>(project.Parameters,
                 p => p.Id,
                 (m, p) => m.UpdateAccordingToNewObject(p),
-                p => new ProjectParameterManager(Session, this, p)));
-            ActionPoints = new ObservableCollection<ActionPointManager>(ActionPoints.UpdateListOfLockableArcor2Objects<ActionPointManager, ActionPoint, BareActionPoint>(project.ActionPoints,
+                p => new ProjectParameterManager(Session, this, p));
+            actionPoints.UpdateListOfLockableArcor2Objects<ActionPointManager, ActionPoint, BareActionPoint>(project.ActionPoints,
                 a => a.Id,
                 (m, a) => m.UpdateAccordingToNewObject(a),
-                a => new ActionPointManager(Session, this, a)));
+                a => new ActionPointManager(Session, this, a));
             var flattenedOverrides =
                 project.ObjectOverrides.SelectMany(o => o.Parameters, (@override, parameter) => (ActionObjectId: @override.Id, Parameter: parameter)).ToList();
-            Overrides = new ObservableCollection<ProjectOverrideManager>(Overrides.UpdateListOfArcor2Objects<ProjectOverrideManager, (string ActionObjectId, Parameter Parameter), ProjectOverride>(flattenedOverrides,
+            overrides.UpdateListOfArcor2Objects<ProjectOverrideManager, (string ActionObjectId, Parameter Parameter), ProjectOverride>(flattenedOverrides,
                 (m, o) => m.Data.ActionObjectId == o.ActionObjectId && m.Data.Parameter.Name == o.Parameter.Name && m.Data.Parameter.Type == o.Parameter.Type,
                 (m, o) => m.UpdateAccordingToNewObject(o.Parameter),
-                o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter)));
-            LogicItems = new ObservableCollection<LogicItemManager>(LogicItems.UpdateListOfLockableArcor2Objects<LogicItemManager, LogicItem, LogicItem>(project.LogicItems,
+                o => new ProjectOverrideManager(Session, this, o.ActionObjectId, o.Parameter));
+            logicItems.UpdateListOfLockableArcor2Objects<LogicItemManager, LogicItem, LogicItem>(project.LogicItems,
                 l => l.Id,
                 (m, l) => m.UpdateAccordingToNewObject(l),
-                l => new LogicItemManager(Session, this, l)));
+                l => new LogicItemManager(Session, this, l));
         }
 
         /// <summary>
@@ -540,7 +549,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnProjectRemoved(object sender, BareProjectEventArgs e) {
             if(e.Data.Id == Id) {
                 RemoveData();
-                Session.Projects.Remove(this);
+                Session.projects.Remove(this);
                 Dispose();
             }
         }
@@ -551,7 +560,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     Session.Logger?.LogError($"When adding a new project parameter, the parameters collection for project {Id} was null.");
                 }
 
-                Parameters?.Add(new ProjectParameterManager(Session, this, e.Data));
+                parameters?.Add(new ProjectParameterManager(Session, this, e.Data));
             }
         }
 
@@ -561,7 +570,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     Session.Logger?.LogError($"When adding a new action point, the action point collection for project {Id} was null.");
                 }
 
-                ActionPoints?.Add(new ActionPointManager(Session, this, e.Data));
+                actionPoints?.Add(new ActionPointManager(Session, this, e.Data));
             }
         }
 
@@ -571,8 +580,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     Session.Logger?.LogError($"When adding a new project override, the override collection for project {Id} was null.");
                     return;
                 }
-
-                Overrides.Add(new ProjectOverrideManager(Session, this, e.ParentId, e.Data));
+                
+                overrides?.Add(new ProjectOverrideManager(Session, this, e.ParentId, e.Data));
             }
         }
 
@@ -583,7 +592,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                     return;
                 }
 
-                LogicItems!.Add(new LogicItemManager(Session, this, e.Data));
+                logicItems?.Add(new LogicItemManager(Session, this, e.Data));
             }
         }
     }

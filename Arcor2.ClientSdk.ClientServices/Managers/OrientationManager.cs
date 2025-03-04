@@ -152,7 +152,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
                     RemoveData();
-                    ActionPoint.Orientations.Remove(this);
+                    ActionPoint.orientations.Remove(this);
                     Dispose();
                 }
             }

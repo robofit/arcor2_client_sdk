@@ -19,20 +19,23 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         internal ProjectManager Project { get; }
 
+        internal ObservableCollection<ActionManager> actions { get; }
         /// <summary>
         /// A collection of actions.
         /// </summary>
-        public ObservableCollection<ActionManager> Actions { get; private set; }
+        public ReadOnlyObservableCollection<ActionManager> Actions { get; }
 
+        internal ObservableCollection<OrientationManager> orientations { get; }
         /// <summary>
         /// A collection of orientations.
         /// </summary>
-        public ObservableCollection<OrientationManager> Orientations { get; private set; }
+        public ReadOnlyObservableCollection<OrientationManager> Orientations { get; }
 
+        internal ObservableCollection<JointsManager> joints { get; }
         /// <summary>
         /// A collection of joints.
         /// </summary>
-        public ObservableCollection<JointsManager> Joints { get; private set; }
+        public ReadOnlyObservableCollection<JointsManager> Joints { get; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionPointManager"/> class.
@@ -43,9 +46,12 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         public ActionPointManager(Arcor2Session session, ProjectManager project, BareActionPoint actionPointMeta) : base(
             session, actionPointMeta, actionPointMeta.Id) {
             Project = project;
-            Actions = new ObservableCollection<ActionManager>();
-            Orientations = new ObservableCollection<OrientationManager>();
-            Joints = new ObservableCollection<JointsManager>();
+            actions = new ObservableCollection<ActionManager>();
+            orientations = new ObservableCollection<OrientationManager>();
+            joints = new ObservableCollection<JointsManager>();
+            Actions = new ReadOnlyObservableCollection<ActionManager>(actions);
+            Orientations = new ReadOnlyObservableCollection<OrientationManager>(orientations);
+            Joints = new ReadOnlyObservableCollection<JointsManager>(joints);
         }
 
         /// <summary>
@@ -57,9 +63,12 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         public ActionPointManager(Arcor2Session session, ProjectManager project, ActionPoint actionPoint) : base(
             session, actionPoint.MapToBareActionPoint(), actionPoint.Id) {
             Project = project;
-            Actions = new ObservableCollection<ActionManager>(actionPoint.Actions.Select(a => new ActionManager(Session, this, a)));
-            Orientations = new ObservableCollection<OrientationManager>(actionPoint.Orientations.Select(o => new OrientationManager(Session, this, o)));
-            Joints = new ObservableCollection<JointsManager>(actionPoint.RobotJoints.Select(j => new JointsManager(Session, this, j)));
+            actions = new ObservableCollection<ActionManager>(actionPoint.Actions.Select(a => new ActionManager(Session, this, a)));
+            orientations = new ObservableCollection<OrientationManager>(actionPoint.Orientations.Select(o => new OrientationManager(Session, this, o)));
+            joints = new ObservableCollection<JointsManager>(actionPoint.RobotJoints.Select(j => new JointsManager(Session, this, j)));
+            Actions = new ReadOnlyObservableCollection<ActionManager>(actions);
+            Orientations = new ReadOnlyObservableCollection<OrientationManager>(orientations);
+            Joints = new ReadOnlyObservableCollection<JointsManager>(joints);
         }
 
         /// <summary>
@@ -400,18 +409,18 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             }
 
             UpdateData(actionPoint.MapToBareActionPoint());
-            Actions = new ObservableCollection<ActionManager>(Actions.UpdateListOfLockableArcor2Objects<ActionManager, Action, Action>(actionPoint.Actions,
+            actions.UpdateListOfLockableArcor2Objects<ActionManager, Action, Action>(actionPoint.Actions,
                 a => a.Id,
                 (m, a) => m.UpdateAccordingToNewObject(a),
-                a => new ActionManager(Session, this, a)));
-            Orientations = new ObservableCollection<OrientationManager>(Orientations.UpdateListOfLockableArcor2Objects<OrientationManager, NamedOrientation, NamedOrientation>(actionPoint.Orientations,
+                a => new ActionManager(Session, this, a));
+            orientations.UpdateListOfLockableArcor2Objects<OrientationManager, NamedOrientation, NamedOrientation>(actionPoint.Orientations,
                 o => o.Id,
                 (m, o) => m.UpdateAccordingToNewObject(o),
-                o => new OrientationManager(Session, this, o)));
-            Joints = new ObservableCollection<JointsManager>(Joints.UpdateListOfLockableArcor2Objects<JointsManager, ProjectRobotJoints, ProjectRobotJoints>(actionPoint.RobotJoints,
+                o => new OrientationManager(Session, this, o));
+            joints.UpdateListOfLockableArcor2Objects<JointsManager, ProjectRobotJoints, ProjectRobotJoints>(actionPoint.RobotJoints,
                 j => j.Id,
                 (m, j) => m.UpdateAccordingToNewObject(j),
-                j => new JointsManager(Session, this, j)));
+                j => new JointsManager(Session, this, j));
         }
 
         protected override void Dispose(bool disposing) {
@@ -450,7 +459,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnJointsAdded(object sender, JointsEventArgs e) {
             if(Project.IsOpen) {
                 if(e.ParentId == Id) {
-                    Joints.Add(new JointsManager(Session, this, e.Data));
+                    joints.Add(new JointsManager(Session, this, e.Data));
                 }
             }
         }
@@ -458,7 +467,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnOrientationAdded(object sender, OrientationEventArgs e) {
             if (Project.IsOpen) {
                 if (e.ParentId == Id) {
-                    Orientations.Add(new OrientationManager(Session, this, e.Data));
+                    orientations.Add(new OrientationManager(Session, this, e.Data));
                 }
             }
         }
@@ -467,7 +476,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             if (Project.IsOpen) {
                 if (e.Data.Id == Id) {
                     RemoveData();
-                    Project.ActionPoints!.Remove(this);
+                    Project.actionPoints!.Remove(this);
                     Dispose();
                 }
             }
@@ -492,7 +501,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnActionAdded(object sender, ActionEventArgs e) {
             if (Project.IsOpen) {
                 if(e.ParentId == Id) {
-                    Actions.Add(new ActionManager(Session, this, e.Data));
+                    actions.Add(new ActionManager(Session, this, e.Data));
                 }
             }
         }

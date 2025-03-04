@@ -1311,7 +1311,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnSceneActionObjectRemoved(object sender, ActionObjectEventArgs e) {
             if(Id == e.Data.Id) {
                 RemoveData();
-                Scene.ActionObjects?.Remove(this);
+                Scene.actionObjects?.Remove(this);
                 Dispose();
             }
         }

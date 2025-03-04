@@ -211,7 +211,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
                     RemoveData();
-                    ActionPoint.Actions.Remove(this);
+                    ActionPoint.actions.Remove(this);
                     Dispose();
                 }
             }

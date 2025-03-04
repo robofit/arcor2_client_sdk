@@ -28,7 +28,7 @@ internal class Program {
 
         // Set up session with appropriate logging
         var logger = options.EnableConsoleLogger ? new ConsoleLogger() : null;
-        Session = new Arcor2Session(logger);
+        Session = new Arcor2Session(logger: logger);
 
         try {
             await EstablishSessionAsync();
@@ -659,7 +659,7 @@ internal class Program {
     /// <summary>
     /// Gets action objects for the current scene or project.
     /// </summary>
-    private static ObservableCollection<ActionObjectManager> GetActionObjects() =>
+    private static ReadOnlyObservableCollection<ActionObjectManager> GetActionObjects() =>
         (Session.NavigationState switch {
             NavigationState.Scene => Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!.ActionObjects,
             NavigationState.Project => Session.Projects.FirstOrDefault(s => s.Id == Session.NavigationId)!.Scene
@@ -720,7 +720,7 @@ internal class Program {
             !projects - Lists all in-memory projects.
             
             - Object Type -
-            !add_object_type <META_AS_JSON> - Adds a new object type.
+            !add_object_type <TYPE> <PARENT_TYPE> <DESC> - Adds a new object type.
             !remove_object_type <TYPE> - Removes an object type.
             !update_object_model_box <TYPE> <X> <Y> <Z> - Updates objects model to a box.
             
@@ -962,8 +962,7 @@ internal class Program {
     }
 
     private static async Task AddObjectTypeAsync(string[] args) {
-        await Session.CreateObjectTypeAsync(
-            JsonConvert.DeserializeObject<ObjectTypeMeta>(string.Join(' ', args))!);
+        await Session.CreateObjectTypeAsync(args[0], args[1], args[2]);
     }
 
     private static async Task RemoveObjectTypeAsync(string[] args) {
@@ -1170,7 +1169,7 @@ internal class Program {
 
     private static async Task RunPackageAsync(string[] args) {
         await Session.Packages.FirstOrDefault(s => s.Id == args[0])!
-            .RunAsync(Convert.ToBoolean(args[1]), args.Skip(2).ToList());
+            .RunAsync(args.Skip(2).ToList(), Convert.ToBoolean(args[1]));
     }
 
     private static async Task RemovePackageAsync(string[] args) {
@@ -1445,7 +1444,7 @@ internal class Program {
     }
 
     private static async Task BuildProjectTempAsync(string[] args) {
-        await GetCurrentProject().BuildIntoTemporaryPackageAndRunAsync(Convert.ToBoolean(args[0]), args.Skip(1).ToList());
+        await GetCurrentProject().BuildIntoTemporaryPackageAndRunAsync(args.Skip(1).ToList(), Convert.ToBoolean(args[0]));
     }
 
     private static async Task BuildProjectAsync(string[] args) {

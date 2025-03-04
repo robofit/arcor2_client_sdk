@@ -123,7 +123,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             if(ActionPoint.Project.IsOpen) {
                 if(e.Data.Id == Id) {
                     RemoveData();
-                    ActionPoint.Joints.Remove(this);
+                    ActionPoint.joints.Remove(this);
                     Dispose();
                 }
             }

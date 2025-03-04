@@ -64,12 +64,14 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// </value>
         public string? NavigationId;
 
+        internal ObservableCollection<ObjectTypeManager> objectTypes { get; } = new ObservableCollection<ObjectTypeManager>();
         /// <summary>
         /// Collection of available object types.
         /// </summary>
         /// <remarks>Loaded on initialization and automatically maintained.</remarks>
-        public ObservableCollection<ObjectTypeManager> ObjectTypes { get; } = new ObservableCollection<ObjectTypeManager>();
+        public ReadOnlyObservableCollection<ObjectTypeManager> ObjectTypes { get; }
 
+        internal ObservableCollection<SceneManager> scenes { get; } = new ObservableCollection<SceneManager>();
         /// <summary>
         /// Collection of available scenes.
         /// </summary>
@@ -77,7 +79,9 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// If the server opens a scene, that scene will get fully initialized and added automatically (regardless of the current state).
         /// Furthermore, users may also invoke <see cref="SceneManager.LoadAsync"/> on the specific instance to load the action objects without opening it.
         /// </remarks>
-        public ObservableCollection<SceneManager> Scenes { get; } = new ObservableCollection<SceneManager>();
+        public ReadOnlyObservableCollection<SceneManager> Scenes { get; }
+
+        internal ObservableCollection<ProjectManager> projects { get; } = new ObservableCollection<ProjectManager>();
 
         /// <summary>
         /// Collection of available projects.
@@ -85,12 +89,13 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <remarks>
         /// If the server opens a project, that project (and corresponding scene) will get fully initialized and added automatically (regardless of the current state).
         /// </remarks>
-        public ObservableCollection<ProjectManager> Projects { get; } = new ObservableCollection<ProjectManager>();
+        public ReadOnlyObservableCollection<ProjectManager> Projects { get; }
 
+        internal ObservableCollection<PackageManager> packages { get; } = new ObservableCollection<PackageManager>();
         /// <summary>
         /// Collection of available packages.
         /// </summary>
-        public ObservableCollection<PackageManager> Packages { get; } = new ObservableCollection<PackageManager>();
+        public ReadOnlyObservableCollection<PackageManager> Packages { get; }
 
         /// <summary>
         /// Raised when any connection-related error occurs.
@@ -125,6 +130,11 @@ namespace Arcor2.ClientSdk.ClientServices {
             };
             Client.ConnectionError += ConnectionError;
             RegisterHandlers();
+
+            ObjectTypes = new ReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
+            Scenes = new ReadOnlyObservableCollection<SceneManager>(scenes);
+            Projects = new ReadOnlyObservableCollection<ProjectManager>(projects);
+            Packages = new ReadOnlyObservableCollection<PackageManager>(packages);
         }
 
         /// <summary>
@@ -152,6 +162,11 @@ namespace Arcor2.ClientSdk.ClientServices {
                 ConnectionClosed?.Invoke(this, EventArgs.Empty);
             };
             Client.ConnectionError += ConnectionError;
+
+            ObjectTypes = new ReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
+            Scenes = new ReadOnlyObservableCollection<SceneManager>(scenes);
+            Projects = new ReadOnlyObservableCollection<ProjectManager>(projects);
+            Packages = new ReadOnlyObservableCollection<PackageManager>(packages);
         }
 
         /// <summary>
@@ -295,14 +310,14 @@ namespace Arcor2.ClientSdk.ClientServices {
             var newScenes = sceneResponse.Data.Select(scene =>
                 new BareScene(scene.Name, scene.Description, scene.Created, scene.Modified, scene.Modified, scene.Id)).ToList();
 
-            var scenesToRemove = Scenes
+            var scenesToRemove = scenes
                 .Where(oldScene => newScenes.All(newScene => newScene.Id != oldScene.Id))
                 // New opened unsaved scene are not returned by this RPC... so check if there is one active
                 .Where(scene => NavigationState != NavigationState.Scene || scene.Id != NavigationId)
                 .ToList();
 
             foreach(var scene in scenesToRemove) {
-                Scenes.Remove(scene);
+                scenes.Remove(scene);
                 scene.Dispose();
             }
 
@@ -312,7 +327,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                     existingScene.UpdateAccordingToNewObject(newScene);
                 }
                 else {
-                    Scenes.Add(new SceneManager(this, newScene));
+                    scenes.Add(new SceneManager(this, newScene));
                 }
             }
         }
@@ -333,14 +348,14 @@ namespace Arcor2.ClientSdk.ClientServices {
             var newProjects = projectResponse.Data.Select(project =>
                 new BareProject(project.Name, project.SceneId, project.Description, project.HasLogic, project.Created, project.Modified, project.IntModified, project.Id)).ToList();
 
-            var projectsToRemove = Projects
+            var projectsToRemove = projects
                 .Where(oldProject => newProjects.All(newProject => newProject.Id != oldProject.Id))
                 // New opened unsaved projects are not returned by this RPC... so check if there is one active
                 .Where(project => NavigationState != NavigationState.Project || project.Id != NavigationId)
                 .ToList();
 
             foreach(var project in projectsToRemove) {
-                Projects.Remove(project);
+                projects.Remove(project);
                 project.Dispose();
             }
 
@@ -350,7 +365,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                     existingProject.UpdateAccordingToNewObject(newProject);
                 }
                 else {
-                    Projects.Add(new ProjectManager(this, newProject));
+                    projects.Add(new ProjectManager(this, newProject));
                 }
             }
         }
@@ -368,14 +383,14 @@ namespace Arcor2.ClientSdk.ClientServices {
                 throw new Arcor2Exception("Loading packages failed.", packageResponse.Messages);
             }
 
-            var packagesToRemove = Packages
+            var packagesToRemove = packages
                 .Where(oldPackage => packageResponse.Data.All(newPackage => newPackage.Id != oldPackage.Id))
                 // New opened unsaved packages (e.g., temporary) are not returned by this RPC... so check if there is one active
                 .Where(package => NavigationState != NavigationState.Package || package.Id != NavigationId)
                 .ToList();
 
             foreach(var package in packagesToRemove) {
-                Packages.Remove(package);
+                packages.Remove(package);
                 package.Dispose();
             }
 
@@ -385,7 +400,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                     existingPackage.UpdateAccordingToNewObject(package);
                 }
                 else {
-                    Packages.Add(new PackageManager(this, package));
+                    packages.Add(new PackageManager(this, package));
                 }
             }
         }
@@ -417,7 +432,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             var objectTypesToRemove = ObjectTypes.Where(oldObjectType => newObjectTypes.All(newObjectType => newObjectType.ObjectTypeMeta.Type != oldObjectType.Id)).ToList();
             foreach(var objectType in objectTypesToRemove) {
                 objectType.Dispose();
-                ObjectTypes.Remove(objectType);
+                objectTypes.Remove(objectType);
             }
 
             foreach(var newObjectType in newObjectTypes) {
@@ -426,11 +441,11 @@ namespace Arcor2.ClientSdk.ClientServices {
                     existingObjectType.UpdateAccordingToNewObject(newObjectType.ObjectTypeMeta, newObjectType.RobotMeta);
                 }
                 else {
-                    ObjectTypes.Add(new ObjectTypeManager(this, newObjectType.ObjectTypeMeta, newObjectType.RobotMeta));
+                    objectTypes.Add(new ObjectTypeManager(this, newObjectType.ObjectTypeMeta, newObjectType.RobotMeta));
                 }
             }
 
-            foreach(var objectType in ObjectTypes) {
+            foreach(var objectType in objectTypes) {
                 await objectType.ReloadActionsAsync();
             }
         }
@@ -689,7 +704,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         private void OnPackageAdded(object sender, PackageEventArgs e) {
-            Packages.Add(new PackageManager(this, e.Data));
+            packages.Add(new PackageManager(this, e.Data));
         }
 
         private async void OnProjectClosed(object sender, EventArgs e) {
@@ -712,7 +727,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             // Ad-Hoc create managers if needed
             var scene = Scenes.FirstOrDefault(s => s.Id == e.Data.Scene.Id);
             if(scene == null) {
-                Scenes.Add(new SceneManager(this, e.Data.Scene));
+                scenes.Add(new SceneManager(this, e.Data.Scene));
             }
             else {
                 scene.UpdateAccordingToNewObject(e.Data.Scene);
@@ -720,7 +735,7 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             var project = Projects.FirstOrDefault(s => s.Id == e.Data.Project.Id);
             if(project == null) {
-                Projects.Add(new ProjectManager(this, e.Data.Project));
+                projects.Add(new ProjectManager(this, e.Data.Project));
             }
             else {
                 project.UpdateAccordingToNewObject(e.Data.Project);
@@ -750,7 +765,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             // Ad-Hoc create a manager
             var scene = Scenes.FirstOrDefault(s => s.Data.Id == e.Data.Scene.Id);
             if(scene == null) {
-                Scenes.Add(new SceneManager(this, e.Data.Scene));
+                scenes.Add(new SceneManager(this, e.Data.Scene));
             }
             else {
                 scene.UpdateAccordingToNewObject(e.Data.Scene);
@@ -785,53 +800,53 @@ namespace Arcor2.ClientSdk.ClientServices {
         private void OnObjectTypeAdded(object sender, ObjectTypesEventArgs args) {
             foreach(var objectTypeMeta in args.Data) {
                 var objectType = new ObjectTypeManager(this, objectTypeMeta);
-                ObjectTypes.Add(objectType);
+                objectTypes.Add(objectType);
             }
         }
 
         private void OnSceneBaseUpdated(object sender, BareSceneEventArgs e) {
-            if(Scenes.All(s => s.Id != e.Data.Id)) {
-                Scenes.Add(new SceneManager(this, e.Data));
+            if(scenes.All(s => s.Id != e.Data.Id)) {
+                scenes.Add(new SceneManager(this, e.Data));
             }
         }
 
         private void OnProjectBaseUpdated(object sender, BareProjectEventArgs e) {
-            if(Projects.All(s => s.Id != e.Data.Id)) {
-                Projects.Add(new ProjectManager(this, e.Data));
+            if(projects.All(s => s.Id != e.Data.Id)) {
+                projects.Add(new ProjectManager(this, e.Data));
             }
         }
 
         private void OnPackageState(object sender, PackageStateEventArgs e) {
-            if(Packages.FirstOrDefault(p => p.Id == e.Data.PackageId) == null) {
+            if(packages.FirstOrDefault(p => p.Id == e.Data.PackageId) == null) {
                 unopenedPackageStates.Push(e.Data);
             }
         }
 
         private void OnPackageInfo(object sender, PackageInfoEventArgs e) {
-            var scene = Scenes.FirstOrDefault(s => s.Id == e.Data.Scene.Id);
+            var scene = scenes.FirstOrDefault(s => s.Id == e.Data.Scene.Id);
             if(scene == null) {
-                Scenes.Add(new SceneManager(this, e.Data.Scene));
+                scenes.Add(new SceneManager(this, e.Data.Scene));
             }
             else {
                 scene.UpdateAccordingToNewObject(e.Data.Scene);
             }
 
-            var project = Projects.FirstOrDefault(s => s.Id == e.Data.Project.Id);
+            var project = projects.FirstOrDefault(s => s.Id == e.Data.Project.Id);
             if(project == null) {
-                Projects.Add(new ProjectManager(this, e.Data.Project));
+                projects.Add(new ProjectManager(this, e.Data.Project));
             }
             else {
                 project.UpdateAccordingToNewObject(e.Data.Project);
             }
 
-            var package = Packages.FirstOrDefault(p => p.Id == e.Data.PackageId);
+            var package = packages.FirstOrDefault(p => p.Id == e.Data.PackageId);
             if(package == null) {
                 if(unopenedPackageStates.TryPeek(out var data) && data.PackageId == e.Data.PackageId) {
-                    Packages.Add(new PackageManager(this, e.Data, data));
+                    packages.Add(new PackageManager(this, e.Data, data));
                     unopenedPackageStates.Pop();
                 }
                 else {
-                    Packages.Add(new PackageManager(this, e.Data));
+                    packages.Add(new PackageManager(this, e.Data));
                 }
             }
             else {

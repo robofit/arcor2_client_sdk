@@ -115,7 +115,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             if(Project.IsOpen) {
                 if(e.Data.Id == Id) {
                     RemoveData();
-                    Project.LogicItems!.Remove(this);
+                    Project.logicItems!.Remove(this);
                     Dispose();
                 }
             }

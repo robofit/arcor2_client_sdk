@@ -53,7 +53,7 @@ public class CollectionChangedAwaiter {
     }
 }
 
-public static class ObservableCollectionExtensions {
+public static class ReadOnlyObservableCollectionExtensions {
     /// <summary>
     /// Creates an awaiter for the CollectionChanged event
     /// </summary>
@@ -61,7 +61,7 @@ public static class ObservableCollectionExtensions {
     /// <param name="action">Optional action type to filter for (Add, Remove, etc.)</param>
     /// <returns>CollectionChangedAwaiter that can be awaited</returns>
     public static CollectionChangedAwaiter CreateCollectionChangedAwaiter<T>(
-        this ObservableCollection<T> collection,
+        this ReadOnlyObservableCollection<T> collection,
         NotifyCollectionChangedAction? action = null) {
         // Create predicate if action filter is specified
         Func<NotifyCollectionChangedEventArgs, bool>? predicate = action.HasValue
@@ -69,7 +69,7 @@ public static class ObservableCollectionExtensions {
             : null;
 
         var awaiter = new CollectionChangedAwaiter(predicate);
-        collection.CollectionChanged += awaiter.EventHandler!;
+        (collection as INotifyCollectionChanged).CollectionChanged += awaiter.EventHandler!;
         return awaiter;
     }
 
@@ -82,7 +82,7 @@ public static class ObservableCollectionExtensions {
     /// <param name="timeout">Timeout in milliseconds</param>
     /// <returns>The event arguments from when the item was added</returns>
     public static async Task<NotifyCollectionChangedEventArgs> WaitForItemAddedAsync<T>(
-        this ObservableCollection<T> collection,
+        this ReadOnlyObservableCollection<T> collection,
         Func<T, bool> itemPredicate,
         int timeout = 5000) {
         var awaiter = new CollectionChangedAwaiter(e =>
@@ -90,14 +90,14 @@ public static class ObservableCollectionExtensions {
             e.NewItems!.Count > 0 &&
             e.NewItems.Cast<T>().Any(itemPredicate));
 
-        collection.CollectionChanged += awaiter.EventHandler!;
+        (collection as INotifyCollectionChanged).CollectionChanged += awaiter.EventHandler!;
 
         try {
             return await awaiter.WaitForEventAsync(timeout);
         }
         finally {
             // Always unsubscribe
-            collection.CollectionChanged -= awaiter.EventHandler!;
+            (collection as INotifyCollectionChanged).CollectionChanged -= awaiter.EventHandler!;
         }
     }
 
@@ -109,7 +109,7 @@ public static class ObservableCollectionExtensions {
     /// <param name="itemPredicate">Predicate to match the removed item</param>
     /// <param name="timeout">Timeout in milliseconds</param>
     public static async Task<NotifyCollectionChangedEventArgs> WaitForItemRemovedAsync<T>(
-        this ObservableCollection<T> collection,
+        this ReadOnlyObservableCollection<T> collection,
         Func<T, bool> itemPredicate,
         int timeout = 5000) {
         var awaiter = new CollectionChangedAwaiter(e =>
@@ -117,13 +117,13 @@ public static class ObservableCollectionExtensions {
             e.OldItems!.Count > 0 &&
             e.OldItems.Cast<T>().Any(itemPredicate));
 
-        collection.CollectionChanged += awaiter.EventHandler!;
+        (collection as INotifyCollectionChanged).CollectionChanged += awaiter.EventHandler!;
 
         try {
             return await awaiter.WaitForEventAsync(timeout);
         }
         finally {
-            collection.CollectionChanged -= awaiter.EventHandler!;
+            (collection as INotifyCollectionChanged).CollectionChanged -= awaiter.EventHandler!;
         }
     }
 }

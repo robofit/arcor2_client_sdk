@@ -106,7 +106,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             if (Project.IsOpen) {
                 if (e.ParentId == Data.ActionObjectId) {
                     RemoveData();
-                    Project.Overrides!.Remove(this);
+                    Project.overrides!.Remove(this);
                     Dispose();
                 }
             }
