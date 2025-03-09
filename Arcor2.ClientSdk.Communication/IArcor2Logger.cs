@@ -21,6 +21,6 @@ namespace Arcor2.ClientSdk.Communication {
         /// Used for logging errors that can be recovered and result in a successful operation.
         /// </summary>
         /// <param name="message">The message.</param>
-        void LogWarning(string message);
+        void LogWarn(string message);
     }
 }

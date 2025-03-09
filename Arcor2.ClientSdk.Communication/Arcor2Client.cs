@@ -630,7 +630,7 @@ namespace Arcor2.ClientSdk.Communication {
                 if(dispatch.response != null && dispatch.id != null && dispatch.id != 0) {
                     if(pendingRequests.TryGetValue(dispatch.id.Value, out PendingRequest? pendingRequest)) {
                         if(clientSettings.ValidateRpcResponseName && dispatch.response != pendingRequest.Signature) {
-                            logger?.LogInfo(
+                            logger?.LogWarn(
                                 $"An ARCOR2 RPC response with matching ID was received, but the RPC name does not correspond to the request. Expected \"{pendingRequest.Signature}\", got \"{dispatch.response}\".");
                             pendingRequest.TaskCompletionSource.TrySetException(
                                 new Arcor2ConnectionException(
@@ -758,7 +758,7 @@ namespace Arcor2.ClientSdk.Communication {
                             HandlePackageChanged(data);
                             break;
                         default:
-                            logger?.LogError($"Unknown ARCOR2 \"{dispatch.@event}\" event received.");
+                            logger?.LogWarn($"Unknown ARCOR2 \"{dispatch.@event}\" event received.");
                             break;
                     }
                 }

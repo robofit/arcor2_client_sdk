@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.Communicat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.ClientServices", "Arcor2.ClientSdk.ClientServices\Arcor2.ClientSdk.ClientServices.csproj", "{23D0082A-F744-43C5-A5D3-3ADD49BC9273}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arcor2.ClientSdk.ClientServices.IntegrationTests", "Arcor2.ClientSdk.ClientServices.IntegrationTests\Arcor2.ClientSdk.ClientServices.IntegrationTests.csproj", "{9D60E611-F2C2-477A-ACC2-5A103167FC49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arcor2.ClientSdk.ClientServices.IntegrationTests", "Arcor2.ClientSdk.ClientServices.IntegrationTests\Arcor2.ClientSdk.ClientServices.IntegrationTests.csproj", "{9D60E611-F2C2-477A-ACC2-5A103167FC49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arcor2.ClientSdk.ClientServices.UnitTests", "Arcor2.ClientSdk.ClientServices.UnitTests\Arcor2.ClientSdk.ClientServices.UnitTests.csproj", "{51096C3A-DC09-450E-9CB9-993EE75FD2A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{9D60E611-F2C2-477A-ACC2-5A103167FC49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D60E611-F2C2-477A-ACC2-5A103167FC49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D60E611-F2C2-477A-ACC2-5A103167FC49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51096C3A-DC09-450E-9CB9-993EE75FD2A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51096C3A-DC09-450E-9CB9-993EE75FD2A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51096C3A-DC09-450E-9CB9-993EE75FD2A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51096C3A-DC09-450E-9CB9-993EE75FD2A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

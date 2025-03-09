@@ -12,7 +12,7 @@ public class TestLogger(ITestOutputHelper output) : IArcor2Logger {
         output.WriteLine($"ERR: {message}");
     }
 
-    public void LogWarning(string message) {
+    public void LogWarn(string message) {
         output.WriteLine($"WARN: {message}");
     }
 }

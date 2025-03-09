@@ -20,7 +20,7 @@ public class ConsoleLogger : IArcor2Logger {
         Console.WriteLine(message);
     }
 
-    public void LogWarning(string message)
+    public void LogWarn(string message)
     {
         ConsoleEx.WriteColor("WARN: ", ConsoleColor.Yellow);
         Console.WriteLine(message);
