@@ -24,7 +24,7 @@ Task CloseAsync()
 EventHandler ConnectionOpened
 EventHandler<WebSocketCloseEventArgs>? ConnectionClosed
 EventHandler<Exception>? ConnectionError
-TWebSocket GetUnderlyingWebSocket()
+IWebSocket GetUnderlyingWebSocket()
 ```
 
 The `ConnectAsync()` method is stateful and can thus only be called once (in `WebSocketState.None` state). New communication sessions require a new instance of `Arcor2Client`.
@@ -69,7 +69,7 @@ The resulting task will be faulted if the client fails to receive a response fro
 
 ### Events
 
-Server events are mapped to .NET events. When the client decodes an event message from the server, the appropriate event will be raised with the corresponding data and, if applicable, parent ID.
+Server events are mapped to .NET events. When client decodes an event message from the server, the appropriate event will be raised with the corresponding data and, if applicable, parent ID.
 
 The library provides a special handling for message containing the `change_type` field, which have up to four mapped C# events depending on the possible change types (`Added`, `Updated`, `BaseUpdated`, and `Removed`).
 
@@ -90,18 +90,15 @@ While Microsoft's documentation explicitly states that `ClientWebSocket` is only
 For example, Unity's multiplatform `NativeWebSockets` package internally uses the `ClientWebSocket`. The only known unsupported platform is Unity's WebGL.
 
 The library uses the beforementioned `ClientWebSocket` by default. 
-In case the implementation is not supported by your platform, you can use your own by implementing the `IWebSocket` interface, as the `Arcor2Client` is a generic class.
+In case the implementation is not supported by your platform, you can use your own by implementing the `IWebSocket` interface and injecting it into the `Arcor2Client` class.
 
 ```
-// The non-generic Arcor2Client is defined as so:
-public class Arcor2Client : Arcor2Client<SystemNetWebSocket> { };
-
-public class Arcor2Client<TWebSocket> where TWebSocket : class, IWebSocket, new() { 
-    // ...
-}
+var client = new Arcor2Client(
+    websocket: new CustomWebSocket()
+)
 ```
 
-The requirements for each method are listed in the interface's XAML comments. Most importantly, the implementation should fully support concurrency and hava parameterless constructor.
+The requirements for each WebSocket member are listed in the interface's XAML comments. Most importantly, the implementation should fully support concurrency and hava parameterless constructor.
 Related classes can be found in the `Arcor2.ClientSdk.Communication.Design` namespace.
 
 ### Unity Support and Usage
@@ -195,7 +192,7 @@ private void RegisterUser() {
 
 ## Contributing
 
-This library is a simple typed interface for the ARCOR2 protocol and all changes should reflect that. 
+This library is a simple typed and most importantly - **maintainable** - interface for the ARCOR2 protocol and all changes should reflect that. 
 Complex convenience features (such as a single method performing multiple RPC exchanges) should be implemented in different projects extending, subtyping, or wrapping the `Arcor2Client` class.
 
 ### Naming
@@ -210,10 +207,10 @@ We deliberately **exclude generated models** from these changes to avoid exponen
 Please note that the following rules should not be taken as a dogma. If it makes sense, break them or change them.
 
 - Expand shorthands (e.g. `AddApUsingRobot` => `AddActionPointUsingRobot`, `OnRobotEefUpdated` => `OnRobotEndEffectorUpdated`)
-- Correct non-specific, innacurate, or confusing ARCOR2 terminology (e.g. `OnProjectException` => `OnPackageException`, `GetSceneObjectUsage` => `GetSceneActionObjectUsage`)
+- Correct non-specific, innacurate, or confusing ARCOR2 terminology (e.g. `ProjectException` => `PackageException`, `GetSceneObjectUsage` => `GetSceneActionObjectUsage`)
 - Prefer `Duplicate` over `Copy` and other synonyms (e.g. `CopyProject` => `DuplicateProject`)
 - Prefer `Remove` over `Delete` and other synonyms (e.g. `DeleteProject` => `RemoveProject`)
-- Use `Get` (or `List` and others if appropriate) prefix for query RPCs missing it (e.g. `ProjectsWithSceneAsync` => `GetProjectsWithScene`)
+- Use `Get` (or `List` and others if appropriate) prefix for query RPCs missing it (e.g. `ProjectsWithScene` => `GetProjectsWithScene`)
 - Use `Set` prefix for RPCs setting an option and missing it (e.g. `HandTeachingMode` => `SetHandTeachingMode`)
 - Use `Add` prefix for RPCs creating new entities and missing it (e.g.`NewProject` => `AddNewProject`)
 
@@ -221,11 +218,11 @@ Please note that the following rules should not be taken as a dogma. If it makes
 
 ### Implementing Protocol Updates
 
-Reflecting most changes to the ARCOR2 protocol in the library is straightforward and will only require modifications to the `Arcor2Client` class. In general, follow the standard C# conventions and conventions of existing code which are briefly discussed below.
+Reflecting most changes to the ARCOR2 protocol in the library is straightforward and will only require modifications to the `Arcor2Client` class. In general, follow the standard C# conventions and conventions of the existing code which are briefly discussed below.
 
 #### Model properties changes
 
-Most changes to model properties (the JSON data) can be implemented by simple regeneration of the OpenApi models in `Arcor2.ClientSdk.Communication.OpenApi` project using the attached shell script `generate_models.sh` file. 
+Most changes to model properties (the JSON data) can be implemented by a simple regeneration of the OpenApi models in `Arcor2.ClientSdk.Communication.OpenApi` project using the attached shell script `generate_models.sh`. 
 Changes to integral properties (such as the root `id`, `result`, `event`, etc.) can require larger library updates.
 
 
