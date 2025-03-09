@@ -183,16 +183,28 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         /// <summary>
+        /// Updates action point using a robot. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject) {
+            await UpdateUsingRobotAsync(actionObject.Id, "default", null!);
+        }
+
+        /// <summary>
         /// Updates action point using a robot.
         /// </summary>
         /// <remarks>
         /// The scene must be online.
         /// </remarks>
         /// <param name="actionObject">The robot.</param>
-        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The ID of the end effector.</param>
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null) {
+        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId, string? armId = null) {
             await UpdateUsingRobotAsync(actionObject.Id, endEffectorId, armId);
         }
 
@@ -203,11 +215,11 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// The scene must be online.
         /// </remarks>
         /// <param name="actionObject">The robot.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null) {
-            await UpdateUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId);
+        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, EndEffector endEffector) {
+            await UpdateUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", endEffector.ArmId);
         }
 
         /// <summary>
@@ -251,6 +263,46 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             await AddActionAsync(name, type,
                 new List<Flow> { new Flow(Flow.TypeEnum.Default, new List<string>()) },
                 parameters ?? new List<ActionParameter>());
+        }
+
+        /// <summary>
+        /// Adds a new action with the default flow and no parameters.
+        /// </summary>
+        /// <param name="name">The name of the action.</param>
+        /// <param name="actionObject">The action object.</param>
+        /// <param name="action">The action itself (listed in <see cref="ObjectTypeManager"/>)</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionAsync(string name, ActionObjectManager actionObject, ObjectAction action) {
+            var type = $"{actionObject.Id}/{action.Name}";
+            var parameters = action.Parameters
+                .Where(p => p.DefaultValue != null!)
+                .Select(p => p.ToActionParameter())
+                .ToList();
+
+            await AddActionAsync(name, type,
+                new List<Flow> { new Flow(Flow.TypeEnum.Default, new List<string>()) },
+                new List<ActionParameter>());
+        }
+
+        /// <summary>
+        /// Adds a new action with the default flow and parameters.
+        /// </summary>
+        /// <param name="name">The name of the action.</param>
+        /// <param name="actionObject">The action object.</param>
+        /// <param name="action">The action itself (listed in <see cref="ObjectTypeManager"/>)</param>
+        /// <returns></returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionWithDefaultParametersAsync(string name, ActionObjectManager actionObject, ObjectAction action) {
+            var type = $"{actionObject.Id}/{action.Name}";
+            var parameters = action.Parameters
+                .Where(p => p.DefaultValue != null!)
+                .Select(p => p.ToActionParameter())
+                .ToList();
+
+            await AddActionAsync(name, type,
+                new List<Flow> { new Flow(Flow.TypeEnum.Default, new List<string>()) },
+                parameters);
         }
 
         /// <summary>
@@ -353,8 +405,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <param name="name">The name of the orientation.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task AddOrientationUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null, string name = "default") {
-            await AddOrientationUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId, name);
+        public async Task AddOrientationUsingRobotAsync(ActionObjectManager actionObject, EndEffector endEffector, string name = "default") {
+            await AddOrientationUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", endEffector?.ArmId, name);
         }
 
         /// <summary>
@@ -405,8 +457,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <param name="name">The name of the joints.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task AddJointsUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null, string name = "default") {
-            await AddJointsUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", armId, name);
+        public async Task AddJointsUsingRobotAsync(ActionObjectManager actionObject, EndEffector endEffector, string name = "default") {
+            await AddJointsUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", endEffector?.ArmId, name);
         }
 
         /// <summary>

@@ -78,7 +78,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         public async Task RemoveAsync() {
             var response = await Session.Client.RemovePackageAsync(new IdArgs(Id));
             if(!response.Result) {
-                throw new Arcor2Exception($"Removing joints {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Removing package {Id} failed.", response.Messages);
             }
         }
 

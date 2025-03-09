@@ -36,23 +36,27 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <summary>
         /// Raised when state of long-running process of the action object changes (e.g., camera or robot calibration).
         /// </summary>
-        public EventHandler<ProcessStateChangedEventArgs>? ProcessStateChanged { get; set; }
+        public event EventHandler<ProcessStateChangedEventArgs>? ProcessStateChanged;
+
         /// <summary>
         /// Raised when the state of movement of robot to joints changes.
         /// </summary>
-        public EventHandler<RobotMovingToJointsEventArgs>? MovingToJoints { get; set; }
+        public event EventHandler<RobotMovingToJointsEventArgs>? MovingToJoints;
+
         /// <summary>
         /// Raised when the state of movement of robot to joints changes.
         /// </summary>
-        public EventHandler<RobotMovingToPoseEventArgs>? MovingToPose { get; set; }
+        public event EventHandler<RobotMovingToPoseEventArgs>? MovingToPose;
+
         /// <summary>
         /// Raised when the state of movement of robot to joints changes.
         /// </summary>
-        public EventHandler<RobotMovingToActionPointJointsEventArgs>? MovingToActionPointJoints { get; set; }
+        public event EventHandler<RobotMovingToActionPointJointsEventArgs>? MovingToActionPointJoints;
+
         /// <summary>
         /// Raised when the state of movement of robot to joints changes.
         /// </summary>
-        public EventHandler<RobotMovingToActionPointOrientationEventArgs>? MovingToActionPointOrientation { get; set; }
+        public event EventHandler<RobotMovingToActionPointOrientationEventArgs>? MovingToActionPointOrientation;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ActionObjectManager"/> class.
@@ -128,16 +132,15 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="axis">The axis to step.</param>
         /// <param name="step">The step site.</param>
         /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
-        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepPositionAsync(Axis axis, decimal step, EndEffector? endEffector = null, string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
+        public async Task StepPositionAsync(Axis axis, decimal step, EndEffector? endEffector = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LibraryLockAsync();
-            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
+            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, endEffector?.ArmId!));
             if(!response.Result) {
                 await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
@@ -189,9 +192,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepOrientationAsync(Axis axis, decimal step, EndEffector? endEffector = null, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
+        public async Task StepOrientationAsync(Axis axis, decimal step, EndEffector? endEffector = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LibraryLockAsync();
-            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId!));
+            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, endEffector?.ArmId!));
             if(!response.Result) {
                 await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
@@ -256,8 +259,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToPoseAsync(EndEffector? endEffector, Pose pose, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            var response = await Session.Client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ?? "default", speed, pose.Position, pose.Orientation, safe, linear, armId!));
+        public async Task MoveToPoseAsync(EndEffector? endEffector, Pose pose, bool safe = true, bool linear = false, decimal speed = 1) {
+            var response = await Session.Client.MoveToPoseAsync(new MoveToPoseRequestArgs(Id, endEffector?.Id ?? "default", speed, pose.Position, pose.Orientation, safe, linear, endEffector?.ArmId!));
             if(!response.Result) {
                 throw new Arcor2Exception($"Moving robot {Id} to a pose failed.", response.Messages);
             }
@@ -372,8 +375,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointOrientationAsync(string orientationId, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointOrientationAsync(orientationId, endEffector.Id, armId, safe, linear, speed);
+        public async Task MoveToActionPointOrientationAsync(string orientationId, EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointOrientationAsync(orientationId, endEffector.Id, endEffector.ArmId, safe, linear, speed);
         }
 
         /// <summary>
@@ -390,8 +393,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointOrientationAsync(orientation.Id, endEffector.Id, armId, safe, linear, speed);
+        public async Task MoveToActionPointOrientationAsync(OrientationManager orientation, EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointOrientationAsync(orientation.Id, endEffector.Id, endEffector.ArmId, safe, linear, speed);
         }
 
         /// <summary>
@@ -447,8 +450,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointJointsAsync(string jointsId, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointJointsAsync(jointsId, endEffector.Id, armId, safe, linear, speed);
+        public async Task MoveToActionPointJointsAsync(string jointsId, EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointJointsAsync(jointsId, endEffector.Id, endEffector.ArmId, safe, linear, speed);
         }
 
         /// <summary>
@@ -465,8 +468,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task MoveToActionPointJointsAsync(JointsManager joints, EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await MoveToActionPointJointsAsync(joints.Id, endEffector.Id, armId, safe, linear, speed);
+        public async Task MoveToActionPointJointsAsync(JointsManager joints, EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1) {
+            await MoveToActionPointJointsAsync(joints.Id, endEffector.Id, endEffector?.ArmId, safe, linear, speed);
         }
 
         /// <summary>
@@ -541,8 +544,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task SetEndEffectorPerpendicularToWorldAsync(EndEffector endEffector, string? armId = null, bool safe = true, bool linear = false, decimal speed = 1) {
-            await SetEndEffectorPerpendicularToWorldAsync(endEffector.Id, armId, safe, linear, speed);
+        public async Task SetEndEffectorPerpendicularToWorldAsync(EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1) {
+            await SetEndEffectorPerpendicularToWorldAsync(endEffector.Id, endEffector.ArmId, safe, linear, speed);
         }
 
         /// <summary>
@@ -627,8 +630,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <returns>The calculated pose.</returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<Pose> GetForwardKinematicsAsync(EndEffector endEffector, IList<Joint> joints, string? armId = null) {
-            return await GetForwardKinematicsAsync(endEffector.Id, joints, armId);
+        public async Task<Pose> GetForwardKinematicsAsync(EndEffector endEffector, IList<Joint> joints) {
+            return await GetForwardKinematicsAsync(endEffector.Id, joints, endEffector.ArmId);
         }
 
         /// <summary>
@@ -673,8 +676,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <returns>The calculated pose.</returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<Pose> GetForwardKinematicsAsync(EndEffector endEffector, string? armId = null) {
-            return await GetForwardKinematicsAsync(endEffector.Id, armId);
+        public async Task<Pose> GetForwardKinematicsAsync(EndEffector endEffector) {
+            return await GetForwardKinematicsAsync(endEffector.Id, endEffector.ArmId);
         }
 
         /// <summary>
@@ -724,8 +727,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="avoidCollisions">Should the calculation avoid collisions?</param>
         /// <returns>The calculated joints and their values.</returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<IList<Joint>> GetInverseKinematicsAsync(EndEffector endEffector, bool avoidCollisions = true, string? armId = null) {
-            return await GetInverseKinematicsAsync(endEffector.Id, avoidCollisions, armId);
+        public async Task<IList<Joint>> GetInverseKinematicsAsync(EndEffector endEffector, bool avoidCollisions = true) {
+            return await GetInverseKinematicsAsync(endEffector.Id, avoidCollisions, endEffector.ArmId);
         }
 
         /// <summary>
@@ -764,8 +767,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="avoidCollisions">Should the calculation avoid collisions?</param>
         /// <returns>The calculated joints and their values.</returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<IList<Joint>> GetInverseKinematicsAsync(EndEffector endEffector, Pose pose, IList<Joint>? startingJoints = null, bool avoidCollisions = true, string? armId = null) {
-            return await GetInverseKinematicsAsync(endEffector.Id, pose, startingJoints, avoidCollisions, armId);
+        public async Task<IList<Joint>> GetInverseKinematicsAsync(EndEffector endEffector, Pose pose, IList<Joint>? startingJoints = null, bool avoidCollisions = true) {
+            return await GetInverseKinematicsAsync(endEffector.Id, pose, startingJoints, avoidCollisions, endEffector.ArmId);
         }
 
         /// <summary>
@@ -780,8 +783,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="avoidCollisions">Should the calculation avoid collisions?</param>
         /// <returns>The calculated joints and their values.</returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<IList<Joint>> GetInverseKinematicsAsync(Pose pose, IList<Joint>? startingJoints = null, bool avoidCollisions = true, string? armId = null) {
-            return await GetInverseKinematicsAsync("default", pose, startingJoints, avoidCollisions, armId);
+        public async Task<IList<Joint>> GetInverseKinematicsAsync(Pose pose, IList<Joint>? startingJoints = null, bool avoidCollisions = true) {
+            return await GetInverseKinematicsAsync("default", pose, startingJoints, avoidCollisions, null!);
         }
 
         /// <summary>

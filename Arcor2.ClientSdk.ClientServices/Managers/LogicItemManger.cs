@@ -21,7 +21,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <c>null</c> if START/END node.
         /// </value>
         // Do not cache, can change
-        public ActionManager? StartAction => Project.ActionPoints?.SelectMany(ap => ap.Actions, (_, action) => action).FirstOrDefault(a => a.Id == Data.Start);
+        public ActionManager? StartActionManager => Project.ActionPoints?.SelectMany(ap => ap.Actions, (_, action) => action).FirstOrDefault(a => a.Id == Data.Start);
 
         /// <summary>
         /// Gets the end action. 
@@ -30,7 +30,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <c>null</c> if START/END node.
         /// </value>
         // Do not cache, can change
-        public ActionManager? EndAction => Project.ActionPoints?.SelectMany(ap => ap.Actions, (_, action) => action).FirstOrDefault(a => a.Id == Data.End);
+        public ActionManager? EndActionManager => Project.ActionPoints?.SelectMany(ap => ap.Actions, (_, action) => action).FirstOrDefault(a => a.Id == Data.End);
 
         /// <summary>
         /// Initializes a new instance of <see cref="LogicItemManager"/> class.

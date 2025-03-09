@@ -94,6 +94,21 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="pose">The pose.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionObjectAsync(string type, string name, Pose pose) {
+            var response = await Session.Client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Adding new action object {type} to scene {Id} failed.", response.Messages);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new action object to the scene with the default parameter values.
+        /// </summary>
+        /// <param name="type">The object type.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="pose">The pose.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        /// <exception cref="InvalidOperationException">When the object type does not exist.</exception>
+        public async Task AddActionObjectWithDefaultParametersAsync(string type, string name, Pose pose) {
             var parameters = Session.ObjectTypes.First(o => o.Id == type).Data.Meta.Settings.Select(parameterMeta => parameterMeta.ToParameter()).ToList();
             var response = await Session.Client.AddActionObjectToSceneAsync(new AddObjectToSceneRequestArgs(name, type, pose, parameters));
             if(!response.Result) {
@@ -444,10 +459,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                GetProjects().Any(project => project.IsOpen || 
                 project.GetPackages().Any(package => package.IsOpen))) {
                 State = e.Data.MapToCustomSceneStateEnum();
-                OnlineStateChanged?.Invoke(this, new SceneOnlineStateEventArgs(State));
-                if(State.State == OnlineState.Started && Session.ConnectionState == Arcor2SessionState.Initialized) {
+                if(State.State == OnlineState.Started && Session.ConnectionState == Arcor2SessionState.Registered) {
                     await GetRobotInfoAndUpdatesAsync();
                 }
+                OnlineStateChanged?.Invoke(this, new SceneOnlineStateEventArgs(State));
             }
         }
         private void OnActionObjectAdded(object sender, ActionObjectEventArgs e) {

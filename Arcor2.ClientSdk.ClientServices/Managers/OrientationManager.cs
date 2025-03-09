@@ -71,10 +71,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// The scene must be online.
         /// </remarks>
         /// <param name="actionObject">The robot.</param>
-        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The ID of the end effector. </param>
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null) {
+        public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, string endEffectorId, string? armId = null) {
             await UpdateUsingRobotAsync(actionObject.Id, endEffectorId, armId);
         }
 
@@ -85,7 +85,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// The scene must be online.
         /// </remarks>
         /// <param name="actionObject">The robot.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector.</param>
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null) {

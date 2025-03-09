@@ -29,7 +29,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             await LibraryLockAsync();
             var response = await Session.Client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, Data.Name, value));
             if(!response.Result) {
-                throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Updating project parameter {Id} value failed.", response.Messages);
             }
             // Unlocked automatically by server
         }
@@ -44,7 +44,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             await LibraryLockAsync();
             var response = await Session.Client.UpdateProjectParameterAsync(new UpdateProjectParameterRequestArgs(Id, name, Data.Value));
             if(!response.Result) {
-                throw new Arcor2Exception($"Removing project parameter {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Updating project parameter {Id} name failed.", response.Messages);
             }
             // Unlocked automatically by server
         }

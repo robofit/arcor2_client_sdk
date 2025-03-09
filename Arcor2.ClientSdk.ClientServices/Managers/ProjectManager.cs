@@ -243,6 +243,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// Builds the project into a temporary package and runs it.
         /// </summary>
         /// <remarks>
+        /// A saved project must be opened.
         /// Invalid breakpoint IDs will not throw an exception, but rather lead to <see cref="PackageManager.ExceptionOccured"/> event and closing of the package.
         /// </remarks>
         /// <param name="startPaused">Should the package start paused? By default, "true".</param>
@@ -304,7 +305,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         public async Task AddActionPointAsync(string name, Position position) {
             var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, string.Empty));
             if(!response.Result) {
-                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Adding action point for project {Id} failed.", response.Messages);
             }
         }
 
@@ -318,7 +319,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         public async Task AddActionPointAsync(string name, Position position, ActionPointManager parent) {
             var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
             if(!response.Result) {
-                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Adding action point for project {Id} failed.", response.Messages);
             }
         }
 
@@ -332,26 +333,34 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         public async Task AddActionPointAsync(string name, Position position, ActionObjectManager parent) {
             var response = await Session.Client.AddActionPointAsync(new AddActionPointRequestArgs(name, position, parent.Id));
             if(!response.Result) {
-                throw new Arcor2Exception($"Adding project parameter for project {Id} failed.", response.Messages);
+                throw new Arcor2Exception($"Adding action point for project {Id} failed.", response.Messages);
             }
         }
 
         /// <summary>
-        /// Adds a new action point using a robot.
+        /// Adds a new action point using a robot. Uses the default end effector.
         /// </summary>
         /// <remarks>
-        /// The scene must be online.+
+        /// The scene must be online.
         /// </remarks>
-        /// <param name="robotId">The ID of the robot action object.</param>
+        /// <param name="actionObjectId">The robot.</param>
         /// <param name="name">The name of the action point.</param>
-        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
-        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task AddActionPointUsingRobotAsync(string name, string robotId, string endEffectorId = "default", string? armId = null) {
-            var response = await Session.Client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(robotId, endEffectorId, name, armId!));
-            if(!response.Result) {
-                throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
-            }
+        public async Task AddActionPointUsingRobotAsync(string name, string actionObjectId) {
+            await AddActionPointUsingRobotAsync(name, actionObjectId, "default", null!);
+        }
+
+        /// <summary>
+        /// Adds a new action point using a robot. Uses the default end effector.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject) {
+            await AddActionPointUsingRobotAsync(name, actionObject.Id, "default", null!);
         }
 
         /// <summary>
@@ -362,11 +371,54 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </remarks>
         /// <param name="actionObject">The robot.</param>
         /// <param name="name">The name of the action point.</param>
-        /// <param name="endEffectorId">The ID of the end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffectorId">The ID of the end effector.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, string endEffectorId) {
+            await AddActionPointUsingRobotAsync(name, actionObject.Id, endEffectorId, null!);
+        }
+
+        /// <summary>
+        /// Adds a new action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="endEffector">The end effector.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, EndEffector endEffector) {
+            await AddActionPointUsingRobotAsync(name, actionObject.Id, endEffector.Id, null!);
+        }
+
+        /// <summary>
+        /// Adds a new action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObject">The robot.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="endEffectorId">The ID of the end effector.</param>
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, string endEffectorId = "default", string? armId = null) {
-            var response = await Session.Client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(actionObject.Id, endEffectorId, name, armId!));
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, string endEffectorId, string armId) {
+            await AddActionPointUsingRobotAsync(name, actionObject.Id, endEffectorId, armId);
+        }
+
+        /// <summary>
+        /// Adds a new action point using a robot.
+        /// </summary>
+        /// <remarks>
+        /// The scene must be online.
+        /// </remarks>
+        /// <param name="actionObjectId">The robot ID.</param>
+        /// <param name="name">The name of the action point.</param>
+        /// <param name="endEffectorId">The ID of the end effector.</param>
+        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task AddActionPointUsingRobotAsync(string name, string actionObjectId, string endEffectorId, string armId) {
+            var response = await Session.Client.AddActionPointUsingRobotAsync(new AddApUsingRobotRequestArgs(actionObjectId, endEffectorId, name, armId));
             if(!response.Result) {
                 throw new Arcor2Exception($"Adding action point using robot for project {Id} failed.", response.Messages);
             }
@@ -383,8 +435,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
         /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, EndEffector? endEffector = null, string? armId = null) {
-            await AddActionPointUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", name, armId!);
+        public async Task AddActionPointUsingRobotAsync(string name, ActionObjectManager actionObject, EndEffector? endEffector, string armId) {
+            await AddActionPointUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", name, armId);
         }
 
         /// <summary>

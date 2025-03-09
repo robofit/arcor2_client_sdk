@@ -56,6 +56,23 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         /// <summary>
+        /// Updates a project override for an action object.
+        /// </summary>
+        /// <param name="value">The updated parameter value.</param>
+        /// <remarks>
+        /// The project must be opened.
+        /// </remarks>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task UpdateValueAsync(string value) {
+            await LibraryLockAsync(Data.ActionObjectId);
+            var response = await Session.Client.UpdateOverrideAsync(new UpdateOverrideRequestArgs(Data.ActionObjectId, new Parameter(Data.Parameter.Name, Data.Parameter.Type, value)));
+            if(!response.Result) {
+                throw new Arcor2Exception($"Updating project override {Data.Parameter.Name} for action object {Data.ActionObjectId} in project {Project.Id} failed.", response.Messages);
+            }
+            await LibraryUnlockAsync(Data.ActionObjectId);
+        }
+
+        /// <summary>
         /// Deletes a project override for an action object.
         /// </summary>
         /// <remarks>

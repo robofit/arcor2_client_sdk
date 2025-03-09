@@ -19,6 +19,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public abstract bool Validate(string value);
 
         /// <summary>
+        /// Converts the validator into JSON as a valid <see cref="ParameterMeta.Extra"/> value.
+        /// </summary>
+        public abstract string ToJson();
+
+        /// <summary>
         /// The type of parameter validation rule.
         /// </summary>
         public abstract ParameterValidationType Type { get; }
@@ -41,6 +46,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         [DataMember(Name = "minimum")]
         [JsonProperty("maximum")]
         public decimal Maximum { get; set; }
+
+        /// <inheritdoc cref="ParameterValidator"/>
+        public override string ToJson() {
+            return JsonConvert.SerializeObject(this);
+        }
 
         /// <inheritdoc cref="ParameterValidator"/>
         public override ParameterValidationType Type { get; } = ParameterValidationType.Range;
@@ -96,6 +106,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
 
         /// <inheritdoc cref="ParameterValidator"/>
         public override ParameterValidationType Type { get;  } = ParameterValidationType.Values;
+
+        /// <inheritdoc cref="ParameterValidator"/>
+        public override string ToJson() {
+            return JsonConvert.SerializeObject(this);
+        }
 
         /// <summary>
         /// Validates if parameter value is within the allowed values using the <see cref="StringComparison.InvariantCulture"/> comparer.

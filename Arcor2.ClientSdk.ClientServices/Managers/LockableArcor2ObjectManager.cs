@@ -63,8 +63,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         /// Locks the resource represented by this instance.
         /// </summary>
+        /// <remarks>
+        /// Before using locking methods, make sure AutoLock mode is disabled or paused. See <see cref="PauseAutoLock"/> or <see cref="Arcor2SessionSettings"/>.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
+        /// <exception cref="InvalidOperationException">When invoked with AutoLock mode enabled.</exception>
         public async Task LockAsync(bool lockTree = false) {
+            if (Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
+                throw new InvalidOperationException($"Can't use locking methods on object {Id} without disabling or pausing AutoLock mode.");
+            }
+
             var @lock = await Session.Client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
@@ -87,8 +95,16 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         /// Unlocks the resource represented by this instance.
         /// </summary>
+        /// <remarks>
+        /// Before using locking methods, make sure AutoLock mode is disabled or paused. See <see cref="PauseAutoLock"/> or <see cref="Arcor2SessionSettings"/>.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
+        /// <exception cref="InvalidOperationException">When invoked with AutoLock mode enabled.</exception>
         internal async Task UnlockAsync() {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
+                throw new InvalidOperationException($"Can't use locking methods on object {Id} without disabling or pausing AutoLock mode.");
+            }
+
             var @lock = await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
             if(!@lock.Result) {
                 throw new Arcor2Exception($"Unlocking object {Id} failed.", @lock.Messages);
@@ -109,14 +125,22 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         /// <summary>
-        /// Unlocks the resource represented by this instance. Doesn't throw on failure if auto-lock mode is enabled.
+        /// Unlocks the resource represented by this instance. Doesn't throw on failure.
         /// </summary>
+        /// <remarks>
+        /// Before using locking methods, make sure AutoLock mode is disabled or paused. See <see cref="PauseAutoLock"/> or <see cref="Arcor2SessionSettings"/>.
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">When invoked with AutoLock mode enabled.</exception>
         internal async Task TryUnlockAsync() {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
+                throw new InvalidOperationException($"Can't use locking methods on object {Id} without disabling or pausing AutoLock mode.");
+            }
+
             await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
         }
 
         /// <summary>
-        /// Unlocks the resource represented by this instance if auto-lock mode is enabled. Doesn't throw on failure if auto-lock mode is enabled
+        /// Unlocks the resource represented by this instance if auto-lock mode is enabled. Doesn't throw on failure.
         /// </summary>
         internal async Task TryLibraryUnlockAsync() {
             if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
