@@ -34,6 +34,12 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         public string? LockOwner { get; private set; }
 
         /// <summary>
+        /// Pauses automatic locking on all RPCs offered by this object.
+        /// All locks must be acquired manually by using the provided locking method.
+        /// </summary>
+        public bool PauseAutoLock { get; set; } = false;
+
+        /// <summary>
         /// Raised when this object gets locked.
         /// </summary>
         public event EventHandler<LockEventArgs>? Locked;
@@ -70,7 +76,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         internal async Task LibraryLockAsync(bool lockTree = false) {
-            if(Session.Settings.LockingMode == LockingMode.AutoLock) {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
                 var @lock = await Session.Client.WriteLockAsync(new WriteLockRequestArgs(Id, lockTree));
                 if(!@lock.Result) {
                     throw new Arcor2Exception($"Locking object {Id} failed.", @lock.Messages);
@@ -94,7 +100,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </summary>
         /// <exception cref="Arcor2Exception"></exception>
         internal async Task LibraryUnlockAsync() {
-            if(Session.Settings.LockingMode == LockingMode.AutoLock) {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
                 var @lock = await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
                 if(!@lock.Result) {
                     throw new Arcor2Exception($"Unlocking object {Id} failed.", @lock.Messages);
@@ -113,7 +119,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// Unlocks the resource represented by this instance if auto-lock mode is enabled. Doesn't throw on failure if auto-lock mode is enabled
         /// </summary>
         internal async Task TryLibraryUnlockAsync() {
-            if(Session.Settings.LockingMode == LockingMode.AutoLock) {
+            if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
                 await Session.Client.WriteUnlockAsync(new WriteUnlockRequestArgs(Id));
             }
         }
@@ -139,7 +145,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnObjectsLocked(object sender, ObjectsLockEventArgs e) {
             if(e.Data.ObjectIds.Contains(Id)) {
                 if(IsLocked) {
-                    Session.Logger?.LogWarning($"The object {Id} received lock event message while already locked.");
+                    Session.Logger?.LogWarn($"The object {Id} received lock event message while already locked.");
                 }
                 IsLocked = true;
                 LockOwner = e.Data.Owner;
@@ -150,7 +156,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         private void OnObjectsUnlocked(object sender, ObjectsLockEventArgs e) {
             if(e.Data.ObjectIds.Contains(Id)) {
                 if(!IsLocked) {
-                    Session.Logger?.LogWarning($"The object {Id} received unlock event message while already unlocked.");
+                    Session.Logger?.LogWarn($"The object {Id} received unlock event message while already unlocked.");
                 }
                 IsLocked = false;
                 LockOwner = null;

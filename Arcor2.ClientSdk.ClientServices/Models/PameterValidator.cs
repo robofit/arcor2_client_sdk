@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
+using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using Newtonsoft.Json;
 
 namespace Arcor2.ClientSdk.ClientServices.Models {
 
@@ -15,6 +17,11 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// Validates the string representation of the parameter value.
         /// </summary>
         public abstract bool Validate(string value);
+
+        /// <summary>
+        /// The type of parameter validation rule.
+        /// </summary>
+        public abstract ParameterValidationType Type { get; }
     }
 
     /// <summary>
@@ -25,13 +32,18 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// The minimum value of the parameter.
         /// </summary>
         [DataMember(Name = "minimum")]
-        public decimal Minimum { get; }
-        
+        [JsonProperty("minimum")]
+        public decimal Minimum { get; set; }
+
         /// <summary>
         /// The maximum value of the parameter.
         /// </summary>
-        [DataMember(Name = "maximum")]
-        public decimal Maximum { get; }
+        [DataMember(Name = "minimum")]
+        [JsonProperty("maximum")]
+        public decimal Maximum { get; set; }
+
+        /// <inheritdoc cref="ParameterValidator"/>
+        public override ParameterValidationType Type { get; } = ParameterValidationType.Range;
 
         /// <summary>
         /// Validates if parameter value is within a given range.
@@ -40,10 +52,6 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <returns><c>true</c> if yes, <c>false</c> if no.</returns>
         public override bool Validate(string value) {
             var dValue = decimal.Parse(value, CultureInfo.InvariantCulture);
-            if (dValue < Minimum) {
-                return false;
-            }
-
             return dValue <= Maximum && dValue >= Minimum;
         }
 
@@ -55,6 +63,24 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         public bool Validate(decimal dValue) {
             return dValue <= Maximum && dValue >= Minimum;
         }
+
+        /// <summary>
+        /// Validates if parameter value is within a given range.
+        /// </summary>
+        /// <param name="dValue">The value.</param>
+        /// <returns><c>true</c> if yes, <c>false</c> if no.</returns>
+        public bool Validate(double dValue) {
+            return (decimal) dValue <= Maximum && (decimal) dValue >= Minimum;
+        }
+
+        /// <summary>
+        /// Validates if parameter value is within a given range.
+        /// </summary>
+        /// <param name="dValue">The value.</param>
+        /// <returns><c>true</c> if yes, <c>false</c> if no.</returns>
+        public bool Validate(int dValue) {
+            return dValue <= Maximum && dValue >= Minimum;
+        }
     }
 
     /// <summary>
@@ -64,8 +90,12 @@ namespace Arcor2.ClientSdk.ClientServices.Models {
         /// <summary>
         /// The allowed parameter values.
         /// </summary>
-        [DataMember(Name = "allowed_values")] 
-        public IList<string> AllowedValues = null!;
+        [DataMember(Name = "allowed_values")]
+        [JsonProperty("allowed_values")]
+        public IList<string> AllowedValues { get; set; } = null!;
+
+        /// <inheritdoc cref="ParameterValidator"/>
+        public override ParameterValidationType Type { get;  } = ParameterValidationType.Values;
 
         /// <summary>
         /// Validates if parameter value is within the allowed values using the <see cref="StringComparison.InvariantCulture"/> comparer.

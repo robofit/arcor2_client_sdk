@@ -22,7 +22,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         internal ObjectTypeManager(Arcor2Session session, ObjectTypeMeta meta, RobotMeta? robotMeta = null) : base(session, new ObjectType(meta, robotMeta), meta.Type) { }
 
         /// <summary>
-        /// Determines whenever the object type is a type or subtype of another object type.
+        /// Determines whenever the object type is a type or derived from another object type.
         /// </summary>
         /// <param name="objectType">An object type.</param>
         /// <returns><c>true</c> if this object type is a subtype of the second object type, <c>false</c> otherwise.</returns>
@@ -31,12 +31,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                 return true;
             }
             if (!string.IsNullOrEmpty(Data.Meta.Base)) {
-                var parentType = Session.ObjectTypes.FirstOrDefault(o => o.Data.Meta.Type == Data.Meta.Base);
-                if (parentType != null) {
-                    return parentType.IsTypeOf(objectType);
+                if (Parent != null) {
+                    return Parent.IsTypeOf(objectType);
                 }
                 else {
-                    Session.Logger?.LogWarning($"An object type '{objectType.Data.Meta.Type}' references non-existing parent '{Data.Meta.Base}'.");
+                    if(Id != "Generic") {
+                        Session.Logger?.LogWarn($"An object type '{objectType}' references non-existing parent '{Data.Meta.Base}'.");
+                    }
                     return false;
                 }
             }
@@ -44,17 +45,117 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         /// <summary>
-        /// Determines if object is a Robot subtype.
+        /// Determines whenever the object type is a type or derived from another object type.
+        /// </summary>
+        /// <param name="objectType">An object type.</param>
+        /// <returns><c>true</c> if this object type is a subtype of the second object type, <c>false</c> otherwise.</returns>
+        public bool IsTypeOf(string objectType) {
+            if(Data.Meta.Type == objectType &&
+               objectType != null! && // This is to prevent Generic being a type of empty string (lets assume empty string will never be a valid type)
+               objectType != string.Empty
+               ) {
+                return true;
+            }
+            if(!string.IsNullOrEmpty(Data.Meta.Base)) {
+                if(Parent != null) {
+                    return Parent.IsTypeOf(objectType);
+                }
+                else {
+                    if(Id != "Generic") {
+                        Session.Logger?.LogWarn($"An object type '{objectType}' references non-existing parent '{Data.Meta.Base}'.");
+                    }
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whenever the object type is derived from another object type.
+        /// </summary>
+        /// <param name="objectType">An object type.</param>
+        /// <returns><c>true</c> if this object type is a subtype of the second object type, <c>false</c> otherwise.</returns>
+        public bool IsSubtypeOf(string objectType) {
+            if(!string.IsNullOrEmpty(Data.Meta.Base)) {
+                if(Parent != null) {
+                    return Parent.IsTypeOf(objectType);
+                }
+                else {
+                    if (Id != "Generic") {
+                        Session.Logger?.LogWarn($"An object type '{objectType}' references non-existing parent '{Data.Meta.Base}'.");
+                    }
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whenever the object type is derived from another object type.
+        /// </summary>
+        /// <param name="objectType">An object type.</param>
+        /// <returns><c>true</c> if this object type is a subtype of the second object type, <c>false</c> otherwise.</returns>
+        public bool IsSubtypeOf(ObjectTypeManager objectType) {
+            if(!string.IsNullOrEmpty(Data.Meta.Base)) {
+                if(Parent != null) {
+                    return Parent.IsTypeOf(objectType);
+                }
+                else {
+                    if(Id != "Generic") {
+                        Session.Logger?.LogWarn($"An object type '{objectType}' references non-existing parent '{Data.Meta.Base}'.");
+                    }
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        private ObjectTypeManager? parentCached;
+        /// <summary>
+        /// The parent object type.
+        /// </summary>
+        /// <value>
+        /// <c>null</c> if the object type is the root base type (<c>Generic</c>).
+        /// </value>
+        public ObjectTypeManager? Parent => parentCached ??= Session.ObjectTypes.FirstOrDefault(o => o.Id == Data.Meta.Base);
+
+
+        private ObjectTypeManager? sceneParentCached;
+        /// <summary>
+        /// The required parent action object type.
+        /// </summary>
+        /// <value>
+        /// <c>null</c> if no action object parent is required.
+        /// </value>
+        public ObjectTypeManager? SceneParent => sceneParentCached ??= Session.ObjectTypes.FirstOrDefault(o => o.Id == Data.Meta.NeedsParentType);
+
+        /// <summary>
+        /// Determines if object is derived from the builtin GenericWithPose type.
+        /// </summary>
+        public bool IsGenericWithPose() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "GenericWithPose"));
+
+        /// <summary>
+        /// Determines if object is derived from the builtin Robot type.
         /// </summary>
         public bool IsRobot() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "Robot"));
 
         /// <summary>
-        /// Determines if object is a CollisionObject subtype.
+        /// Determines if object is derived from the builtin MultiArmRobot type.
+        /// </summary>
+        public bool IsMultiArmRobot() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "MultiArmRobot"));
+
+        /// <summary>
+        /// Determines if object is derived from the builtin CollisionObject type.
         /// </summary>
         public bool IsCollisionObject() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "CollisionObject"));
 
         /// <summary>
-        /// Determines if object is a CollisionObject subtype.
+        /// Determines if object is derived from the builtin VirtualCollisionObject type.
+        /// </summary>
+        public bool IsVirtualCollisionObject() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "VirtualCollisionObject"));
+
+        /// <summary>
+        /// Determines if object is derived from the builtin CollisionObject type.
         /// </summary>
         public bool IsCamera() => IsTypeOf(Session.ObjectTypes.First(o => o.Data.Meta.Type == "Camera"));
 
@@ -74,6 +175,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <summary>
         /// Deletes this object type.
         /// </summary>
+        /// <remarks>
+        /// An action object of this type must not be in an existing scene.
+        /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task DeleteAsync() {
             var result = await Session.Client.RemoveObjectTypeAsync(Id);
@@ -105,7 +209,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         /// <summary>
-        /// Updates the <see cref="Actions"/> collection.
+        /// Updates the collection of actions.
         /// </summary>
         /// <remarks>
         /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
@@ -118,7 +222,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
                 OnUpdated();
             }
             else {
-                Session.Logger?.LogWarning(
+                Session.Logger?.LogWarn(
                     $"The server returned an error when fetching actions for {Id} object type. Leaving it blank. Error messages: " +
                     string.Join(",", actions.Messages));
             }

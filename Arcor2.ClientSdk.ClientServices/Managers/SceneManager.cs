@@ -250,6 +250,17 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         /// <summary>
+        /// Check if the scene has unsaved changes.
+        /// </summary>
+        /// <remarks>
+        /// Scene must be open on invocation.
+        /// </remarks>
+        public async Task<bool> HasUnsavedChangesAsync() {
+            var response = await Session.Client.SaveSceneAsync(true);
+            return !response.Result;
+        }
+
+        /// <summary>
         /// Deletes the scene.
         /// </summary>
         /// <remarks>
@@ -429,7 +440,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         private async void OnSceneState(object sender, SceneStateEventArgs e) {
-            if(IsOpen || GetProjects().Any(p => p.IsOpen)) {
+            if(IsOpen || 
+               GetProjects().Any(project => project.IsOpen || 
+                project.GetPackages().Any(package => package.IsOpen))) {
                 State = e.Data.MapToCustomSceneStateEnum();
                 OnlineStateChanged?.Invoke(this, new SceneOnlineStateEventArgs(State));
                 if(State.State == OnlineState.Started && Session.ConnectionState == Arcor2SessionState.Initialized) {
@@ -440,7 +453,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnActionObjectAdded(object sender, ActionObjectEventArgs e) {
             if(IsOpen) {
                 if(ActionObjects == null) {
-                    Session.Logger?.LogError($"While adding new action object, the currently opened scene ({Id}) had non-initialized (null) action object collection. Possible inconsistent state.");
+                    Session.Logger?.LogWarn($"While adding new action object, the currently opened scene ({Id}) had non-initialized (null) action object collection. Possible inconsistent state.");
                 }
                 actionObjects?.Add(new ActionObjectManager(Session, this, e.Data));
             }

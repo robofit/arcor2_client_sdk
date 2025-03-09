@@ -87,6 +87,13 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         }
 
         /// <summary>
+        /// Returns a collection of packages based of this project.
+        /// </summary>
+        public IList<PackageManager> GetPackages() {
+            return Session.Packages.Where(p => p.ProjectId == Id).ToList();
+        }
+
+        /// <summary>
         /// Renames the project.
         /// </summary>
         /// <param name="newName">New name for the project.</param>
@@ -145,6 +152,17 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             if(!response.Result) {
                 throw new Arcor2Exception($"Saving project {Id} failed.", response.Messages);
             }
+        }
+
+        /// <summary>
+        /// Check if the project has unsaved changes.
+        /// </summary>
+        /// <remarks>
+        /// Project must be open on invocation.
+        /// </remarks>
+        public async Task<bool> HasUnsavedChangesAsync() {
+            var response = await Session.Client.SaveProjectAsync(true);
+            return !response.Result;
         }
 
         /// <summary>

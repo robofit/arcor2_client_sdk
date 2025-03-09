@@ -72,6 +72,17 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         /// <summary>
+        /// Returns the parent if the parent is set and of the action object type.
+        /// </summary>
+        public ActionObjectManager? TryGetParentActionObject() =>
+            Project.Scene.ActionObjects!.FirstOrDefault(a => a.Id == Data.Parent);
+        /// <summary>
+        /// Returns the parent if the parent is set and of the action point type.
+        /// </summary>
+        public ActionPointManager? TryGetParentActionPoint() =>
+            Project.ActionPoints!.FirstOrDefault(a => a.Id == Data.Parent);
+
+        /// <summary>
         /// Duplicates the action point.
         /// </summary>
         /// <param name="position">The position of duplicated action point.</param>

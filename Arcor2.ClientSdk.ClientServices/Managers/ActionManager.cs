@@ -236,7 +236,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnActionResult(object sender, ActionResultEventArgs e) {
             if(e.Data.ActionId == Id) {
                 if(!IsExecuting) {
-                    Session.Logger?.LogWarning($"Action {Id} received ActionResult event when its {nameof(IsExecuting)} property was false.");
+                    Session.Logger?.LogWarn($"Action {Id} received ActionResult event when its {nameof(IsExecuting)} property was false.");
                 }
                 IsExecuting = false;
                 Executed?.Invoke(this, new ActionExecutedEventArgs(e.Data.Results, e.Data.Error));
@@ -254,7 +254,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         private void OnActionExecution(object sender, ActionExecutionEventArgs e) {
             if(e.Data.ActionId == Id) {
                 if(IsExecuting) {
-                    Session.Logger?.LogWarning($"Action {Id} received ActionExecution event when its {nameof(IsExecuting)} property was true.");
+                    Session.Logger?.LogWarn($"Action {Id} received ActionExecution event when its {nameof(IsExecuting)} property was true.");
                 }
                 IsExecuting = true;
                 Executing?.Invoke(this, EventArgs.Empty);
