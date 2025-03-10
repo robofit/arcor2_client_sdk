@@ -119,7 +119,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(assetContainer);
         await assetContainer.StartAsync();
-        await WaitForHealthyServiceAsync(assetContainer, "Asset service");
 
         // Project Container
         var projectPort1 = GetServicePort("project1");
@@ -137,7 +136,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(projectContainer);
         await projectContainer.StartAsync();
-        await WaitForHealthyServiceAsync(projectContainer, "Project service");
 
         // Scene Container
         var scenePort = GetServicePort("scene");
@@ -151,7 +149,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(sceneContainer);
         await sceneContainer.StartAsync();
-        await WaitForHealthyServiceAsync(sceneContainer, "Scene service");
 
         // Build Container
         var buildPort = GetServicePort("build");
@@ -167,7 +164,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(buildContainer);
         await buildContainer.StartAsync();
-        await WaitForHealthyServiceAsync(buildContainer, "Build service");
 
         // Execution Container
         var executionPort = GetServicePort("execution");
@@ -219,7 +215,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(calibrationContainer);
         await calibrationContainer.StartAsync();
-        await WaitForHealthyServiceAsync(calibrationContainer, "Calibration service");
 
         // Dobot Magician Container
         var dobotMagicianPort = GetServicePort("dobot-magician");
@@ -237,7 +232,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(dobotMagicianContainer);
         await dobotMagicianContainer.StartAsync();
-        await WaitForHealthyServiceAsync(dobotMagicianContainer, "Dobot Magician service");
 
         // Dobot Magician2 Container
         var dobotMagician2Port = GetServicePort("dobot-magician2");
@@ -255,7 +249,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(dobotMagician2Container);
         await dobotMagician2Container.StartAsync();
-        await WaitForHealthyServiceAsync(dobotMagician2Container, "Dobot Magician2 service");
 
         // Dobot M1 Container
         var dobotM1Port = GetServicePort("dobot-m1");
@@ -273,7 +266,6 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         containers.Add(dobotM1Container);
         await dobotM1Container.StartAsync();
-        await WaitForHealthyServiceAsync(dobotM1Container, "Dobot M1 service");
 
         // Nginx Container
         var nginxPort = GetServicePort("nginx");
@@ -316,6 +308,10 @@ public class Arcor2ServerFixture : IAsyncLifetime {
         containers.Add(uploadBuiltinObjectsContainer);
         await uploadBuiltinObjectsContainer.StartAsync();
 
+        // TODO: Change
+        await Task.Delay(8000);
+
+
         // AR Server Container - Start this last as it depends on all other services
         var secondaryServerPort = GetServicePort("secondary-server");
         arServerContainer = new ContainerBuilder()
@@ -340,12 +336,12 @@ public class Arcor2ServerFixture : IAsyncLifetime {
             .Build();
 
         containers.Add(arServerContainer);
+
         await arServerContainer.StartAsync();
     }
 
-
     private async Task WaitForServerReadyAsync() {
-        const int maxRetries = 30;
+        const int maxRetries = 90;
         const int delayMs = 1000;
 
         for(int i = 0; i < maxRetries; i++) {
@@ -363,11 +359,5 @@ public class Arcor2ServerFixture : IAsyncLifetime {
         }
 
         throw new TimeoutException($"Server at {Uri} did not become ready within {maxRetries * delayMs / 1000} seconds");
-    }
-
-
-    private async Task WaitForHealthyServiceAsync(IContainer container, string serviceName) {
-        // Not really needed
-        await Task.Delay(100);
     }
 }

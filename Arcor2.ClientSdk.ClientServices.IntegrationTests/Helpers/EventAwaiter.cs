@@ -1,4 +1,6 @@
-﻿using Arcor2.ClientSdk.ClientServices.Managers;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
+using Arcor2.ClientSdk.ClientServices.EventArguments;
+using Arcor2.ClientSdk.ClientServices.Managers;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 
@@ -111,5 +113,23 @@ public static class Arcor2ObjectExtensions {
         var awaiter = new EventAwaiter();
         manager.Removing += awaiter.EventHandler;
         return awaiter.WaitForEventAsync();
+    }
+
+    public static EventAwaiter<SceneOnlineStateEventArgs> GetStartedAwaiter(this SceneManager manager) {
+        var awaiter = new EventAwaiter<SceneOnlineStateEventArgs>(p => p.State.State == OnlineState.Started);
+        manager.OnlineStateChanged += (o, args) => awaiter.EventHandler(o, args);
+        return awaiter;
+    }
+
+    public static EventAwaiter<SceneOnlineStateEventArgs> GetStoppedAwaiter(this SceneManager manager) {
+        var awaiter = new EventAwaiter<SceneOnlineStateEventArgs>(p => p.State.State == OnlineState.Stopped);
+        manager.OnlineStateChanged += (o, args) => awaiter.EventHandler(o, args);
+        return awaiter;
+    }
+
+    public static EventAwaiter<PackageStateEventArgs> GetPackageStateAwaiter(this PackageManager manager, PackageState state) {
+        var awaiter = new EventAwaiter<PackageStateEventArgs>(p => p.State == state);
+        manager.StateChanged += (o, args) => awaiter.EventHandler(o, args);
+        return awaiter;
     }
 }

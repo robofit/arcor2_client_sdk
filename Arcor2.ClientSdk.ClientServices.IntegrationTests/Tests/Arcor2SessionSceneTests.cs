@@ -2,6 +2,8 @@
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
+using Arcor2.ClientSdk.ClientServices.Models;
+using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
@@ -166,6 +168,27 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         }
     }
 
+    [Fact]
+    public async Task Duplicate_Valid_Duplicated() {
+        await Setup();
+        // Arrange
+        await SceneClosed();
+        var scene = Session.Scenes.First();
+        try {
+            // Act
+            var addAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+                .WaitForEventAsync();
+            await scene.DuplicateAsync("CopyScene");
+            await addAwaiter;
+
+            // Assert
+            Assert.Equal(2, Session.Scenes.Count);
+            Assert.Equal(Session.Scenes.First().Data.Description, Session.Scenes.Last().Data.Description);
+        }
+        finally {
+            await Teardown();
+        }
+    }
 
 
     [Fact]
@@ -281,6 +304,42 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             Assert.Null(Session.Scenes.First().State.Message);
         }
         finally {
+            await DisposeSceneOpen();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task CreateVirtualCollisionObjects_Valid_StartsAndStops() {
+        await Setup();
+        // Arrange
+        await SceneOpen();
+        await Session.Scenes.First().SaveAsync();
+        var scene = Session.Scenes.First();
+        try {
+            // Act
+            var addAwaiter1 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            await scene.AddVirtualCollisionBoxAsync("Box", new Pose(), new BoxCollisionModel(1, 2, 3));
+            await addAwaiter1;
+            var addAwaiter2 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            await scene.AddVirtualCollisionCylinderAsync("Cylinder", new Pose(), new CylinderCollisionModel(10, 1));
+            await addAwaiter2;
+            var addAwaiter3 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            await scene.AddVirtualCollisionSphereAsync("Sphere", new Pose(), new SphereCollisionModel(15));
+            await addAwaiter3;
+
+            // Assert
+            Assert.Contains(scene.ActionObjects!, a => a.Data.Meta.Name == "Box");
+            Assert.Contains(scene.ActionObjects!, a => a.Data.Meta.Name == "Cylinder");
+            Assert.Contains(scene.ActionObjects!, a => a.Data.Meta.Name == "Sphere");
+            Assert.Contains(Session.ObjectTypes, o => o.Data.Meta.Type == "Box");
+            Assert.Contains(Session.ObjectTypes, o => o.Data.Meta.Type == "Cylinder");
+            Assert.Contains(Session.ObjectTypes, o => o.Data.Meta.Type == "Sphere");
+        }
+        finally {
+            foreach (var actionObject in scene.ActionObjects!) {
+                await actionObject.RemoveAsync();
+            }
             await DisposeSceneOpen();
             await Teardown();
         }

@@ -1,8 +1,11 @@
 ﻿using System.Collections.Specialized;
+using Arcor2.ClientSdk.ClientServices.Enums;
+using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using Xunit.Abstractions;
+using Joint = Arcor2.ClientSdk.ClientServices.Models.Joint;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
@@ -105,6 +108,213 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
         }
         finally {
             await DisposeSceneOpen();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task GetKinematics_Dobot_NotEmpty() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+
+        try {
+            // Act
+            var fk = await actionObject.GetForwardKinematicsAsync();
+            var ik = await actionObject.GetInverseKinematicsAsync();
+            // Assert
+            Assert.NotNull(fk);
+            Assert.NotNull(ik);
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task SetEndEffectorPerpendicularToWorld_Dobot_Moves() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+
+        try {
+            // Arrange
+            var robotMoveToPoseAwaiter = new EventAwaiter();
+            actionObject.MovingToPose += robotMoveToPoseAwaiter.EventHandler;
+            var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
+            var updatedAwaiter = new EventAwaiter();
+            actionObject.Updated += updatedAwaiter.EventHandler;
+            var updatedTask = updatedAwaiter.WaitForEventAsync();
+
+            // Act
+            await actionObject.SetEndEffectorPerpendicularToWorldAsync();
+
+            // Assert
+            await Task.WhenAll(robotMoveToPoseTask, updatedTask);
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+
+    [Fact]
+    public async Task MoveToPose_DobotImpossible_FailsMove() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+
+        try {
+            // Arrange
+            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToPoseEventArgs>(a => a.MoveEventType == RobotMoveType.Failed);
+            actionObject.MovingToPose += (sender, args) => robotMoveToPoseAwaiter.EventHandler(sender, args);
+            var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
+            var updatedAwaiter = new EventAwaiter();
+            actionObject.Updated += updatedAwaiter.EventHandler;
+            var updatedTask = updatedAwaiter.WaitForEventAsync();
+
+            // Act
+            await actionObject.MoveToPoseAsync(new Pose(new Position(5, 5, 5), new Orientation()));
+
+            // Assert
+            await Task.WhenAll(robotMoveToPoseTask, updatedTask);
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task MoveToJoints_DobotSingleArm_Fails() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+
+        try {
+            // Arrange
+            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToJointsEventArgs>(a => a.MoveEventType == RobotMoveType.Failed);
+            actionObject.MovingToJoints += robotMoveToPoseAwaiter.EventHandler;
+            var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
+            var updatedAwaiter = new EventAwaiter();
+            actionObject.Updated += updatedAwaiter.EventHandler;
+            var updatedTask = updatedAwaiter.WaitForEventAsync();
+
+            var modifiedJoint = actionObject.Data.Joints!.First();
+            var newJoints = actionObject.Data.Joints!.Skip(1).Append(new Joint(modifiedJoint.Id, modifiedJoint.Value - 0.1m));
+
+            // Act
+            await actionObject.MoveToJointsAsync(newJoints.ToList());
+
+            // Assert
+            await Task.WhenAll(robotMoveToPoseTask, updatedTask);
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task MoveToActionPointJoints_Dobot_Moves() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+        var actionPoint = Session.Projects.First().ActionPoints!.First();
+
+        try {
+            // Arrange
+            // TODO: Why does this not catch the raised event?
+            //var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToActionPointJointsEventArgs>(a => a.MoveEventType == RobotMoveType.Finished);
+            //actionObject.MovingToActionPointJoints += robotMoveToPoseAwaiter.EventHandler;
+            //var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
+            var updatedAwaiter = new EventAwaiter();
+            actionObject.Updated += updatedAwaiter.EventHandler;
+            var updatedTask = updatedAwaiter.WaitForEventAsync();
+
+            // Act
+            await actionObject.MoveToActionPointJointsAsync(actionPoint.Joints.First());
+
+            // Assert
+            await Task.WhenAll(/*robotMoveToPoseTask,*/ updatedTask);
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task MoveToActionPointOrientation_Dobot_Moves() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+        var actionPoint = Session.Projects.First().ActionPoints!.First();
+
+        try {
+            // Arrange
+            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToActionPointOrientationEventArgs>(a => a.MoveEventType == RobotMoveType.Finished);
+            actionObject.MovingToActionPointOrientation += robotMoveToPoseAwaiter.EventHandler;
+            var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
+            var updatedAwaiter = new EventAwaiter();
+            actionObject.Updated += updatedAwaiter.EventHandler;
+            var updatedTask = updatedAwaiter.WaitForEventAsync();
+
+            // Act
+            await actionObject.MoveToActionPointOrientationAsync(actionPoint.Orientations.First());
+
+            // Assert
+            await Task.WhenAll(robotMoveToPoseTask, updatedTask);
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task StepPosition_Dobot_Move() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+
+        try {
+            // Arrange
+            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToPoseEventArgs>(a => a.MoveEventType == RobotMoveType.Finished);
+            actionObject.MovingToPose += (sender, args) => robotMoveToPoseAwaiter.EventHandler(sender, args);
+            var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
+            var updatedAwaiter = new EventAwaiter();
+            actionObject.Updated += updatedAwaiter.EventHandler;
+            var updatedTask = updatedAwaiter.WaitForEventAsync();
+            var oldPose = actionObject.Data.Meta.Pose.Position;
+
+            // Act
+            await actionObject.StepPositionAsync(Axis.X, 0.1m, "default");
+
+            // Assert
+            await Task.WhenAll(updatedTask, robotMoveToPoseTask);
+            Assert.True(oldPose.EqualTo(actionObject.Data.Meta.Pose.Position, 0.01m));
+        }
+        finally {
+            await DisposeProjectStarted();
+            await Teardown();
+        }
+    }
+
+    [Fact]
+    public async Task SetHandTeachingMode_Dobot_FailsUnavailable() {
+        await Setup();
+        await ProjectStartedObjectActionPointWithEntities("DobotMagician");
+        var actionObject = Session.Scenes.First().ActionObjects!.First();
+
+        try {
+            // Act
+            await Assert.ThrowsAsync<Arcor2Exception>(() => actionObject.SetHandTeachingModeAsync(true));
+        }
+        finally {
+            await DisposeProjectStarted();
             await Teardown();
         }
     }

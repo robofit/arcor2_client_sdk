@@ -1,4 +1,4 @@
-# Communication Library Intergration Tests
+# Client Services Library Integration Tests
 
 The `Arcor2.ClientSdk.ClientServices.IntegrationTests` project contains integration tests for the `Arcor2.ClientSdk.ClientServices` library, implemented using xUnit.
 
@@ -16,7 +16,7 @@ To support parallel test execution, both container names and ports are randomize
 
 A major issue is balancing test isolation with the resource overhead of recreating the server for each test (which takes around a minute on a moderately powered machine). 
 The chosen approach reuses server instances across tests within the same class, with each test class receiving its own server instance.
-However, care must be taken to ensure proper cleanup after each test, as leftover objects could interfere with subsequent tests and cascade issue.
+However, care must be taken to ensure proper cleanup after each test, as leftover objects could interfere with subsequent tests and cascade issues.
 
 Nevertheless, **the current configuration uses one server instance per one test due to server bugs**.
 If the future state of the server allows it, 
@@ -35,6 +35,13 @@ However, RPC parameter configurations that are and will always be unquestionably
 In such cases keep in mind that the library still merely propagates all server errors without additional processing.
 
 In the end, testing should focus on verifying that the library raises the expected events and correctly updates its internal state.
+
+## What is Tested
+
+Tests for majority of RPCs and events already exist.
+
+There are no calibration-related RPC tests due to the lack of mock support.
+A large number of overloads also remain untested. That is because they internally just invoke another overload with transformed arguments.
 
 ## Testing Format
 
@@ -62,7 +69,7 @@ public async Task UnitOrUseCases_ParametersOrState_ExpectedBehavior() {
 }
 ```
 
-Note tht RPC method invocations do not change the inner state of the library immediately, as it updates its state only when the server broadcasts an event. 
+Note that RPC method invocations do not change the inner state of the library immediately, as it updates its state only when the server broadcasts an event. 
 It is strongly recommended to use the existing `EventAwaiter` and `CollectionChangedAwaiter` classes to ensure events were raised before proceeding.
 
 ```
