@@ -41,7 +41,7 @@ jobs:
       
     - name: Run Integration Tests
       if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
-      run: dotnet test src/Arcor2.ClientSdk.ClientServices.IntegrationTests --configuration Release --no-build --verbosity normal
+      run: dotnet test src/Arcor2.ClientSdk.ClientServices.IntegrationTests/Arcor2.ClientSdk.ClientServices.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
     
     - name: Package
       run: |
