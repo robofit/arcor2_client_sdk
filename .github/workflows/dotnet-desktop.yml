@@ -36,11 +36,11 @@ jobs:
         dotnet test src/Arcor2.ClientSdk.ClientServices.UnitTests --configuration Release --no-build --verbosity normal
     
     - name: Setup Docker for Integration Tests
-      if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
+      if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
       uses: docker/setup-buildx-action@v3
 
     - name: Configure Docker daemon with additional address pools
-      if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
+      if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
       run: |
         sudo mkdir -p /etc/docker
         echo '{
@@ -61,11 +61,11 @@ jobs:
         sleep 10 # Wait for Docker to restart
 
     - name: Verify Docker configuration
-      if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
+      if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
       run: cat /etc/docker/daemon.json
       
     - name: Run Integration Tests
-      if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
+      if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
       run: dotnet test src/Arcor2.ClientSdk.ClientServices.IntegrationTests/Arcor2.ClientSdk.ClientServices.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
     
     - name: Package
