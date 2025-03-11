@@ -3,6 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
+    <AssemblyName>Arcor2.ClientSdk.ClientServices</AssemblyName>
+    <PackageId>Arcor2.ClientSdk.ClientServices</PackageId>
+    <OutputType>Library</OutputType>
+    <Authors>Michael Janeček</Authors>
+    <Company>Robofit</Company>
+    <AssemblyTitle>ARCOR2 ClientServices library</AssemblyTitle>
+    <Description>An all-in-one library for ARCOR2 client development.</Description>
+    <Copyright>GNU Lesser General Public License v3.0</Copyright>
+    <RootNamespace>Arcor2.ClientSdk.ClientServices</RootNamespace>
+    <Version>1.0.0</Version>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
   <ItemGroup>
