@@ -377,7 +377,7 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             var changedAwaiterEvent = new EventAwaiter();
             @override!.Updated += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
-            await @override!.UpdateAsync(new Parameter(parameter.Name, parameter.Type, "\"newer_value\""));
+            await @override.UpdateAsync(new Parameter(parameter.Name, parameter.Type, "\"newer_value\""));
             await changedAwaiter;
 
             // Assert
@@ -495,13 +495,13 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
                 .WaitForEventAsync();
             await project.AddLogicItem("START", action.Id);
             await addAwaiter1;
-            var addAwaiter2 = project.LogicItems.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+            var addAwaiter2 = project.LogicItems!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
                 .WaitForEventAsync();
             await project.AddLogicItem(action.Id, "END");
             await addAwaiter2;
 
             // Assert
-            Assert.Equal(2, project.LogicItems.Count);
+            Assert.Equal(2, project.LogicItems!.Count);
 
             var firstItem = project.LogicItems.First();
             var lastItem = project.LogicItems.Last();
@@ -528,7 +528,7 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
         var logicItems = project.LogicItems!.ToList();
         var firstLogicItem = logicItems[0];
         var secondLogicItem = logicItems[1];
-        var action = firstLogicItem.EndActionManager;
+        var action = firstLogicItem.EndActionManager!;
 
         try {
             // Act

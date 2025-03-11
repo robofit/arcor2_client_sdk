@@ -1388,7 +1388,7 @@ internal class Program {
             args[0],
             args[1],
             args.Length > 2 ? args[2] : "default",
-            args.Length > 3 ? args[3] : null);
+            (args.Length > 3 ? args[3] : null)!);
     }
 
     private static async Task AddActionPointAsync(string[] args) {

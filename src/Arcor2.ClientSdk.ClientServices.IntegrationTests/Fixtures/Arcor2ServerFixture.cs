@@ -12,7 +12,7 @@ public class Arcor2ServerFixture : IAsyncLifetime {
     private readonly List<IContainer> containers = new();
     private readonly Dictionary<string, INetwork> networks = new();
     private readonly Dictionary<string, IVolume> volumes = new();
-    private IContainer arServerContainer;
+    private IContainer arServerContainer = null!;
     private readonly string testRunId;
     private readonly string arServerContainerName;
     private readonly Dictionary<string, int> randomPorts = new();

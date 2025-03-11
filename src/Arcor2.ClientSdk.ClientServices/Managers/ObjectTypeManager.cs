@@ -58,7 +58,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
             }
             if(!string.IsNullOrEmpty(Data.Meta.Base)) {
                 if(Parent != null) {
-                    return Parent.IsTypeOf(objectType);
+                    return Parent.IsTypeOf(objectType!);
                 }
                 else {
                     if(Id != "Generic") {

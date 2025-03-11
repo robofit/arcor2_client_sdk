@@ -97,7 +97,7 @@ namespace Arcor2.ClientSdk.Communication.Design {
                             try {
                                 result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
                             }
-                            catch(WebSocketException ex) {
+                            catch(WebSocketException) {
                                 // Handle abrupt connection close from server gracefully
                                 OnClose?.Invoke(this, new WebSocketCloseEventArgs {
                                     CloseStatus = WebSocketCloseStatus.ProtocolError,
@@ -105,7 +105,7 @@ namespace Arcor2.ClientSdk.Communication.Design {
                                 });
                                 return;
                             }
-                            catch(ObjectDisposedException ex) {
+                            catch(ObjectDisposedException) {
                                 // Socket was disposed, treat as graceful close
                                 OnClose?.Invoke(this, new WebSocketCloseEventArgs {
                                     CloseStatus = WebSocketCloseStatus.NormalClosure,

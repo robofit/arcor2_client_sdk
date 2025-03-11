@@ -216,10 +216,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <param name="actionObject">The robot.</param>
         /// <param name="endEffector">The end effector.</param>
-        /// <param name="armId">The ID of the arm. By default, <c>null</c>.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateUsingRobotAsync(ActionObjectManager actionObject, EndEffector endEffector) {
-            await UpdateUsingRobotAsync(actionObject.Id, endEffector?.Id ?? "default", endEffector.ArmId);
+            await UpdateUsingRobotAsync(actionObject.Id, endEffector.Id, endEffector.ArmId);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+#pragma warning disable 67 // Event is never used
 
 using System.Text;
 using Arcor2.ClientSdk.Communication.Design;

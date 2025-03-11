@@ -9,9 +9,9 @@ using Xunit.Abstractions;
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests;
 
 public class TestBase(ITestOutputHelper output) : IAsyncLifetime {
-    private Arcor2ServerFixture server;
+    private Arcor2ServerFixture server = null!;
     protected Arcor2Session Session { get; private set; } = null!;
-    protected IArcor2Logger Logger { get; private set; }
+    protected IArcor2Logger Logger { get; private set; } = null!;
     protected Uri Uri => server.Uri;
     protected string Host => server.Host;
     protected ushort Port => server.Port;
