@@ -308,11 +308,14 @@ public class Arcor2ServerFixture : IAsyncLifetime {
         containers.Add(uploadBuiltinObjectsContainer);
         await uploadBuiltinObjectsContainer.StartAsync();
 
-        // TODO: Change
-        await Task.Delay(8000);
+        // We can only start after the FIT Demo object types are uploaded. Wait until we get exit code.
+        await Task.WhenAll(
+            uploadBuiltinObjectsContainer.GetExitCodeAsync(),
+            uploadObjectTypesContainer.GetExitCodeAsync()
+            );
 
 
-        // AR Server Container - Start this last as it depends on all other services
+        // AR Server Container
         var secondaryServerPort = GetServicePort("secondary-server");
         arServerContainer = new ContainerBuilder()
             .WithImage("arcor2/arcor2_arserver:1.3.1")
@@ -353,7 +356,7 @@ public class Arcor2ServerFixture : IAsyncLifetime {
                     return;
                 }
             }
-            catch { }
+            catch { /* This is fine in our case. */ }
 
             await Task.Delay(delayMs);
         }
