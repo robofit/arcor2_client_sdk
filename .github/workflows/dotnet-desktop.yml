@@ -1,0 +1,86 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '6.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore src/Arcor2.ClientSdk.sln
+    
+    - name: Build
+      run: dotnet build src/Arcor2.ClientSdk.sln --configuration Release --no-restore
+    
+    - name: Run Unit Tests
+      run: |
+        dotnet test src/Arcor2.ClientSdk.Communication.UnitTests --configuration Release --no-build --verbosity normal
+        dotnet test src/Arcor2.ClientSdk.ClientServices.UnitTests --configuration Release --no-build --verbosity normal
+    
+    - name: Setup Docker for Integration Tests
+      if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Run Integration Tests
+      if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
+      run: dotnet test src/Arcor2.ClientSdk.ClientServices.IntegrationTests --configuration Release --no-build --verbosity normal
+    
+    - name: Package
+      run: |
+        dotnet pack src/Arcor2.ClientSdk.Communication/Arcor2.ClientSdk.Communication.csproj -c Release -o packages --no-build
+        dotnet pack src/Arcor2.ClientSdk.ClientServices/Arcor2.ClientSdk.ClientServices.csproj -c Release -o packages --no-build
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: nuget-packages
+        path: packages/*.nupkg
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: |
+          src/Arcor2.ClientSdk.Communication/bin/Release/netstandard2.1
+          src/Arcor2.ClientSdk.ClientServices/bin/Release/netstandard2.1
+  
+  publish:
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: nuget-packages
+        path: packages
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+   # TODO: Setup secret 
+   # - name: Publish NuGet packages
+   #   run: |
+   #     for package in packages/*.nupkg; do
+   #       dotnet nuget push "$package" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+   #     done
