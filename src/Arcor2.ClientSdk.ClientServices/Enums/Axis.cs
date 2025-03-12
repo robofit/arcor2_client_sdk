@@ -6,8 +6,17 @@ namespace Arcor2.ClientSdk.ClientServices.Enums {
     /// Represents a spatial axis.
     /// </summary>
     public enum Axis {
+        /// <summary>
+        /// The X axis.
+        /// </summary>
         X = 0,
+        /// <summary>
+        /// The Y axis.
+        /// </summary>
         Y,
+        /// <summary>
+        /// The Z axis.
+        /// </summary>
         Z
     }
 

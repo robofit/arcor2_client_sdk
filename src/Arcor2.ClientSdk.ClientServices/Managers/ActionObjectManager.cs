@@ -101,6 +101,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature.
+        /// A pose is needed when <param name="mode" /> is <see cref="StepMode.User"/> or <see cref="StepMode.Relative"/>.
         /// </remarks>
         /// <param name="axis">The axis to step.</param>
         /// <param name="step">The step site.</param>
@@ -112,7 +113,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepPositionAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
+        public async Task StepPositionAsync(Axis axis, decimal step, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LibraryLockAsync();
             var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
@@ -128,25 +129,19 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature.
+        /// A pose is needed when <param name="mode" /> is <see cref="StepMode.User"/> or <see cref="StepMode.Relative"/>.
         /// </remarks>
         /// <param name="axis">The axis to step.</param>
         /// <param name="step">The step site.</param>
-        /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
+        /// <param name="endEffector">The end effector. </param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepPositionAsync(Axis axis, decimal step, EndEffector? endEffector = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
-            await LibraryLockAsync();
-            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, endEffector?.ArmId!));
-            if(!response.Result) {
-                await TryLibraryUnlockAsync();
-                throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
-            }
-
-            await LibraryUnlockAsync();
+        public async Task StepPositionAsync(Axis axis, decimal step, EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
+            await StepPositionAsync(axis, step, endEffector.Id, endEffector.ArmId, safe, linear, speed, mode);
         }
 
         /// <summary>
@@ -154,6 +149,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature.
+        /// A pose is needed when <param name="mode" /> is <see cref="StepMode.User"/> or <see cref="StepMode.Relative"/>.
         /// </remarks>
         /// <param name="axis">The axis to step.</param>
         /// <param name="step">The step site.</param>
@@ -165,7 +161,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepOrientationAsync(Axis axis, decimal step, string endEffectorId = "default", string armId = "", bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
+        public async Task StepOrientationAsync(Axis axis, decimal step, string endEffectorId = "default", string? armId = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
             await LibraryLockAsync();
             var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId, axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, armId));
             if(!response.Result) {
@@ -181,26 +177,19 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// </summary>
         /// <remarks>
         /// The scene must be online and the action object a robot with corresponding feature.
+        /// A pose is needed when <param name="mode" /> is <see cref="StepMode.User"/> or <see cref="StepMode.Relative"/>.
         /// </remarks>
         /// <param name="axis">The axis to step.</param>
         /// <param name="step">The step site.</param>
         /// <param name="endEffector">The end effector. By default, <c>"default"</c>.</param>
-        /// <param name="armId">The arm ID. By default, <c>null</c>.</param>
         /// <param name="safe">Signifies if the movement be verifies as safe. By default, <c>"true"</c>.</param>
         /// <param name="linear">Signifies if the movement should be linear. By default, <c>"false"</c></param>
         /// <param name="speed">The speed in 0..1 interval.</param>
         /// <param name="mode">The mode. By default, <c>Robot</c></param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task StepOrientationAsync(Axis axis, decimal step, EndEffector? endEffector = null, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
-            await LibraryLockAsync();
-            var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffector?.Id ?? "default", axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(), step, safe, null!, speed, linear, endEffector?.ArmId!));
-            if(!response.Result) {
-                await TryLibraryUnlockAsync();
-                throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
-            }
-
-            await LibraryUnlockAsync();
+        public async Task StepOrientationAsync(Axis axis, decimal step, EndEffector endEffector, bool safe = true, bool linear = false, decimal speed = 1, StepMode mode = StepMode.Robot) {
+            await StepOrientationAsync(axis, step, endEffector.Id, endEffector.ArmId, safe, linear, speed, mode);
         }
 
         /// <summary>

@@ -8,9 +8,21 @@ namespace Arcor2.ClientSdk.ClientServices.Enums
     /// Represents state of a scene.
     /// </summary>
     public enum OnlineState {
+        /// <summary>
+        /// The scene is starting. It is illegal to invoke RPCs requiring started scene in this state. 
+        /// </summary>
         Starting,
+        /// <summary>
+        /// The scene is started. 
+        /// </summary>
         Started,
+        /// <summary>
+        /// The scene is starting. It is illegal to invoke RPCs requiring stopped scene in this state. 
+        /// </summary>
         Stopping,
+        /// <summary>
+        /// The scene is stopped. 
+        /// </summary>
         Stopped
     }
 

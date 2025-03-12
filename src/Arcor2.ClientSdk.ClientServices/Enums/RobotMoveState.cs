@@ -3,11 +3,20 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.ClientServices.Enums {
     /// <summary>
-    /// Represents a type of robot movement event.
+    /// Represents a state of a robot movement event.
     /// </summary>
     public enum RobotMoveType {
+        /// <summary>
+        /// The movement task has started and the robot is moving.
+        /// </summary>
         Started = 0,
+        /// <summary>
+        /// The movement task has finished.
+        /// </summary>
         Finished,
+        /// <summary>
+        /// The movement task has failed.
+        /// </summary>
         Failed
     }
 

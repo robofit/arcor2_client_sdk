@@ -6,12 +6,48 @@ namespace Arcor2.ClientSdk.ClientServices.Enums {
     /// Represents state of a package.
     /// </summary>
     public enum PackageState { 
-        Running = 0,
+        /// <summary>
+        /// The package is currently starting.
+        /// </summary>
+        /// <remarks>
+        /// The ARCOR2 server 1.5.0 currently fails to generate this state in its OpenAPI specification.
+        /// Due to this, this state won't be set until the issue is fixed.
+        /// </remarks>
+        Starting = 0,
+        /// <summary>
+        /// The package is currently executing.
+        /// </summary>
+        Running,
+        /// <summary>
+        /// The package is currently stopping.
+        /// </summary>
         Stopping,
+        /// <summary>
+        /// The package is stopped.
+        /// </summary>
+        /// <remarks>
+        /// A show main menu request usually follows this state.
+        /// </remarks>
         Stopped,
+        /// <summary>
+        /// The package is pausing.
+        /// </summary>
         Pausing,
+        /// <summary>
+        /// The package is paused.
+        /// </summary>
         Paused,
+        /// <summary>
+        /// The package is resuming execution.
+        /// </summary>
         Resuming,
+        /// <summary>
+        /// The state of the package is undefined.
+        /// </summary>
+        /// <remarks>
+        /// This is the default state when a package is not open for both the client and the server.
+        /// During active package usage, this state should never occur.
+        /// </remarks>
         Undefined
     }
 
