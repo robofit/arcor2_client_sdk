@@ -191,7 +191,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers
         /// Updates object model.
         /// </summary>
         /// <remarks>
-        /// Can only be used in opened scene. Only model parameter changes are possible, the model must be of the same type.
+        /// Can only be used in an opened scene with enabled object type of the CollisionObject type.
+        ///
+        /// Only model parameter changes are possible, the model must be of the same type.
         /// </remarks>
         /// <param name="model">New object model.</param>
         /// <exception cref="Arcor2Exception"></exception>

@@ -186,6 +186,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <param name="port">Port od the ARCOR2 server</param>
         /// <exception cref="UriFormatException" />
         /// <exception cref="InvalidOperationException" />
+        /// <exception cref="ObjectDisposedException" />
         public async Task ConnectAsync(string domain, ushort port) {
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
@@ -199,7 +200,8 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <param name="uri">Full WebSocket URI</param>
         /// <exception cref="UriFormatException" />
         /// <exception cref="InvalidOperationException" />
-        /// <exception cref="Communication.Arcor2ConnectionException"> When inner WebSocket fails to connect.</exception>
+        /// <exception cref="Arcor2ConnectionException"> When inner WebSocket fails to connect.</exception>
+        /// <exception cref="ObjectDisposedException" />
         public async Task ConnectAsync(Uri uri) {
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
@@ -211,6 +213,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// Closes the connection to ARCOR2 sever and disposes the object.
         /// </summary>
         /// <exception cref="InvalidOperationException">When closed in the <see cref="Arcor2SessionState.Closed"/>.</exception>
+        /// <exception cref="ObjectDisposedException" />
         public async Task CloseAsync() {
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
@@ -254,6 +257,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <exception cref="Arcor2Exception" />
         /// <exception cref="Arcor2ConnectionException" />
         /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ObjectDisposedException" />
         public async Task<SystemInfoResponseData> InitializeAsync() {
             if(disposed) {
                 throw new ObjectDisposedException(nameof(Arcor2Session));
