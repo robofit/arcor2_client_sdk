@@ -30,7 +30,7 @@ namespace Arcor2.ClientSdk.Communication {
                 Signature = signature;
                 CancellationTokenSource = new CancellationTokenSource((int) timeout);
                 CancellationTokenSource.Token.Register(() => {
-                    TaskCompletionSource.TrySetException(new TimeoutException("The request timed out."));
+                    TaskCompletionSource.TrySetException(new Arcor2ConnectionException("A pending ARCOR2 request failed.", new TimeoutException("The request timed out.")));
                 }, false);
             }
         }
