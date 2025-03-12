@@ -118,7 +118,9 @@ namespace Arcor2.ClientSdk.ClientServices {
         public Arcor2Session(Arcor2SessionSettings? settings = null, IArcor2Logger? logger = null) {
             Logger = logger;
             Settings = settings ?? new Arcor2SessionSettings();
-            Client = new Arcor2Client(new Arcor2ClientSettings(), Logger);
+            Client = new Arcor2Client(new Arcor2ClientSettings {
+                RpcTimeout = settings?.RpcTimeout ?? 10_000
+            }, Logger);
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
@@ -151,7 +153,9 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             Logger = logger;
             Settings = settings ?? new Arcor2SessionSettings();
-            Client = new Arcor2Client(websocket, new Arcor2ClientSettings(), Logger);
+            Client = new Arcor2Client(websocket, new Arcor2ClientSettings {
+                RpcTimeout = settings?.RpcTimeout ?? 10_000
+            }, Logger);
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
@@ -549,7 +553,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         public async Task UploadPackageAsync(string packageId, string encodedPackage) {
             var response = await Client.UploadPackageAsync(new UploadPackageRequestArgs(packageId, encodedPackage));
             if(!response.Result) {
-                throw new Arcor2Exception($"Upload package {packageId} failed.", response.Messages);
+                throw new Arcor2Exception($"Uploading package {packageId} failed.", response.Messages);
             }
         }
 
@@ -582,7 +586,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
             var response = await Client.GetMarkersCornersAsync(new MarkersCornersRequestArgs(cameraParameters, encodedImage));
             if(!response.Result) {
-                throw new Arcor2Exception($"Estimating marker corners failed.", response.Messages);
+                throw new Arcor2Exception($"Estimating marker corner position failed.", response.Messages);
             }
 
             return response.Data;
@@ -789,7 +793,11 @@ namespace Arcor2.ClientSdk.ClientServices {
                     try {
                         await ReloadPackagesAsync();
                     }
-                    catch { /*It is possible close can happen soon*/ }
+                    catch {
+                        // It is possible a connection close can happen when executing this.
+                        // The best action we can do is swallow the exception.
+                        // There is no good way to 100% prevent it due to timing.
+                    }
                 }
             }
 

@@ -15,5 +15,10 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// To fata can be later loaded manually using methods with 'Reload' prefix. 
         /// </remarks>
         public bool LoadData { get; set; } = true;
+
+        /// <summary>
+        /// RPC response timeout in milliseconds. By default, <c>10,000</c>ms.
+        /// </summary>
+        public uint RpcTimeout { get; set; } = 10_000;
     }
 }
