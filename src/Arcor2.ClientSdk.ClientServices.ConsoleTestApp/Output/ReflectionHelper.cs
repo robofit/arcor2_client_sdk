@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Ignore.Test.Output;
+namespace Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Output;
 
 public static class ReflectionHelper {
     // ANSI color codes

@@ -1,10 +1,10 @@
 ﻿using System.Collections.ObjectModel;
+using Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Models;
+using Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Output;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.Managers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
-using Ignore.Test.Models;
-using Ignore.Test.Output;
 using Newtonsoft.Json;
 using Joint = Arcor2.ClientSdk.Communication.OpenApi.Models.Joint;
 

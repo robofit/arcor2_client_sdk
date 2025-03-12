@@ -1,4 +1,4 @@
-﻿namespace Ignore.Test.Output;
+﻿namespace Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Output;
 
 public class ConsoleEx {
     public static void WriteLineColor(string message, ConsoleColor color) {

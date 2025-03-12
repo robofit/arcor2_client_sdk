@@ -1,6 +1,6 @@
 ﻿using Arcor2.ClientSdk.Communication;
 
-namespace Ignore.Test.Output;
+namespace Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Output;
 
 public class ConsoleLogger : IArcor2Logger {
     public void LogInfo(string message) {
