@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Arcor2.ClientSdk.ClientServices.IntegrationTests\Arcor2.ClientSdk.ClientServices.IntegrationTests.csproj" />
-    <ProjectReference Include="..\Arcor2.ClientSdk.ClientServices\Arcor2.ClientSdk.ClientServices.csproj" />
+    <ProjectReference Include="..\..\src\Arcor2.ClientSdk.ClientServices\Arcor2.ClientSdk.ClientServices.csproj" />
   </ItemGroup>
 </Project>
