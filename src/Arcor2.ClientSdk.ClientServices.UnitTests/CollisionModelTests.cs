@@ -73,9 +73,9 @@ public class CollisionModelTests {
     [Fact]
     public void MeshCollisionModel_Valid_CorrectRepresentation() {
         var mesh = new MeshCollisionModel("AssetID", [
-            new Pose(new Position(0, 0, 0)),
-            new Pose(new Position(1, 0, 0)),
-            new Pose(new Position(0, 1, 0))
+            new Pose(new Position()),
+            new Pose(new Position(1)),
+            new Pose(new Position(0, 1))
         ]);
         Assert.Equal(3, mesh.Points.Count);
 

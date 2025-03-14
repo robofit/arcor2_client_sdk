@@ -4,11 +4,11 @@ using System.Collections.Specialized;
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 
 /// <summary>
-/// Helper class for testing ObservableCollection.CollectionChanged events 
+///     Helper class for testing ObservableCollection.CollectionChanged events
 /// </summary>
 public class CollectionChangedAwaiter {
-    private readonly TaskCompletionSource<NotifyCollectionChangedEventArgs> tcs = new();
     private readonly CancellationTokenSource cts = new();
+    private readonly TaskCompletionSource<NotifyCollectionChangedEventArgs> tcs = new();
     private Func<NotifyCollectionChangedEventArgs, bool>? predicate;
 
     public CollectionChangedAwaiter() { }
@@ -29,7 +29,7 @@ public class CollectionChangedAwaiter {
     }
 
     /// <summary>
-    /// Waits for a CollectionChanged event to be raised.
+    ///     Waits for a CollectionChanged event to be raised.
     /// </summary>
     /// <param name="timeout">Timeout in milliseconds</param>
     /// <returns>The event arguments that were raised</returns>
@@ -52,10 +52,9 @@ public class CollectionChangedAwaiter {
         }
     }
 }
-
 public static class ReadOnlyObservableCollectionExtensions {
     /// <summary>
-    /// Creates an awaiter for the CollectionChanged event
+    ///     Creates an awaiter for the CollectionChanged event
     /// </summary>
     /// <param name="collection">The ObservableCollection to monitor</param>
     /// <param name="action">Optional action type to filter for (Add, Remove, etc.)</param>
@@ -74,7 +73,7 @@ public static class ReadOnlyObservableCollectionExtensions {
     }
 
     /// <summary>
-    /// Waits for a specific item to be added to the collection
+    ///     Waits for a specific item to be added to the collection
     /// </summary>
     /// <typeparam name="T">Type of items in the collection</typeparam>
     /// <param name="collection">The ObservableCollection to monitor</param>
@@ -102,7 +101,7 @@ public static class ReadOnlyObservableCollectionExtensions {
     }
 
     /// <summary>
-    /// Waits for a specific item to be removed from the collection
+    ///     Waits for a specific item to be removed from the collection
     /// </summary>
     /// <typeparam name="T">Type of items in the collection</typeparam>
     /// <param name="collection">The ObservableCollection to monitor</param>

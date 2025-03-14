@@ -4,19 +4,19 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 namespace Arcor2.ClientSdk.ClientServices.UnitTests;
 
 public class ObjectTypeTypingTests {
-    private ObjectTypeManager Generic;
-    private ObjectTypeManager GenericWithPose;
-    private ObjectTypeManager CollisionObject;
-    private ObjectTypeManager VirtualCollisionObject;
     private ObjectTypeManager Camera;
-    private ObjectTypeManager Robot;
-    private ObjectTypeManager MultiArmRobot;
+    private ObjectTypeManager CollisionObject;
+    private ObjectTypeManager Cube;
     private ObjectTypeManager DobotM1;
     private ObjectTypeManager DobotM2;
+    private ObjectTypeManager Generic;
+    private ObjectTypeManager GenericWithColor;
+    private ObjectTypeManager GenericWithPose;
+    private ObjectTypeManager MultiArmRobot;
     private ObjectTypeManager MultiArmTerminator;
     private ObjectTypeManager Nikon;
-    private ObjectTypeManager GenericWithColor;
-    private ObjectTypeManager Cube;
+    private ObjectTypeManager Robot;
+    private ObjectTypeManager VirtualCollisionObject;
 
     public ObjectTypeTypingTests() {
         // Create a session with mock type system

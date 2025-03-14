@@ -1,7 +1,7 @@
-using System.Collections.Specialized;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
@@ -65,11 +65,11 @@ public class Arcor2SessionObjectTypeTests(ITestOutputHelper output) : TestBase(o
             var record = await Record.ExceptionAsync(() => Session.CreateObjectTypeAsync(name,
                 "CollisionObject",
                 "desc",
-                new BoxCollisionModel(1, 1, 1), 
-                null!, 
-                false, 
-                true, 
-                false, 
+                new BoxCollisionModel(1, 1, 1),
+                null!,
+                false,
+                true,
+                false,
                 [new ParameterMeta("Param", "string", false, null!, "Description", "\"value\"")]));
 
             // Assert
@@ -119,14 +119,12 @@ public class Arcor2SessionObjectTypeTests(ITestOutputHelper output) : TestBase(o
         }
     }
 
-
-
     [Fact]
     public async Task UpdateObjectModel_Model_Updates() {
         await Setup();
 
         // Arrange
-        var name = "OT" + RandomName()[0..4];
+        var name = "OT" + RandomName()[..4];
         var addAwaiter = Session.ObjectTypes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
             .WaitForEventAsync();
         await Session.CreateObjectTypeAsync(name, "CollisionObject", model: new BoxCollisionModel(2, 2, 2));
@@ -161,7 +159,7 @@ public class Arcor2SessionObjectTypeTests(ITestOutputHelper output) : TestBase(o
         await Setup();
 
         // Arrange
-        var name = "OT" + RandomName()[0..4];
+        var name = "OT" + RandomName()[..4];
         var addAwaiter = Session.ObjectTypes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
             .WaitForEventAsync();
         await Session.CreateObjectTypeAsync(name);
@@ -189,7 +187,7 @@ public class Arcor2SessionObjectTypeTests(ITestOutputHelper output) : TestBase(o
         await Setup();
 
         // Arrange
-        var name = "OT" + RandomName()[0..4];
+        var name = "OT" + RandomName()[..4];
         var addAwaiter = Session.ObjectTypes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
             .WaitForEventAsync();
         await Session.CreateObjectTypeAsync(name);

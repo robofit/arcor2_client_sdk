@@ -1,12 +1,11 @@
-﻿using System.Collections.Specialized;
-using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
-
 
 public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(output) {
     [Fact]
@@ -14,14 +13,16 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
         await Setup();
         await SceneClosed();
         // Arrange
-        var addAwaiter = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+        var addAwaiter = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+            .WaitForEventAsync();
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
         var projectName = RandomName();
         var projectDesc = RandomName();
 
         try {
             // Act
-            var record = await Record.ExceptionAsync(() => Session.CreateProjectAsync(Session.Scenes.First(), projectName, projectDesc));
+            var record = await Record.ExceptionAsync(() =>
+                Session.CreateProjectAsync(Session.Scenes.First(), projectName, projectDesc));
 
             // Assert
             Assert.Null(record);
@@ -77,7 +78,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
 
         try {
-            var removeAwaiter = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var removeAwaiter = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
+                .WaitForEventAsync();
             // Act
             var record = await Record.ExceptionAsync(() => Session.Projects.First().CloseAsync(true));
 
@@ -87,7 +89,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             Assert.Empty(Session.Projects);
             await navigationAwaiter;
             Assert.Equal(NavigationState.MenuListOfProjects, Session.NavigationState);
-
         }
         finally {
             await DisposeSceneClosed();
@@ -113,7 +114,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await navigationAwaiter;
             Assert.Equal(NavigationState.MenuListOfProjects, Session.NavigationState);
             Assert.NotNull(Session.NavigationId);
-
         }
         finally {
             await DisposeSceneClosed();
@@ -139,7 +139,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await navigationAwaiter;
             Assert.Equal(NavigationState.MenuListOfProjects, Session.NavigationState);
             Assert.NotNull(Session.NavigationId);
-
         }
         finally {
             await DisposeProjectClosed();
@@ -156,7 +155,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
         try {
             var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
             var removingAwaiter = Session.Projects.First().GetRemovingAwaiterAndWait();
-            var remove = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var remove = Session.Projects.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
+                .WaitForEventAsync();
             // Act
             var record = await Record.ExceptionAsync(() => Session.Projects.First().RemoveAsync());
 
@@ -191,7 +191,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await changedAwaiter;
             Assert.Single(Session.Projects);
             Assert.Equal(newName, Session.Projects.First().Data.Name);
-
         }
         finally {
             await DisposeProjectClosed();
@@ -217,7 +216,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await changedAwaiter;
             Assert.Single(Session.Projects);
             Assert.Equal(newDesc, Session.Projects.First().Data.Description);
-
         }
         finally {
             await DisposeProjectClosed();
@@ -242,7 +240,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             Assert.True(Session.Projects.First().IsOpen);
             Assert.Equal(NavigationState.Project, Session.NavigationState);
             Assert.Equal(Session.Projects.First().Id, Session.NavigationId);
-
         }
         finally {
             await DisposeProjectOpen();
@@ -261,14 +258,13 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             var changedAwaiterEvent = new EventAwaiter();
             project.Updated += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
-            
+
             await project.SetHasLogicAsync(false);
 
             await changedAwaiter;
 
             // Assert
             Assert.False(project.Data.HasLogic);
-
         }
         finally {
             await DisposeProjectClosed();
@@ -293,7 +289,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
 
             // Assert
             Assert.Equal(2, Session.Projects.Count);
-
         }
         finally {
             await Session.Projects.Last().RemoveAsync();
@@ -320,8 +315,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await addAwaiter;
 
             // Assert
-            Assert.Contains(project.Overrides!, p => p.Data.Parameter is { Name: "url", Type: "string", Value: "\"new_value\"" });
-
+            Assert.Contains(project.Overrides!,
+                p => p.Data.Parameter is { Name: "url", Type: "string", Value: "\"new_value\"" });
         }
         finally {
             await DisposeProjectOpen();
@@ -351,7 +346,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
 
             // Assert
             Assert.Empty(project.Overrides!);
-
         }
         finally {
             await DisposeProjectOpen();
@@ -382,7 +376,6 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
 
             // Assert
             Assert.Equal("\"newer_value\"", @override.Data.Parameter.Value);
-
         }
         finally {
             await DisposeProjectOpen();
@@ -406,8 +399,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await addAwaiter;
 
             // Assert
-            Assert.Contains(project.Parameters!, p => p.Data is { Name: "test_param", Type: "string", Value: "\"value\"" });
-
+            Assert.Contains(project.Parameters!,
+                p => p.Data is { Name: "test_param", Type: "string", Value: "\"value\"" });
         }
         finally {
             await DisposeProjectOpen();
@@ -435,8 +428,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await removeAwaiter;
 
             // Assert
-            Assert.DoesNotContain(project.Parameters!, p => p.Data is { Name: "test_param", Type: "string", Value: "\"value\"" });
-
+            Assert.DoesNotContain(project.Parameters!,
+                p => p.Data is { Name: "test_param", Type: "string", Value: "\"value\"" });
         }
         finally {
             await DisposeProjectOpen();
@@ -473,8 +466,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await changedAwaiter2;
 
             // Assert
-            Assert.Contains(project.Parameters!, p => p.Data is { Name: "new_name", Type: "string", Value: "\"new_value\"" });
-
+            Assert.Contains(project.Parameters!,
+                p => p.Data is { Name: "new_name", Type: "string", Value: "\"new_value\"" });
         }
         finally {
             await DisposeProjectOpen();
@@ -534,7 +527,7 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             // Act
             var removeAwaiter = project.LogicItems!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
                 .WaitForEventAsync();
-            await firstLogicItem.RemoveAsync(); 
+            await firstLogicItem.RemoveAsync();
             await removeAwaiter;
 
             var updatedAwaiter = new EventAwaiter();
@@ -545,7 +538,7 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             await updateTask;
 
             // Assert
-            Assert.Single(project.LogicItems!); 
+            Assert.Single(project.LogicItems!);
             var updatedLogicItem = project.LogicItems!.First();
             Assert.Equal("START", updatedLogicItem.Data.Start);
             Assert.Equal(action.Id, updatedLogicItem.Data.End);
@@ -591,8 +584,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
         await Session.Projects.First().SaveAsync();
 
         try {
-
-            var startedAwaiterEvent = new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Started);
+            var startedAwaiterEvent =
+                new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Started);
             Session.Projects.First().Scene.OnlineStateChanged += startedAwaiterEvent.EventHandler;
             var startedAwaiter = startedAwaiterEvent.WaitForEventAsync();
 
@@ -606,7 +599,8 @@ public class Arcor2SessionProjectTests(ITestOutputHelper output) : TestBase(outp
             Assert.Null(Session.Projects.First().Scene.State.Message);
 
             // Arrange
-            var stoppedAwaiterEvent = new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Stopped);
+            var stoppedAwaiterEvent =
+                new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Stopped);
             Session.Projects.First().Scene.OnlineStateChanged += stoppedAwaiterEvent.EventHandler;
             var stoppedAwaiter = stoppedAwaiterEvent.WaitForEventAsync();
 

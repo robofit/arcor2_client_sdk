@@ -1,7 +1,7 @@
-using System.Collections.Specialized;
 using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
@@ -14,11 +14,13 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
 
         try {
             // Arrange
-            var addAwaiter = Session.Projects.First().ActionPoints!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            var addAwaiter = Session.Projects.First().ActionPoints!
+                .CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
             var actionPointName = RandomName();
 
             // Act
-            var record = await Record.ExceptionAsync(() => Session.Projects.First().AddActionPointAsync(actionPointName, new Position()));
+            var record = await Record.ExceptionAsync(() =>
+                Session.Projects.First().AddActionPointAsync(actionPointName, new Position()));
 
             // Assert
             Assert.Null(record);
@@ -42,14 +44,16 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
 
         try {
             // Arrange
-            var addAwaiter = project.ActionPoints!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            var addAwaiter = project.ActionPoints!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+                .WaitForEventAsync();
             var actionPointName = RandomName();
             var robot = project.Scene.ActionObjects!.First();
             await project.Scene.StartAsync();
             await project.Scene.GetStartedAwaiter().WaitForEventAsync();
 
             // Act
-            var record = await Record.ExceptionAsync(() => project.AddActionPointUsingRobotAsync(actionPointName, robot));
+            var record =
+                await Record.ExceptionAsync(() => project.AddActionPointUsingRobotAsync(actionPointName, robot));
 
             // Assert
             Assert.Null(record);
@@ -133,7 +137,8 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
             var actionPoint = Session.Projects.First().ActionPoints!.First();
 
             // Act
-            var removeAwaiter = Session.Projects.First().ActionPoints!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var removeAwaiter = Session.Projects.First().ActionPoints!
+                .CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
             await actionPoint.RemoveAsync();
             await removeAwaiter;
 
@@ -164,7 +169,7 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
             await actionPoint.RenameAsync(newName);
 
             await changedAwaiter;
-            
+
             // Assert
             Assert.Equal(newName, actionPoint.Data.Name);
         }
@@ -241,8 +246,9 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
             var actionPoint = Session.Projects.First().ActionPoints!.First();
 
             // Act
-            var addAwaiter = Session.Projects.First().ActionPoints!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
-            await actionPoint.DuplicateAsync(new Position(999,999,999));
+            var addAwaiter = Session.Projects.First().ActionPoints!
+                .CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            await actionPoint.DuplicateAsync(new Position(999, 999, 999));
             await addAwaiter;
 
             // Assert
@@ -274,7 +280,6 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
             // Act
             var record = await Record.ExceptionAsync(() => actionPoint.AddJointsUsingRobotAsync(robot));
             await addAwaiter;
-
 
             // Assert
             Assert.Null(record);
@@ -481,7 +486,7 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
 
         try {
             // Arrange
-            var newOrientation = new Orientation(0.7071067811865475m, 0, 0, 0.7071067811865475m); 
+            var newOrientation = new Orientation(0.7071067811865475m, 0, 0, 0.7071067811865475m);
 
             // Act
             var updatedAwaiter = new EventAwaiter();
@@ -578,7 +583,8 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
 
         try {
             // Arrange
-            var removeAwaiter = actionPoint.Orientations.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
+            var removeAwaiter = actionPoint.Orientations
+                .CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
                 .WaitForEventAsync();
 
             // Act
@@ -606,10 +612,11 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
             var robot = Session.Projects.First().Scene.ActionObjects!.First();
 
             // Act
-            var addAwaiter = actionPoint.Actions!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            var addAwaiter = actionPoint.Actions!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+                .WaitForEventAsync();
             var record = await Record.ExceptionAsync(() => actionPoint.AddActionAsync(
-                "home", 
-                robot, 
+                "home",
+                robot,
                 robot.ObjectType.Data.Actions.First(a => a.Name == "home"),
                 new List<ActionParameter>()));
 
@@ -701,7 +708,7 @@ public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : Te
 
             // Assert
             await executingAwaiter.WaitForEventAsync(); // Ensure Executing event is raised
-            await executedAwaiter.WaitForEventAsync();  // Ensure Executed event is raised
+            await executedAwaiter.WaitForEventAsync(); // Ensure Executed event is raised
         }
         finally {
             await DisposeProjectStarted();

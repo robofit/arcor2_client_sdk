@@ -1,126 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.Managers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.Design;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using PackageStateEventArgs = Arcor2.ClientSdk.Communication.PackageStateEventArgs;
 
 namespace Arcor2.ClientSdk.ClientServices {
-
     /// <summary>
-    /// Class used for session management and communication with ARCOR2 server.
-    /// This class mostly offers actions you could do from the main screen.
+    ///     Class used for session management and communication with ARCOR2 server.
+    ///     This class mostly offers actions you could do from the main screen.
     /// </summary>
     public class Arcor2Session : IDisposable {
-        private bool disposed;
-        // For storing the package state, because we receive PackageState before PackageInfo, and thus must store it. 
-        private readonly Stack<PackageStateData> unopenedPackageStates = new Stack<PackageStateData>();
         internal readonly Arcor2Client Client;
         internal readonly IArcor2Logger? Logger;
+
         internal readonly Arcor2SessionSettings Settings;
 
-        /// <summary>
-        /// The registered username. 
-        /// </summary>
-        public string? Username { get; private set; }
+        // For storing the package state, because we receive PackageState before PackageInfo, and thus must store it. 
+        private readonly Stack<PackageStateData> unopenedPackageStates = new Stack<PackageStateData>();
+        private bool disposed;
 
         /// <summary>
-        /// Represents a client view that is expected by the server.
-        /// Dynamically updated.
-        ///
-        /// The <see cref="NavigationId"/> contains the ID of the highlighted item, or another related object such as a scene.
-        /// </summary>
-        /// <remarks>
-        /// The ARCOR2 server is written with a specific UI design in mind.
-        /// Some states are purely informational and do not disallow any operations (e.g. there is no functional difference in all the menu states).
-        /// </remarks>
-        public NavigationState NavigationState { get; set; } = NavigationState.None;
-
-        /// <summary>
-        /// Raised when <see cref="NavigationState"/> changes.
-        /// </summary>
-        public event EventHandler<NavigationStateEventArgs>? NavigationStateChanged;
-
-        /// <summary>
-        /// The state of the session.
-        /// </summary>
-        public Arcor2SessionState ConnectionState { get; private set; } = Arcor2SessionState.None;
-
-
-        /// <summary>
-        /// The ID of a highlighted object or object needed for client view that is expected by the server
-        /// (e.g., a scene or project ID).
+        ///     The ID of a highlighted object or object needed for client view that is expected by the server
+        ///     (e.g., a scene or project ID).
         /// </summary>
         /// <value>
-        /// The ID of an object, <c>null</c> if not applicable.
+        ///     The ID of an object, <c>null</c> if not applicable.
         /// </value>
         public string? NavigationId;
 
-        internal ObservableCollection<ObjectTypeManager> objectTypes { get; } = new ObservableCollection<ObjectTypeManager>();
         /// <summary>
-        /// Collection of available object types.
-        /// </summary>
-        /// <remarks>Loaded on initialization and automatically maintained.</remarks>
-        public ReadOnlyObservableCollection<ObjectTypeManager> ObjectTypes { get; }
-
-        internal ObservableCollection<SceneManager> scenes { get; } = new ObservableCollection<SceneManager>();
-        /// <summary>
-        /// Collection of available scenes.
-        /// </summary>
-        /// <remarks>
-        /// If the server opens a scene, that scene will get fully initialized and added automatically (regardless of the current state).
-        /// Furthermore, users may also invoke <see cref="SceneManager.LoadAsync"/> on the specific instance to load the action objects without opening it.
-        /// </remarks>
-        public ReadOnlyObservableCollection<SceneManager> Scenes { get; }
-
-        internal ObservableCollection<ProjectManager> projects { get; } = new ObservableCollection<ProjectManager>();
-
-        /// <summary>
-        /// Collection of available projects.
-        /// </summary>
-        /// <remarks>
-        /// If the server opens a project, that project (and corresponding scene) will get fully initialized and added automatically (regardless of the current state).
-        /// </remarks>
-        public ReadOnlyObservableCollection<ProjectManager> Projects { get; }
-
-        internal ObservableCollection<PackageManager> packages { get; } = new ObservableCollection<PackageManager>();
-        /// <summary>
-        /// Collection of available packages.
-        /// </summary>
-        public ReadOnlyObservableCollection<PackageManager> Packages { get; }
-
-        /// <summary>
-        /// Raised when any connection-related error occurs.
-        /// </summary>
-        public event EventHandler<Exception>? ConnectionError;
-        /// <summary>
-        /// Raised when connection is closed.
-        /// </summary>
-        public event EventHandler? ConnectionClosed;
-        /// <summary>
-        /// Raised when connection is successfully opened.
-        /// </summary>
-        public event EventHandler? ConnectionOpened;
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="Arcor2Session"/> class.
+        ///     Initializes a new instance of <see cref="Arcor2Session" /> class.
         /// </summary>
         /// <param name="settings">The session settings.</param>
         /// <param name="logger">A logger instance.</param>
         public Arcor2Session(Arcor2SessionSettings? settings = null, IArcor2Logger? logger = null) {
             Logger = logger;
             Settings = settings ?? new Arcor2SessionSettings();
-            Client = new Arcor2Client(new Arcor2ClientSettings {
-                RpcTimeout = settings?.RpcTimeout ?? 10_000
-            }, Logger);
+            Client = new Arcor2Client(new Arcor2ClientSettings { RpcTimeout = settings?.RpcTimeout ?? 10_000 }, Logger);
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
@@ -140,22 +65,25 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Initializes a new instance of <see cref="Arcor2Session"/> class.
+        ///     Initializes a new instance of <see cref="Arcor2Session" /> class.
         /// </summary>
         /// <param name="settings">The session settings.</param>
-        /// <param name="websocket">A WebSocket object implementing the <see cref="IWebSocket"/> interface.</param>
+        /// <param name="websocket">A WebSocket object implementing the <see cref="IWebSocket" /> interface.</param>
         /// <param name="logger">A logger instance.</param>
-        /// <exception cref="InvalidOperationException">If the provided WebSocket instance is not in the <see cref="WebSocketState.None"/> state.</exception>
-        public Arcor2Session(IWebSocket websocket, Arcor2SessionSettings? settings = null, IArcor2Logger? logger = null) {
+        /// <exception cref="InvalidOperationException">
+        ///     If the provided WebSocket instance is not in the
+        ///     <see cref="WebSocketState.None" /> state.
+        /// </exception>
+        public Arcor2Session(IWebSocket websocket, Arcor2SessionSettings? settings = null,
+            IArcor2Logger? logger = null) {
             if(websocket.State != WebSocketState.None) {
                 throw new InvalidOperationException("The socket instance must be in the 'None' state.");
             }
 
             Logger = logger;
             Settings = settings ?? new Arcor2SessionSettings();
-            Client = new Arcor2Client(websocket, new Arcor2ClientSettings {
-                RpcTimeout = settings?.RpcTimeout ?? 10_000
-            }, Logger);
+            Client = new Arcor2Client(websocket,
+                new Arcor2ClientSettings { RpcTimeout = settings?.RpcTimeout ?? 10_000 }, Logger);
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
@@ -174,59 +102,72 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Retrieves the underlying <see cref="Arcor2Client"/> instance.
+        ///     The registered username.
         /// </summary>
-        /// <returns></returns>
-        public Arcor2Client GetUnderlyingArcor2Client() => Client;
+        public string? Username { get; private set; }
 
         /// <summary>
-        /// Establishes a connection to ARCOR2 server.
-        /// </summary>
-        /// <param name="domain">Domain of the ARCOR2 server</param>
-        /// <param name="port">Port od the ARCOR2 server</param>
-        /// <exception cref="UriFormatException" />
-        /// <exception cref="InvalidOperationException" />
-        /// <exception cref="ObjectDisposedException" />
-        public async Task ConnectAsync(string domain, ushort port) {
-            if(disposed) {
-                throw new ObjectDisposedException(nameof(Arcor2Session));
-            }
-            await Client.ConnectAsync(domain, port);
-        }
-
-        /// <summary>
-        /// Establishes a connection to ARCOR2 server.
-        /// </summary>
-        /// <param name="uri">Full WebSocket URI</param>
-        /// <exception cref="UriFormatException" />
-        /// <exception cref="InvalidOperationException" />
-        /// <exception cref="Arcor2ConnectionException"> When inner WebSocket fails to connect.</exception>
-        /// <exception cref="ObjectDisposedException" />
-        public async Task ConnectAsync(Uri uri) {
-            if(disposed) {
-                throw new ObjectDisposedException(nameof(Arcor2Session));
-            }
-            await Client.ConnectAsync(uri);
-        }
-
-        /// <summary>
-        /// Closes the connection to ARCOR2 sever and disposes the object.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">When closed in the <see cref="Arcor2SessionState.Closed"/>.</exception>
-        /// <exception cref="ObjectDisposedException" />
-        public async Task CloseAsync() {
-            if(disposed) {
-                throw new ObjectDisposedException(nameof(Arcor2Session));
-            }
-            await Client.CloseAsync();
-            Dispose();
-        }
-
-        /// <summary>
-        /// Disposes the object and if needed, closes the connection to ARCOR2 server.
+        ///     Represents a client view that is expected by the server.
+        ///     Dynamically updated.
+        ///     The <see cref="NavigationId" /> contains the ID of the highlighted item, or another related object such as a scene.
         /// </summary>
         /// <remarks>
-        /// Practically idempotent version of <see cref="CloseAsync"/>.
+        ///     The ARCOR2 server is written with a specific UI design in mind.
+        ///     Some states are purely informational and do not disallow any operations (e.g. there is no functional difference in
+        ///     all the menu states).
+        /// </remarks>
+        public NavigationState NavigationState { get; set; } = NavigationState.None;
+
+        /// <summary>
+        ///     The state of the session.
+        /// </summary>
+        public Arcor2SessionState ConnectionState { get; private set; } = Arcor2SessionState.None;
+
+        internal ObservableCollection<ObjectTypeManager> objectTypes { get; } =
+            new ObservableCollection<ObjectTypeManager>();
+
+        /// <summary>
+        ///     Collection of available object types.
+        /// </summary>
+        /// <remarks>Loaded on initialization and automatically maintained.</remarks>
+        public ReadOnlyObservableCollection<ObjectTypeManager> ObjectTypes { get; }
+
+        internal ObservableCollection<SceneManager> scenes { get; } = new ObservableCollection<SceneManager>();
+
+        /// <summary>
+        ///     Collection of available scenes.
+        /// </summary>
+        /// <remarks>
+        ///     If the server opens a scene, that scene will get fully initialized and added automatically (regardless of the
+        ///     current state).
+        ///     Furthermore, users may also invoke <see cref="SceneManager.LoadAsync" /> on the specific instance to load the
+        ///     action objects without opening it.
+        /// </remarks>
+        public ReadOnlyObservableCollection<SceneManager> Scenes { get; }
+
+        internal ObservableCollection<ProjectManager> projects { get; } = new ObservableCollection<ProjectManager>();
+
+        /// <summary>
+        ///     Collection of available projects.
+        /// </summary>
+        /// <remarks>
+        ///     If the server opens a project, that project (and corresponding scene) will get fully initialized and added
+        ///     automatically (regardless of the current state).
+        /// </remarks>
+        public ReadOnlyObservableCollection<ProjectManager> Projects { get; }
+
+        internal ObservableCollection<PackageManager> packages { get; } = new ObservableCollection<PackageManager>();
+
+        /// <summary>
+        ///     Collection of available packages.
+        /// </summary>
+        public ReadOnlyObservableCollection<PackageManager> Packages { get; }
+
+        /// <summary>
+        ///     Disposes the object and if needed, closes the connection to ARCOR2 server.
+        /// </summary>
+        /// <remarks>
+        ///     Practically idempotent version of <see cref="CloseAsync" />.
         /// </remarks>
         public void Dispose() {
             if(ConnectionState != Arcor2SessionState.Closed && ConnectionState != Arcor2SessionState.None) {
@@ -237,12 +178,15 @@ namespace Arcor2.ClientSdk.ClientServices {
             foreach(var scene in Scenes) {
                 scene.Dispose();
             }
+
             foreach(var project in Projects) {
                 project.Dispose();
             }
+
             foreach(var package in Packages) {
                 package.Dispose();
             }
+
             foreach(var objectType in ObjectTypes) {
                 objectType.Dispose();
             }
@@ -251,7 +195,80 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Initializes a session. Internally loads all object types, actions, scenes, project, etc..., and returns the server information.
+        ///     Raised when <see cref="NavigationState" /> changes.
+        /// </summary>
+        public event EventHandler<NavigationStateEventArgs>? NavigationStateChanged;
+
+        /// <summary>
+        ///     Raised when any connection-related error occurs.
+        /// </summary>
+        public event EventHandler<Exception>? ConnectionError;
+
+        /// <summary>
+        ///     Raised when connection is closed.
+        /// </summary>
+        public event EventHandler? ConnectionClosed;
+
+        /// <summary>
+        ///     Raised when connection is successfully opened.
+        /// </summary>
+        public event EventHandler? ConnectionOpened;
+
+        /// <summary>
+        ///     Retrieves the underlying <see cref="Arcor2Client" /> instance.
+        /// </summary>
+        /// <returns></returns>
+        public Arcor2Client GetUnderlyingArcor2Client() => Client;
+
+        /// <summary>
+        ///     Establishes a connection to ARCOR2 server.
+        /// </summary>
+        /// <param name="domain">Domain of the ARCOR2 server</param>
+        /// <param name="port">Port od the ARCOR2 server</param>
+        /// <exception cref="UriFormatException" />
+        /// <exception cref="InvalidOperationException" />
+        /// <exception cref="ObjectDisposedException" />
+        public async Task ConnectAsync(string domain, ushort port) {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
+
+            await Client.ConnectAsync(domain, port);
+        }
+
+        /// <summary>
+        ///     Establishes a connection to ARCOR2 server.
+        /// </summary>
+        /// <param name="uri">Full WebSocket URI</param>
+        /// <exception cref="UriFormatException" />
+        /// <exception cref="InvalidOperationException" />
+        /// <exception cref="Arcor2ConnectionException"> When inner WebSocket fails to connect.</exception>
+        /// <exception cref="ObjectDisposedException" />
+        public async Task ConnectAsync(Uri uri) {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
+
+            await Client.ConnectAsync(uri);
+        }
+
+        /// <summary>
+        ///     Closes the connection to ARCOR2 sever and disposes the object.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">When closed in the <see cref="Arcor2SessionState.Closed" />.</exception>
+        /// <exception cref="ObjectDisposedException" />
+        public async Task CloseAsync() {
+            if(disposed) {
+                throw new ObjectDisposedException(nameof(Arcor2Session));
+            }
+
+            await Client.CloseAsync();
+            Dispose();
+        }
+
+        /// <summary>
+        ///     Initializes a session. Internally loads all object types, actions, scenes, project, etc..., and returns the server
+        ///     information.
         /// </summary>
         /// <returns>The server information.</returns>
         /// <exception cref="Arcor2Exception" />
@@ -280,14 +297,16 @@ namespace Arcor2.ClientSdk.ClientServices {
                 await ReloadProjectsAsync();
                 await ReloadPackagesAsync();
             }
+
             return systemInfoResult.Data;
         }
 
         /// <summary>
-        /// Registers a user for this session and if there is opened, online scene or project, subscribes to robot events.
+        ///     Registers a user for this session and if there is opened, online scene or project, subscribes to robot events.
         /// </summary>
         /// <remarks>
-        /// If any robot is locked making us unable to register for its events, the registration will retry when it gets unlocked.
+        ///     If any robot is locked making us unable to register for its events, the registration will retry when it gets
+        ///     unlocked.
         /// </remarks>
         /// <param name="username">The username.</param>
         /// <exception cref="Arcor2Exception"></exception>
@@ -296,6 +315,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             if(!registrationResult.Result) {
                 throw new Arcor2Exception("User registration failed.", registrationResult.Messages);
             }
+
             Username = username;
             ConnectionState = Arcor2SessionState.Registered;
 
@@ -303,10 +323,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Updates the <see cref="Scenes"/> collection and scene metadata.
+        ///     Updates the <see cref="Scenes" /> collection and scene metadata.
         /// </summary>
         /// <remarks>
-        /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
+        ///     This method is called internally on initialization unless you specify otherwise and generally not needed to be
+        ///     ínvoked again.
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadScenesAsync() {
@@ -316,7 +337,9 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
 
             var newScenes = sceneResponse.Data.Select(scene =>
-                new BareScene(scene.Name, scene.Description, scene.Created, scene.Modified, scene.Modified, scene.Id)).ToList();
+                    new BareScene(scene.Name, scene.Description, scene.Created, scene.Modified, scene.Modified,
+                        scene.Id))
+                .ToList();
 
             var scenesToRemove = scenes
                 .Where(oldScene => newScenes.All(newScene => newScene.Id != oldScene.Id))
@@ -341,10 +364,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Updates the <see cref="Projects"/> collection and project metadata.
+        ///     Updates the <see cref="Projects" /> collection and project metadata.
         /// </summary>
         /// <remarks>
-        /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
+        ///     This method is called internally on initialization unless you specify otherwise and generally not needed to be
+        ///     ínvoked again.
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadProjectsAsync() {
@@ -354,7 +378,8 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
 
             var newProjects = projectResponse.Data.Select(project =>
-                new BareProject(project.Name, project.SceneId, project.Description, project.HasLogic, project.Created, project.Modified, project.IntModified, project.Id)).ToList();
+                new BareProject(project.Name, project.SceneId, project.Description, project.HasLogic, project.Created,
+                    project.Modified, project.IntModified, project.Id)).ToList();
 
             var projectsToRemove = projects
                 .Where(oldProject => newProjects.All(newProject => newProject.Id != oldProject.Id))
@@ -379,10 +404,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Updates the <see cref="Projects"/> collection and project metadata.
+        ///     Updates the <see cref="Projects" /> collection and project metadata.
         /// </summary>
         /// <remarks>
-        /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
+        ///     This method is called internally on initialization unless you specify otherwise and generally not needed to be
+        ///     ínvoked again.
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         public async Task ReloadPackagesAsync() {
@@ -414,10 +440,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Updates the <see cref="ObjectTypes"/> collection.
+        ///     Updates the <see cref="ObjectTypes" /> collection.
         /// </summary>
         /// <remarks>
-        /// This method is called internally on initialization unless you specify otherwise and generally not needed to be ínvoked again.
+        ///     This method is called internally on initialization unless you specify otherwise and generally not needed to be
+        ///     ínvoked again.
         /// </remarks>
         /// <exception cref="Arcor2Exception" />
         private async Task ReloadObjectTypesAsync() {
@@ -437,7 +464,8 @@ namespace Arcor2.ClientSdk.ClientServices {
                 from r in joinTable.DefaultIfEmpty()
                 select new { ObjectTypeMeta = objectTypeMeta, RobotMeta = r };
 
-            var objectTypesToRemove = ObjectTypes.Where(oldObjectType => newObjectTypes.All(newObjectType => newObjectType.ObjectTypeMeta.Type != oldObjectType.Id)).ToList();
+            var objectTypesToRemove = ObjectTypes.Where(oldObjectType =>
+                newObjectTypes.All(newObjectType => newObjectType.ObjectTypeMeta.Type != oldObjectType.Id)).ToList();
             foreach(var objectType in objectTypesToRemove) {
                 objectType.Dispose();
                 objectTypes.Remove(objectType);
@@ -446,7 +474,8 @@ namespace Arcor2.ClientSdk.ClientServices {
             foreach(var newObjectType in newObjectTypes) {
                 var existingObjectType = ObjectTypes.FirstOrDefault(o => o.Id == newObjectType.ObjectTypeMeta.Type);
                 if(existingObjectType != null) {
-                    existingObjectType.UpdateAccordingToNewObject(newObjectType.ObjectTypeMeta, newObjectType.RobotMeta);
+                    existingObjectType.UpdateAccordingToNewObject(newObjectType.ObjectTypeMeta,
+                        newObjectType.RobotMeta);
                 }
                 else {
                     objectTypes.Add(new ObjectTypeManager(this, newObjectType.ObjectTypeMeta, newObjectType.RobotMeta));
@@ -459,7 +488,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Adds a new scene.
+        ///     Adds a new scene.
         /// </summary>
         /// <param name="name">The name for the scene.</param>
         /// <param name="description">The description for the scene.</param>
@@ -472,7 +501,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Adds a new project.
+        ///     Adds a new project.
         /// </summary>
         /// <param name="scene">The parent scene.</param>
         /// <param name="name">The name for the project.</param>
@@ -480,15 +509,17 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <param name="hasLogic">Should project have logic?</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task CreateProjectAsync(SceneManager scene, string name, string description = "", bool hasLogic = true) {
-            var response = await Client.AddNewProjectAsync(new NewProjectRequestArgs(scene.Id, name, description, hasLogic));
+        public async Task CreateProjectAsync(SceneManager scene, string name, string description = "",
+            bool hasLogic = true) {
+            var response =
+                await Client.AddNewProjectAsync(new NewProjectRequestArgs(scene.Id, name, description, hasLogic));
             if(!response.Result) {
                 throw new Arcor2Exception("Creating a new project failed.", response.Messages);
             }
         }
 
         /// <summary>
-        /// Adds a new project.
+        ///     Adds a new project.
         /// </summary>
         /// <param name="sceneId">The parent scene ID.</param>
         /// <param name="name">The name for the project.</param>
@@ -496,28 +527,42 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <param name="hasLogic">Should project have logic?</param>
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task CreateProjectAsync(string sceneId, string name, string description = "", bool hasLogic = true) {
-            var response = await Client.AddNewProjectAsync(new NewProjectRequestArgs(sceneId, name, description, hasLogic));
+        public async Task CreateProjectAsync(string sceneId, string name, string description = "",
+            bool hasLogic = true) {
+            var response =
+                await Client.AddNewProjectAsync(new NewProjectRequestArgs(sceneId, name, description, hasLogic));
             if(!response.Result) {
                 throw new Arcor2Exception("Creating a new project failed.", response.Messages);
             }
         }
 
         /// <summary>
-        /// Adds a new object type.
+        ///     Adds a new object type.
         /// </summary>
         /// <param name="type">The object type ID.</param>
         /// <param name="description">The description. By default, <c>null</c>.</param>
         /// <param name="base">The object type ID of the parent object type. By default, Generic.</param>
-        /// <param name="model">The model of the object. By default, <c>null</c> meaning no model. Must be based on CollisionModel type.</param>
-        /// <param name="sceneParentObjectType">The required parent action object in scene. By default, <c>null</c> meaning no required parent.</param>
+        /// <param name="model">
+        ///     The model of the object. By default, <c>null</c> meaning no model. Must be based on CollisionModel
+        ///     type.
+        /// </param>
+        /// <param name="sceneParentObjectType">
+        ///     The required parent action object in scene. By default, <c>null</c> meaning no
+        ///     required parent.
+        /// </param>
         /// <param name="hasPose">When <c>true</c>, the object type will have a pose. By default, <c>false</c>.</param>
-        /// <param name="isAbstract">When <c>true</c>, the object type will be marked as abstract and can't be instantiated into action object. By default, <c>false</c>.</param>
+        /// <param name="isAbstract">
+        ///     When <c>true</c>, the object type will be marked as abstract and can't be instantiated into
+        ///     action object. By default, <c>false</c>.
+        /// </param>
         /// <param name="isDisabled">When <c>true</c>, the object type won't be usable. By default, <c>false</c>.</param>
         /// <param name="parameters">A list of parameter definitions.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task CreateObjectTypeAsync(string type, string @base = "Generic", string? description = null, CollisionModel? model = null, string? sceneParentObjectType = null, bool hasPose = false, bool isAbstract = false, bool isDisabled = false, List<ParameterMeta>? parameters =  null) {
-            var meta = new ObjectTypeMeta(type, description!, false, @base, model?.ToObjectModel(type)!, sceneParentObjectType!,
+        public async Task CreateObjectTypeAsync(string type, string @base = "Generic", string? description = null,
+            CollisionModel? model = null, string? sceneParentObjectType = null, bool hasPose = false,
+            bool isAbstract = false, bool isDisabled = false, List<ParameterMeta>? parameters = null) {
+            var meta = new ObjectTypeMeta(type, description!, false, @base, model?.ToObjectModel(type)!,
+                sceneParentObjectType!,
                 hasPose, isAbstract, isDisabled, null!, parameters ?? new List<ParameterMeta>());
             var response = await Client.AddNewObjectTypeAsync(meta);
             if(!response.Result) {
@@ -526,20 +571,29 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Adds a new object type.
+        ///     Adds a new object type.
         /// </summary>
         /// <param name="type">The object type ID.</param>
         /// <param name="description">The description. By default, <c>null</c>.</param>
         /// <param name="base">The type of the parent object type. By default, Generic.</param>
         /// <param name="model">The model of the object. By default, <c>null</c> meaning no model.</param>
-        /// <param name="sceneParentObjectType">The required parent action object in scene. By default, <c>null</c> meaning no required parent.</param>
+        /// <param name="sceneParentObjectType">
+        ///     The required parent action object in scene. By default, <c>null</c> meaning no
+        ///     required parent.
+        /// </param>
         /// <param name="hasPose">When <c>true</c>, the object type will have a pose. By default, <c>false</c>.</param>
-        /// <param name="isAbstract">When <c>true</c>, the object type will be marked as abstract and can't be instantiated into action object. By default, <c>false</c>.</param>
+        /// <param name="isAbstract">
+        ///     When <c>true</c>, the object type will be marked as abstract and can't be instantiated into
+        ///     action object. By default, <c>false</c>.
+        /// </param>
         /// <param name="isDisabled">When <c>true</c>, the object type won't be usable. By default, <c>false</c>.</param>
         /// <param name="parameters">A list of parameter definitions.</param>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task CreateObjectTypeAsync(string type, ObjectTypeManager @base, string? description = null, CollisionModel? model = null, ObjectTypeManager? sceneParentObjectType = null, bool hasPose = false, bool isAbstract = false, bool isDisabled = false, List<ParameterMeta>? parameters = null) {
-            var meta = new ObjectTypeMeta(type, description!, false, @base.Id, model?.ToObjectModel(type)!, sceneParentObjectType?.Id ?? null!,
+        public async Task CreateObjectTypeAsync(string type, ObjectTypeManager @base, string? description = null,
+            CollisionModel? model = null, ObjectTypeManager? sceneParentObjectType = null, bool hasPose = false,
+            bool isAbstract = false, bool isDisabled = false, List<ParameterMeta>? parameters = null) {
+            var meta = new ObjectTypeMeta(type, description!, false, @base.Id, model?.ToObjectModel(type)!,
+                sceneParentObjectType?.Id ?? null!,
                 hasPose, isAbstract, isDisabled, null!, parameters ?? new List<ParameterMeta>());
             var response = await Client.AddNewObjectTypeAsync(meta);
             if(!response.Result) {
@@ -548,7 +602,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Uploads a package to the server.
+        ///     Uploads a package to the server.
         /// </summary>
         /// <param name="packageId">The ID of the package.</param>
         /// <param name="encodedPackage">The package ZIP file encoded as base64 string.</param>
@@ -562,48 +616,57 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Estimates the pose of the camera relative to detected markers in an image.
+        ///     Estimates the pose of the camera relative to detected markers in an image.
         /// </summary>
         /// <param name="cameraParameters">Intrinsic camera parameters (camera matrix and distortion coefficients).</param>
         /// <param name="image">Raw byte array representing the image in JPEG format.</param>
-        /// <param name="inverse">If true, the returned pose represents the camera's position and orientation relative to the marker. If false, it represents the marker's pose relative to the camera.</param>
-        /// <returns>An <see cref="EstimatedPose"/> object containing the camera's position and orientation relative to the detected markers.</returns>
+        /// <param name="inverse">
+        ///     If true, the returned pose represents the camera's position and orientation relative to the
+        ///     marker. If false, it represents the marker's pose relative to the camera.
+        /// </param>
+        /// <returns>
+        ///     An <see cref="EstimatedPose" /> object containing the camera's position and orientation relative to the
+        ///     detected markers.
+        /// </returns>
         /// <exception cref="Arcor2Exception"></exception>
-        public async Task<EstimatedPose> EstimateCameraPoseAsync(CameraParameters cameraParameters, byte[] image, bool inverse = false) {
+        public async Task<EstimatedPose> EstimateCameraPoseAsync(CameraParameters cameraParameters, byte[] image,
+            bool inverse = false) {
             var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
-            var response = await Client.GetCameraPoseAsync(new GetCameraPoseRequestArgs(cameraParameters, encodedImage, inverse));
+            var response =
+                await Client.GetCameraPoseAsync(new GetCameraPoseRequestArgs(cameraParameters, encodedImage, inverse));
             if(!response.Result) {
-                throw new Arcor2Exception($"Estimating camera pose failed.", response.Messages);
-            }
-            return response.Data;
-        }
-
-
-        /// <summary>
-        /// Detects the corners of markers in an image and returns their coordinates.
-        /// </summary>
-        /// <param name="cameraParameters">Intrinsic camera parameters (camera matrix and distortion coefficients).</param>
-        /// <param name="image">Raw byte array representing the image in JPEG format.</param>
-        /// <returns>A list of <see cref="MarkerCorners"/> objects representing the coordinates of detected marker corners.</returns>
-        /// <exception cref="Arcor2Exception"></exception>
-        public async Task<List<MarkerCorners>> EstimateMarkerCornersAsync(CameraParameters cameraParameters, byte[] image) {
-            var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
-            var response = await Client.GetMarkersCornersAsync(new MarkersCornersRequestArgs(cameraParameters, encodedImage));
-            if(!response.Result) {
-                throw new Arcor2Exception($"Estimating marker corner position failed.", response.Messages);
+                throw new Arcor2Exception("Estimating camera pose failed.", response.Messages);
             }
 
             return response.Data;
         }
+
         /// <summary>
-        /// Subscribes to robot events if there is online opened scene.
+        ///     Detects the corners of markers in an image and returns their coordinates.
+        /// </summary>
+        /// <param name="cameraParameters">Intrinsic camera parameters (camera matrix and distortion coefficients).</param>
+        /// <param name="image">Raw byte array representing the image in JPEG format.</param>
+        /// <returns>A list of <see cref="MarkerCorners" /> objects representing the coordinates of detected marker corners.</returns>
+        /// <exception cref="Arcor2Exception"></exception>
+        public async Task<List<MarkerCorners>> EstimateMarkerCornersAsync(CameraParameters cameraParameters,
+            byte[] image) {
+            var encodedImage = Encoding.GetEncoding("iso-8859-1").GetString(image);
+            var response =
+                await Client.GetMarkersCornersAsync(new MarkersCornersRequestArgs(cameraParameters, encodedImage));
+            if(!response.Result) {
+                throw new Arcor2Exception("Estimating marker corner position failed.", response.Messages);
+            }
+
+            return response.Data;
+        }
+
+        /// <summary>
+        ///     Subscribes to robot events if there is online opened scene.
         /// </summary>
         private async Task RegisterForActiveRobotEvents() {
-            var scene = NavigationState == NavigationState.Scene ?
-                Scenes.First(s => s.Id == NavigationId) :
-                NavigationState == NavigationState.Project ?
-                    Projects.First(p => p.Id == NavigationId).Scene :
-                    null;
+            var scene = NavigationState == NavigationState.Scene ? Scenes.First(s => s.Id == NavigationId) :
+                NavigationState == NavigationState.Project ? Projects.First(p => p.Id == NavigationId).Scene :
+                null;
             if(scene is { State: { State: OnlineState.Started } }) {
                 var robotsFailedToRegister = await scene.GetRobotInfoAndUpdatesAsync();
                 foreach(var robot in robotsFailedToRegister) {
@@ -626,7 +689,8 @@ namespace Arcor2.ClientSdk.ClientServices {
                             }
                             else {
                                 // Now we can assume it was really an error.
-                                Logger?.LogError($"Robot {robot.Id} couldn't be subscribed for updates on registration.");
+                                Logger?.LogError(
+                                    $"Robot {robot.Id} couldn't be subscribed for updates on registration.");
                             }
                         }
                     }
@@ -635,7 +699,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Configures one time event that resubscribes to robot events on unlock.
+        ///     Configures one time event that resubscribes to robot events on unlock.
         /// </summary>
         private void ConfigureResubscriptionOnUnlock(ActionObjectManager robot) {
             Logger?.LogInfo($"Robot {robot.Id} was locked on registration. Retrying on unlock.");
@@ -667,6 +731,7 @@ namespace Arcor2.ClientSdk.ClientServices {
                     catch(Arcor2Exception ex) {
                         Logger?.LogError($"Failed retried subscription to robot {robot.Id} with \"{ex.Message}\".");
                     }
+
                     // ReSharper disable once AccessToModifiedClosure
                     actionObject.Unlocked -= resubscribeOnUnlock;
                 }
@@ -711,9 +776,8 @@ namespace Arcor2.ClientSdk.ClientServices {
             Client.PackageInfo -= OnPackageInfo;
         }
 
-        private void OnPackageAdded(object sender, PackageEventArgs e) {
+        private void OnPackageAdded(object sender, PackageEventArgs e) =>
             packages.Add(new PackageManager(this, e.Data));
-        }
 
         private async void OnProjectClosed(object sender, EventArgs e) {
             // In the rare case the order is weird
@@ -725,7 +789,9 @@ namespace Arcor2.ClientSdk.ClientServices {
                 try {
                     await ReloadProjectsAsync();
                 }
-                catch { /*It is possible close can happen soon*/ }
+                catch {
+                    /*It is possible close can happen soon*/
+                }
             }
 
             NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
@@ -764,8 +830,11 @@ namespace Arcor2.ClientSdk.ClientServices {
                 try {
                     await ReloadScenesAsync();
                 }
-                catch { /*It is possible close can happen soon*/ }
+                catch {
+                    /*It is possible close can happen soon*/
+                }
             }
+
             NavigationStateChanged?.Invoke(this, new NavigationStateEventArgs(NavigationState, NavigationId));
         }
 

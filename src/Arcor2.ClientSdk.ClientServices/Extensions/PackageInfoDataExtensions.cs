@@ -2,8 +2,7 @@
 
 namespace Arcor2.ClientSdk.ClientServices.Extensions {
     internal static class PackageInfoDataExtensions {
-        public static PackageMeta MapToPackageMeta(this PackageInfoData package) {
-            return new PackageMeta(package.PackageName);
-        }
+        public static PackageMeta MapToPackageMeta(this PackageInfoData package) =>
+            new PackageMeta(package.PackageName);
     }
 }

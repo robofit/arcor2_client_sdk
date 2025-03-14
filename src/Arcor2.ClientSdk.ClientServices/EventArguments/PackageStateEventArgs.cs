@@ -1,24 +1,21 @@
-﻿using System;
-using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
+using System;
 
-namespace Arcor2.ClientSdk.ClientServices.EventArguments
-{
+namespace Arcor2.ClientSdk.ClientServices.EventArguments {
     /// <summary>
-    /// Event args for package state changes.
+    ///     Event args for package state changes.
     /// </summary>
-    public class PackageStateEventArgs : EventArgs
-    {
+    public class PackageStateEventArgs : EventArgs {
         /// <summary>
-        /// The state of the package.
+        ///     Initializes a new instance of <see cref="PackageStateEventArgs" /> class.
         /// </summary>
-        public PackageState State { get; }
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="PackageStateEventArgs"/> class.
-        /// </summary>
-        public PackageStateEventArgs(PackageState state)
-        {
+        public PackageStateEventArgs(PackageState state) {
             State = state;
         }
+
+        /// <summary>
+        ///     The state of the package.
+        /// </summary>
+        public PackageState State { get; }
     }
 }

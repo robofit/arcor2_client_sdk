@@ -1,9 +1,9 @@
-﻿using System.Collections.Specialized;
-using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 using Joint = Arcor2.ClientSdk.ClientServices.Models.Joint;
 
@@ -17,11 +17,13 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
 
         // Arrange
         try {
-            var addAwaiter = Session.Scenes.First().ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+            var addAwaiter = Session.Scenes.First().ActionObjects!
+                .CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
                 .WaitForEventAsync();
 
             // Act
-            await Session.Scenes.First().AddActionObjectAsync("DobotM1", "Dobot", new Pose(new Position(0,0,0), new Orientation(0,0,0,1)));
+            await Session.Scenes.First()
+                .AddActionObjectAsync("DobotM1", "Dobot", new Pose(new Position(), new Orientation()));
 
             // Assert
             await addAwaiter;
@@ -159,7 +161,6 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
         }
     }
 
-
     [Fact]
     public async Task MoveToPose_DobotImpossible_FailsMove() {
         await Setup();
@@ -168,7 +169,8 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
 
         try {
             // Arrange
-            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToPoseEventArgs>(a => a.MoveEventType == RobotMoveType.Failed);
+            var robotMoveToPoseAwaiter =
+                new EventAwaiter<RobotMovingToPoseEventArgs>(a => a.MoveEventType == RobotMoveType.Failed);
             actionObject.MovingToPose += (sender, args) => robotMoveToPoseAwaiter.EventHandler(sender, args);
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
@@ -195,7 +197,8 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
 
         try {
             // Arrange
-            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToJointsEventArgs>(a => a.MoveEventType == RobotMoveType.Failed);
+            var robotMoveToPoseAwaiter =
+                new EventAwaiter<RobotMovingToJointsEventArgs>(a => a.MoveEventType == RobotMoveType.Failed);
             actionObject.MovingToJoints += robotMoveToPoseAwaiter.EventHandler;
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
@@ -203,7 +206,8 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
             var updatedTask = updatedAwaiter.WaitForEventAsync();
 
             var modifiedJoint = actionObject.Data.Joints!.First();
-            var newJoints = actionObject.Data.Joints!.Skip(1).Append(new Joint(modifiedJoint.Id, modifiedJoint.Value - 0.1m));
+            var newJoints = actionObject.Data.Joints!.Skip(1)
+                .Append(new Joint(modifiedJoint.Id, modifiedJoint.Value - 0.1m));
 
             // Act
             await actionObject.MoveToJointsAsync(newJoints.ToList());
@@ -238,7 +242,7 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
             await actionObject.MoveToActionPointJointsAsync(actionPoint.Joints.First());
 
             // Assert
-            await Task.WhenAll(/*robotMoveToPoseTask,*/ updatedTask);
+            await Task.WhenAll( /*robotMoveToPoseTask,*/ updatedTask);
         }
         finally {
             await DisposeProjectStarted();
@@ -255,7 +259,9 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
 
         try {
             // Arrange
-            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToActionPointOrientationEventArgs>(a => a.MoveEventType == RobotMoveType.Finished);
+            var robotMoveToPoseAwaiter =
+                new EventAwaiter<RobotMovingToActionPointOrientationEventArgs>(a =>
+                    a.MoveEventType == RobotMoveType.Finished);
             actionObject.MovingToActionPointOrientation += robotMoveToPoseAwaiter.EventHandler;
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
@@ -282,7 +288,8 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
 
         try {
             // Arrange
-            var robotMoveToPoseAwaiter = new EventAwaiter<RobotMovingToPoseEventArgs>(a => a.MoveEventType == RobotMoveType.Finished);
+            var robotMoveToPoseAwaiter =
+                new EventAwaiter<RobotMovingToPoseEventArgs>(a => a.MoveEventType == RobotMoveType.Finished);
             actionObject.MovingToPose += (sender, args) => robotMoveToPoseAwaiter.EventHandler(sender, args);
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
@@ -291,7 +298,7 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
             var oldPose = actionObject.Data.Meta.Pose.Position;
 
             // Act
-            await actionObject.StepPositionAsync(Axis.X, 0.1m, "default");
+            await actionObject.StepPositionAsync(Axis.X, 0.1m);
 
             // Assert
             await Task.WhenAll(updatedTask, robotMoveToPoseTask);
@@ -311,7 +318,7 @@ public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase
 
         try {
             // Act
-            await Assert.ThrowsAsync<Arcor2Exception>(() => actionObject.SetHandTeachingModeAsync(true));
+            await Assert.ThrowsAsync<Arcor2Exception>(() => actionObject.SetHandTeachingModeAsync());
         }
         finally {
             await DisposeProjectStarted();

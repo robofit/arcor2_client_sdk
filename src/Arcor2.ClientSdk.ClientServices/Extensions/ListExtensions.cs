@@ -1,16 +1,15 @@
-﻿using System;
+﻿using Arcor2.ClientSdk.ClientServices.Managers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Arcor2.ClientSdk.ClientServices.Managers;
 
 namespace Arcor2.ClientSdk.ClientServices.Extensions {
     internal static class ListExtensions {
-
         /// <summary>
-        /// This method updates Arcor2ObjectManagers lists according to  parameters.
+        ///     This method updates Arcor2ObjectManagers lists according to  parameters.
         /// </summary>
-        /// <typeparam name="TManager">The type of <see cref="LockableArcor2ObjectManager{TData}"/>.</typeparam>
+        /// <typeparam name="TManager">The type of <see cref="LockableArcor2ObjectManager{TData}" />.</typeparam>
         /// <typeparam name="TObject">The object with new data.</typeparam>
         /// <param name="managers">The list of manager objects.</param>
         /// <param name="newObjects">The list of new objects.</param>
@@ -19,12 +18,13 @@ namespace Arcor2.ClientSdk.ClientServices.Extensions {
         /// <param name="creation">Function to create the manager using the new object.</param>
         /// <returns>Updated list of instances.</returns>
         /// <example>
-        /// ActionObjects = ActionObjects.UpdateListOfArcor2Objects(scene.Objects,
-        ///                 o => o.Id,
-        ///                 (manager, o) => manager.UpdateAccordingToNewObject(o),
-        ///                 o => new ActionObjectManager(Session, this, o));
+        ///     ActionObjects = ActionObjects.UpdateListOfArcor2Objects(scene.Objects,
+        ///     o => o.Id,
+        ///     (manager, o) => manager.UpdateAccordingToNewObject(o),
+        ///     o => new ActionObjectManager(Session, this, o));
         /// </example>
-        public static IList<TManager> UpdateListOfLockableArcor2Objects<TManager, TObject, T>(this IList<TManager>? managers, IList<TObject> newObjects, 
+        public static IList<TManager> UpdateListOfLockableArcor2Objects<TManager, TObject, T>(
+            this IList<TManager>? managers, IList<TObject> newObjects,
             Func<TObject, string> id, Action<TManager, TObject> update, Func<TObject, TManager> creation)
             where TManager : LockableArcor2ObjectManager<T> where T : class {
             // This is mainly a convenience method for a very reoccurring problem, because
@@ -47,7 +47,7 @@ namespace Arcor2.ClientSdk.ClientServices.Extensions {
             // Dispose missing
             var disposeList = managers
                 .Where(a => newObjects.All(s => a.Id != id(s))).ToList();
-            foreach (var managerDispose in disposeList) {
+            foreach(var managerDispose in disposeList) {
                 managerDispose.Dispose();
             }
 
@@ -55,7 +55,8 @@ namespace Arcor2.ClientSdk.ClientServices.Extensions {
             return managers.Where(m => !disposeList.Contains(m)).ToList();
         }
 
-        public static void UpdateListOfLockableArcor2Objects<TManager, TObject, T>(this ObservableCollection<TManager>? managers, IList<TObject> newObjects,
+        public static void UpdateListOfLockableArcor2Objects<TManager, TObject, T>(
+            this ObservableCollection<TManager>? managers, IList<TObject> newObjects,
             Func<TObject, string> id, Action<TManager, TObject> update, Func<TObject, TManager> creation)
             where TManager : LockableArcor2ObjectManager<T> where T : class {
             // This is mainly a convenience method for a very reoccurring problem, because
@@ -78,18 +79,19 @@ namespace Arcor2.ClientSdk.ClientServices.Extensions {
             // Dispose missing
             var disposeList = managers
                 .Where(a => newObjects.All(s => a.Id != id(s))).ToList();
-            foreach (var dispose in disposeList) {
+            foreach(var dispose in disposeList) {
                 managers.Remove(dispose);
             }
+
             foreach(var managerDispose in disposeList) {
                 managerDispose.Dispose();
             }
         }
 
         /// <summary>
-        /// This method updates Arcor2ObjectManagers lists according to  parameters.
+        ///     This method updates Arcor2ObjectManagers lists according to  parameters.
         /// </summary>
-        /// <typeparam name="TManager">The type of <see cref="Arcor2ObjectManager{TData}"/>.</typeparam>
+        /// <typeparam name="TManager">The type of <see cref="Arcor2ObjectManager{TData}" />.</typeparam>
         /// <typeparam name="TObject">The object with new data.</typeparam>
         /// <param name="managers">The list of manager objects.</param>
         /// <param name="newObjects">The list of new objects.</param>
@@ -97,7 +99,8 @@ namespace Arcor2.ClientSdk.ClientServices.Extensions {
         /// <param name="update">Function to update the manager using the new object.</param>
         /// <param name="creation">Function to create the manager using the new object.</param>
         /// <returns>Updated list of instances.</returns>
-        public static IList<TManager> UpdateListOfArcor2Objects<TManager, TObject, T>(this IList<TManager>? managers, IList<TObject> newObjects,
+        public static IList<TManager> UpdateListOfArcor2Objects<TManager, TObject, T>(this IList<TManager>? managers,
+            IList<TObject> newObjects,
             Func<TManager, TObject, bool> equality, Action<TManager, TObject> update, Func<TObject, TManager> creation)
             where TManager : Arcor2ObjectManager<T> where T : class {
             // This is mainly a convenience method for a very reoccurring problem, because

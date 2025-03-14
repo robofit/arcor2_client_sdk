@@ -1,8 +1,8 @@
-﻿using System.Collections.Specialized;
-using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
@@ -34,14 +34,13 @@ public class Arcor2SessionInitTests(ITestOutputHelper output) : TestBase(output)
     [Fact]
     public async Task ConnectionSequence_TwoConnects_Throws() {
         await Session.ConnectAsync(Uri);
-         await Assert.ThrowsAsync<InvalidOperationException>(() => Session.ConnectAsync(Uri));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => Session.ConnectAsync(Uri));
         await Session.CloseAsync();
     }
 
     [Fact]
-    public async Task Close_BeforeOpened_Throws() {
+    public async Task Close_BeforeOpened_Throws() =>
         await Assert.ThrowsAsync<InvalidOperationException>(() => Session.CloseAsync());
-    }
 
     [Fact]
     public async Task Close_AfterClose_Throws() {
@@ -51,9 +50,8 @@ public class Arcor2SessionInitTests(ITestOutputHelper output) : TestBase(output)
     }
 
     [Fact]
-    public async Task Rpc_BeforeOpened_Throws() {
+    public async Task Rpc_BeforeOpened_Throws() =>
         await Assert.ThrowsAsync<InvalidOperationException>(() => Session.CreateSceneAsync("exception"));
-    }
 
     [Fact]
     public async Task ConnectionSequence_TwoCloses_Throws() {
@@ -139,7 +137,6 @@ public class Arcor2SessionInitTests(ITestOutputHelper output) : TestBase(output)
         await Session.RegisterAndSubscribeAsync("user");
         var ex = await Record.ExceptionAsync(async () => await session2.RegisterAndSubscribeAsync("user"));
 
-
         await Session.CloseAsync();
         await session2.CloseAsync();
     }
@@ -163,13 +160,14 @@ public class Arcor2SessionInitTests(ITestOutputHelper output) : TestBase(output)
             var openAwaiter = openAwaiterEvent.WaitForEventAsync();
 
             await client.AddNewSceneAsync(new NewSceneRequestArgs(RandomName()));
-            
+
             await openAwaiter;
             Assert.Equal(NavigationState.Scene, Session.NavigationState);
             Assert.Single(Session.Scenes);
         }
         finally {
-            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
+                .WaitForEventAsync();
             await Session.Scenes.First().RemoveAsync();
             await remove;
             await Session.CloseAsync();

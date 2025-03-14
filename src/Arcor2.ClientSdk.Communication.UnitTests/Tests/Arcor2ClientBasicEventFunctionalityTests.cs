@@ -3,8 +3,7 @@ using Arcor2.ClientSdk.Communication.OpenApi.Models;
 
 namespace Arcor2.ClientSdk.Communication.UnitTests.Tests;
 
-public class Arcor2ClientBasicEventFunctionalityTests : TestBase
-{
+public class Arcor2ClientBasicEventFunctionalityTests : TestBase {
     private ObjectsLocked sampleObjectsLockedEvent => new("ObjectsLocked", null, null!,
         new LockData([
             "objectId1",
@@ -13,12 +12,12 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     );
 
     private SceneChanged sampleSceneRemovedEvent => new("SceneChanged", SceneChanged.ChangeTypeEnum.Remove, null!,
-        new BareScene("SampleScene", "Description", DateTime.Parse("2020-01-01"), DateTime.Parse("2020-02-01"), DateTime.Parse("2020-02-01"), "sceneId1")
+        new BareScene("SampleScene", "Description", DateTime.Parse("2020-01-01"), DateTime.Parse("2020-02-01"),
+            DateTime.Parse("2020-02-01"), "sceneId1")
     );
 
     [Fact]
-    public async Task Event_Valid_Success()
-    {
+    public async Task Event_Valid_Success() {
         await Client.ConnectAsync(ValidUri);
         ObjectsLockEventArgs? raisedEventArgs = null;
 
@@ -32,8 +31,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     }
 
     [Fact]
-    public async Task ChangedEvent_Valid_Success()
-    {
+    public async Task ChangedEvent_Valid_Success() {
         await Client.ConnectAsync(ValidUri);
         BareSceneEventArgs? raisedEventArgs = null;
 
@@ -51,8 +49,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     }
 
     [Fact]
-    public async Task Event_WrongEventName_Ignored()
-    {
+    public async Task Event_WrongEventName_Ignored() {
         await Client.ConnectAsync(ValidUri);
         ObjectsLockEventArgs? raisedEventArgs = null;
 
@@ -67,8 +64,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     }
 
     [Fact]
-    public async Task ChangedEvent_UnsupportedChangeType_Ignored()
-    {
+    public async Task ChangedEvent_UnsupportedChangeType_Ignored() {
         await Client.ConnectAsync(ValidUri);
 
         var sampleEventWrongChangeType = sampleSceneRemovedEvent;
@@ -81,8 +77,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     }
 
     [Fact]
-    public async Task Event_EmptyJson_Ignored()
-    {
+    public async Task Event_EmptyJson_Ignored() {
         await Client.ConnectAsync(ValidUri);
 
         var exception = Record.Exception(() => WebSocket.ReceiveMockMessage("{}"));
@@ -92,8 +87,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     }
 
     [Fact]
-    public async Task Event_EmptyString_Ignored()
-    {
+    public async Task Event_EmptyString_Ignored() {
         await Client.ConnectAsync(ValidUri);
 
         var exception = Record.Exception(() => WebSocket.ReceiveMockMessage(""));
@@ -103,8 +97,7 @@ public class Arcor2ClientBasicEventFunctionalityTests : TestBase
     }
 
     [Fact]
-    public async Task Event_MalformedJson_Ignored()
-    {
+    public async Task Event_MalformedJson_Ignored() {
         await Client.ConnectAsync(ValidUri);
 
         var exception = Record.Exception(() => WebSocket.ReceiveMockMessage("{[\"hi\""));

@@ -1,26 +1,21 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using System.Net.WebSockets;
-using DotNet.Testcontainers.Builders;
+﻿using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
 using DotNet.Testcontainers.Volumes;
+using System.Net;
+using System.Net.Sockets;
+using System.Net.WebSockets;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 
 public class Arcor2ServerFixture : IAsyncLifetime {
+    private readonly string arServerContainerName;
     private readonly List<IContainer> containers = new();
     private readonly Dictionary<string, INetwork> networks = new();
+    private readonly Dictionary<string, int> randomPorts = new();
+    private readonly string testRunId;
     private readonly Dictionary<string, IVolume> volumes = new();
     private IContainer arServerContainer = null!;
-    private readonly string testRunId;
-    private readonly string arServerContainerName;
-    private readonly Dictionary<string, int> randomPorts = new();
-
-    public string Host => "localhost";
-    public ushort Port { get; }
-
-    public Uri Uri => new($"ws://{Host}:{Port}");
 
     public Arcor2ServerFixture() {
         testRunId = GenerateRunId();
@@ -28,6 +23,11 @@ public class Arcor2ServerFixture : IAsyncLifetime {
 
         Port = GetRandomPort();
     }
+
+    public string Host => "localhost";
+    public ushort Port { get; }
+
+    public Uri Uri => new($"ws://{Host}:{Port}");
 
     public async Task InitializeAsync() {
         await CreateNetworksAsync();
@@ -39,7 +39,8 @@ public class Arcor2ServerFixture : IAsyncLifetime {
     public async Task DisposeAsync() {
         await arServerContainer.StopAsync();
 
-        var stopTasks = containers.Where(c => c != arServerContainer).Select(container => container.StopAsync()).ToList();
+        var stopTasks = containers.Where(c => c != arServerContainer).Select(container => container.StopAsync())
+            .ToList();
         await Task.WhenAll(stopTasks);
         var disposeTasks = containers.Select(container => container.DisposeAsync().AsTask()).ToList();
         await Task.WhenAll(disposeTasks);
@@ -72,6 +73,7 @@ public class Arcor2ServerFixture : IAsyncLifetime {
         if(!randomPorts.ContainsKey(serviceName)) {
             randomPorts[serviceName] = GetRandomPort();
         }
+
         return randomPorts[serviceName];
     }
 
@@ -312,8 +314,7 @@ public class Arcor2ServerFixture : IAsyncLifetime {
         await Task.WhenAll(
             uploadBuiltinObjectsContainer.GetExitCodeAsync(),
             uploadObjectTypesContainer.GetExitCodeAsync()
-            );
-
+        );
 
         // AR Server Container
         var secondaryServerPort = GetServicePort("secondary-server");
@@ -347,7 +348,7 @@ public class Arcor2ServerFixture : IAsyncLifetime {
         const int maxRetries = 90;
         const int delayMs = 1000;
 
-        for(int i = 0; i < maxRetries; i++) {
+        for(var i = 0; i < maxRetries; i++) {
             try {
                 using var client = new ClientWebSocket();
                 var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -356,11 +357,14 @@ public class Arcor2ServerFixture : IAsyncLifetime {
                     return;
                 }
             }
-            catch { /* This is fine in our case. */ }
+            catch {
+                /* This is fine in our case. */
+            }
 
             await Task.Delay(delayMs);
         }
 
-        throw new TimeoutException($"Server at {Uri} did not become ready within {maxRetries * delayMs / 1000} seconds");
+        throw new TimeoutException(
+            $"Server at {Uri} did not become ready within {maxRetries * delayMs / 1000} seconds");
     }
 }

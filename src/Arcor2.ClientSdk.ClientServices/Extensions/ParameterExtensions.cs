@@ -2,8 +2,6 @@
 
 namespace Arcor2.ClientSdk.ClientServices.Extensions {
     public static class ParameterExtensions {
-        public static IdValue ToIdValue(this Parameter param) {
-            return new IdValue(param.Name, param.Value);
-        }
+        public static IdValue ToIdValue(this Parameter param) => new IdValue(param.Name, param.Value);
     }
 }

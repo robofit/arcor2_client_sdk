@@ -1,9 +1,9 @@
-﻿using System.Collections.Specialized;
-using Arcor2.ClientSdk.ClientServices.Enums;
+﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
@@ -13,7 +13,8 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
     public async Task Create_Valid_Creates() {
         await Setup();
         // Arrange
-        var addAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+        var addAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+            .WaitForEventAsync();
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
         var sceneName = RandomName();
         var sceneDesc = RandomName();
@@ -64,7 +65,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         }
     }
 
-
     [Fact]
     public async Task Close_NotSavedForced_ClosesNotPersists() {
         await Setup();
@@ -73,7 +73,8 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
 
         try {
-            var removeAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var removeAwaiter = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
+                .WaitForEventAsync();
             // Act
             var record = await Record.ExceptionAsync(() => Session.Scenes.First().CloseAsync(true));
 
@@ -83,7 +84,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             Assert.Empty(Session.Scenes);
             await navigationAwaiter;
             Assert.Equal(NavigationState.MenuListOfScenes, Session.NavigationState);
-
         }
         finally {
             await Teardown();
@@ -108,7 +108,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             await navigationAwaiter;
             Assert.Equal(NavigationState.MenuListOfScenes, Session.NavigationState);
             Assert.NotNull(Session.NavigationId);
-
         }
         finally {
             await DisposeSceneClosed();
@@ -134,7 +133,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             await navigationAwaiter;
             Assert.Equal(NavigationState.MenuListOfScenes, Session.NavigationState);
             Assert.NotNull(Session.NavigationId);
-
         }
         finally {
             await DisposeSceneClosed();
@@ -151,7 +149,8 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         try {
             var navigationAwaiter = GetNavigationAwaiter().WaitForEventAsync();
             var removingAwaiter = Session.Scenes.First().GetRemovingAwaiterAndWait();
-            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove).WaitForEventAsync();
+            var remove = Session.Scenes.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Remove)
+                .WaitForEventAsync();
             // Act
             var record = await Record.ExceptionAsync(() => Session.Scenes.First().RemoveAsync());
 
@@ -190,7 +189,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         }
     }
 
-
     [Fact]
     public async Task Rename_Valid_Renames() {
         await Setup();
@@ -208,7 +206,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             await changedAwaiter;
             Assert.Single(Session.Scenes);
             Assert.Equal(newName, Session.Scenes.First().Data.Name);
-
         }
         finally {
             await DisposeSceneClosed();
@@ -234,7 +231,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             await changedAwaiter;
             Assert.Single(Session.Scenes);
             Assert.Equal(newDesc, Session.Scenes.First().Data.Description);
-
         }
         finally {
             await DisposeSceneClosed();
@@ -259,7 +255,6 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             Assert.True(Session.Scenes.First().IsOpen);
             Assert.Equal(NavigationState.Scene, Session.NavigationState);
             Assert.Equal(Session.Scenes.First().Id, Session.NavigationId);
-
         }
         finally {
             await DisposeSceneOpen();
@@ -275,8 +270,8 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         await Session.Scenes.First().SaveAsync();
 
         try {
-
-            var startedAwaiterEvent = new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Started);
+            var startedAwaiterEvent =
+                new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Started);
             Session.Scenes.First().OnlineStateChanged += startedAwaiterEvent.EventHandler;
             var startedAwaiter = startedAwaiterEvent.WaitForEventAsync();
 
@@ -290,7 +285,8 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             Assert.Null(Session.Scenes.First().State.Message);
 
             // Arrange
-            var stoppedAwaiterEvent = new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Stopped);
+            var stoppedAwaiterEvent =
+                new EventAwaiter<SceneOnlineStateEventArgs>(e => e.State.State == OnlineState.Stopped);
             Session.Scenes.First().OnlineStateChanged += stoppedAwaiterEvent.EventHandler;
             var stoppedAwaiter = stoppedAwaiterEvent.WaitForEventAsync();
 
@@ -318,13 +314,16 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
         var scene = Session.Scenes.First();
         try {
             // Act
-            var addAwaiter1 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            var addAwaiter1 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+                .WaitForEventAsync();
             await scene.AddVirtualCollisionBoxAsync("Box", new Pose(), new BoxCollisionModel(1, 2, 3));
             await addAwaiter1;
-            var addAwaiter2 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            var addAwaiter2 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+                .WaitForEventAsync();
             await scene.AddVirtualCollisionCylinderAsync("Cylinder", new Pose(), new CylinderCollisionModel(10, 1));
             await addAwaiter2;
-            var addAwaiter3 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add).WaitForEventAsync();
+            var addAwaiter3 = scene.ActionObjects!.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
+                .WaitForEventAsync();
             await scene.AddVirtualCollisionSphereAsync("Sphere", new Pose(), new SphereCollisionModel(15));
             await addAwaiter3;
 
@@ -337,9 +336,10 @@ public class Arcor2SessionSceneTests(ITestOutputHelper output) : TestBase(output
             Assert.Contains(Session.ObjectTypes, o => o.Data.Meta.Type == "Sphere");
         }
         finally {
-            foreach (var actionObject in scene.ActionObjects!) {
+            foreach(var actionObject in scene.ActionObjects!) {
                 await actionObject.RemoveAsync();
             }
+
             await DisposeSceneOpen();
             await Teardown();
         }

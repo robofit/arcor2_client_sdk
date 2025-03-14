@@ -3,25 +3,24 @@ using System.Collections.Generic;
 
 namespace Arcor2.ClientSdk.ClientServices {
     /// <summary>
-    /// Represents an error returned by the ARCOR2 server.
+    ///     Represents an error returned by the ARCOR2 server.
     /// </summary>
     public class Arcor2Exception : Exception {
         /// <summary>
-        /// The error messages returned by the server.
+        ///     The error message produced by the library.
+        /// </summary>
+        public string? ClientMessage;
+
+        /// <summary>
+        ///     The error messages returned by the server.
         /// </summary>
         /// <remarks>
-        /// More often than not, it is not null with a single message.
+        ///     More often than not, it is not null with a single message.
         /// </remarks>
         public List<string>? ServerMessages;
 
         /// <summary>
-        /// The error message produced by the library.
-        /// </summary>
-        public string? ClientMessage;
-
-
-        /// <summary>
-        /// Initializes new instance of the <see cref="Arcor2Exception"/> class with the specified error message.
+        ///     Initializes new instance of the <see cref="Arcor2Exception" /> class with the specified error message.
         /// </summary>
         /// <param name="message">The error message</param>
         public Arcor2Exception(string message) : base(message) {
@@ -29,7 +28,8 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Initializes new instance of the <see cref="Arcor2Exception"/> class with the specified error message and a list of error messages returned by the server.
+        ///     Initializes new instance of the <see cref="Arcor2Exception" /> class with the specified error message and a list of
+        ///     error messages returned by the server.
         /// </summary>
         /// <param name="message">The error message</param>
         /// <param name="serverErrorMessages">The error messages returned by the server.</param>
@@ -40,8 +40,9 @@ namespace Arcor2.ClientSdk.ClientServices {
         }
 
         /// <summary>
-        /// Initializes new instance of the <see cref="Arcor2Exception"/> class with the specified error message and a reference
-        /// to the inner exception that is the cause of this exception.
+        ///     Initializes new instance of the <see cref="Arcor2Exception" /> class with the specified error message and a
+        ///     reference
+        ///     to the inner exception that is the cause of this exception.
         /// </summary>
         /// <param name="message">The error message</param>
         /// <param name="innerException">The inner exception.</param>

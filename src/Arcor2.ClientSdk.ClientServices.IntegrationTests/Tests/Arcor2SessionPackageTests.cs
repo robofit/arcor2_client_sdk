@@ -1,10 +1,9 @@
-using System.Collections.Specialized;
 using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
+using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
-
 
 public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(output) {
     [Fact]
@@ -44,13 +43,12 @@ public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(outp
         await project.Scene.GetStoppedAwaiter().WaitForEventAsync();
         await project.SaveAsync();
 
-
         try {
             // Act
             var navAwaiter = GetNavigationAwaiter(n => n.State == NavigationState.Package).WaitForEventAsync();
             var addAwaiter = Session.Packages.CreateCollectionChangedAwaiter(NotifyCollectionChangedAction.Add)
                 .WaitForEventAsync();
-            await project.BuildIntoTemporaryPackageAndRunAsync(breakpoints, true);
+            await project.BuildIntoTemporaryPackageAndRunAsync(breakpoints);
 
             // Does not matter which comes first.
             await Task.WhenAll(navAwaiter, addAwaiter);
@@ -74,7 +72,6 @@ public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(outp
             Assert.Empty(Session.Packages);
             Assert.Equal(NavigationState.Project, Session.NavigationState);
             Assert.Equal(project.Id, Session.NavigationId);
-
         }
         finally {
             await DisposeProjectOpen();
@@ -173,7 +170,8 @@ public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(outp
 
         try {
             // Act
-            var backNavAwaiter = GetNavigationAwaiter(n => n.State == NavigationState.MenuListOfPackages).WaitForEventAsync();
+            var backNavAwaiter = GetNavigationAwaiter(n => n.State == NavigationState.MenuListOfPackages)
+                .WaitForEventAsync();
             await package.StopAsync();
             await package.GetPackageStateAwaiter(PackageState.Stopped).WaitForEventAsync();
 
@@ -265,7 +263,7 @@ public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(outp
         try {
             var stateBeforeTask = actionStartingAwaiter.WaitForEventAsync();
             var startTask = package.GetPackageStateAwaiter(PackageState.Paused).WaitForEventAsync();
-            await package.RunAsync(true);
+            await package.RunAsync();
             await startTask;
             await stateBeforeTask;
 
@@ -274,7 +272,6 @@ public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(outp
             var stateAfterTask = actionFinishedAwaiter.WaitForEventAsync();
             await package.StepAsync();
             await Task.WhenAll(stateAfterTask, runTask, pauseTask);
-
         }
         finally {
             await package.StopAsync();

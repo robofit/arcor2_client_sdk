@@ -8,7 +8,7 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void ToParameter_NoConstraintsDoubleWithDefaultValue_ValidRepresentation() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "double", false, null!, "A test parameter", "0.5", null!);
+        var meta = new ParameterMeta("TestParameter", "double", false, null!, "A test parameter", "0.5");
 
         // Act
         var parameter = meta.ToParameter();
@@ -22,7 +22,7 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void ToParameter_NoConstraintsIntegerWithDefaultValue_ValidRepresentation() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "integer", false, null!, "A test parameter", "0", null!);
+        var meta = new ParameterMeta("TestParameter", "integer", false, null!, "A test parameter", "0");
 
         // Act
         var parameter = meta.ToParameter();
@@ -36,7 +36,7 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void ToParameter_NoConstraintsBooleanWithDefaultValue_ValidRepresentation() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "boolean", false, null!, "A test parameter", "true", null!);
+        var meta = new ParameterMeta("TestParameter", "boolean", false, null!, "A test parameter", "true");
 
         // Act
         var parameter = meta.ToParameter();
@@ -50,7 +50,7 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void ToParameter_NoConstraintsStringWithDefaultValue_ValidRepresentation() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "string", false, null!, "A test parameter", "\"Hello\"", null!);
+        var meta = new ParameterMeta("TestParameter", "string", false, null!, "A test parameter", "\"Hello\"");
 
         // Act
         var parameter = meta.ToParameter();
@@ -64,7 +64,8 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void Validate_ValueConstraintsStringWithDefaultValue_Valid() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "string", false, null!, "A test parameter", "\"Hello\"", "{\"allowed_values\":[\"left\",\"right\"]}");
+        var meta = new ParameterMeta("TestParameter", "string", false, null!, "A test parameter", "\"Hello\"",
+            "{\"allowed_values\":[\"left\",\"right\"]}");
 
         // Act
         var validator = (meta.GetValidator() as ValuesParameterValidator)!;
@@ -80,7 +81,7 @@ public class ParameterMetaExtensionsTests {
 
         Assert.True(validator.Validate("lEft", StringComparison.InvariantCultureIgnoreCase));
         Assert.False(validator.Validate("", StringComparison.InvariantCultureIgnoreCase));
-        Assert.True(validator.Validate("Right",StringComparison.InvariantCultureIgnoreCase));
+        Assert.True(validator.Validate("Right", StringComparison.InvariantCultureIgnoreCase));
 
         Assert.Contains("left", validator.AllowedValues);
         Assert.Contains("right", validator.AllowedValues);
@@ -89,7 +90,8 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void Validate_RangeConstraintsDoubleWithDefaultValue_Valid() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "double", false, null!, "A test parameter", "0.5", "{\"minimum\":0.0,\"maximum\":10000000.0}");
+        var meta = new ParameterMeta("TestParameter", "double", false, null!, "A test parameter", "0.5",
+            "{\"minimum\":0.0,\"maximum\":10000000.0}");
 
         // Act
         var validator = (meta.GetValidator() as RangeParameterValidator)!;
@@ -113,7 +115,8 @@ public class ParameterMetaExtensionsTests {
     [Fact]
     public void Validate_RangeConstraintsIntegerWithDefaultValue_Valid() {
         // Arrange
-        var meta = new ParameterMeta("TestParameter", "integer", false, null!, "A test parameter", "5", "{\"minimum\":0,\"maximum\":10000000}");
+        var meta = new ParameterMeta("TestParameter", "integer", false, null!, "A test parameter", "5",
+            "{\"minimum\":0,\"maximum\":10000000}");
 
         // Act
         var validator = (meta.GetValidator() as RangeParameterValidator)!;

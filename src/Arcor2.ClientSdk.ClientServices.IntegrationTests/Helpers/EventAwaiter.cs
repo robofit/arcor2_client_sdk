@@ -5,14 +5,14 @@ using Arcor2.ClientSdk.ClientServices.Managers;
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 
 /// <summary>
-/// Helper class for testing events in xUnit
+///     Helper class for testing events in xUnit
 /// </summary>
 /// <typeparam name="TEventArgs">Type of event arguments</typeparam>
 public class EventAwaiter<TEventArgs>()
     where TEventArgs : EventArgs {
-    private readonly TaskCompletionSource<TEventArgs> tcs = new();
     private readonly CancellationTokenSource cts = new();
     private readonly Func<TEventArgs, bool>? predicate;
+    private readonly TaskCompletionSource<TEventArgs> tcs = new();
 
     public EventAwaiter(Func<TEventArgs, bool> predicate) : this() {
         this.predicate = predicate;
@@ -20,7 +20,7 @@ public class EventAwaiter<TEventArgs>()
 
     public void EventHandler(object? sender, TEventArgs e) {
         try {
-            if (predicate == null || predicate(e)) {
+            if(predicate == null || predicate(e)) {
                 tcs.TrySetResult(e);
             }
         }
@@ -30,7 +30,7 @@ public class EventAwaiter<TEventArgs>()
     }
 
     /// <summary>
-    /// Waits for an event to be raised.
+    ///     Waits for an event to be raised.
     /// </summary>
     /// <param name="timeout">Timeout in milliseconds</param>
     /// <returns>The event arguments that were raised</returns>
@@ -53,13 +53,12 @@ public class EventAwaiter<TEventArgs>()
         }
     }
 }
-
 /// <summary>
-/// Helper class for testing events in xUnit
+///     Helper class for testing events in xUnit
 /// </summary>
 public class EventAwaiter {
-    private readonly TaskCompletionSource tcs = new();
     private readonly CancellationTokenSource cts = new();
+    private readonly TaskCompletionSource tcs = new();
 
     public void EventHandler(object? sender, EventArgs e) {
         try {
@@ -71,7 +70,7 @@ public class EventAwaiter {
     }
 
     /// <summary>
-    /// Waits for an event to be raised.
+    ///     Waits for an event to be raised.
     /// </summary>
     /// <param name="timeout">Timeout in milliseconds</param>
     /// <returns>The event arguments that were raised</returns>
@@ -89,7 +88,6 @@ public class EventAwaiter {
         await tcs.Task;
     }
 }
-
 public static class Arcor2ObjectExtensions {
     public static EventAwaiter GetUpdatedAwaiter<T>(this Arcor2ObjectManager<T> manager) {
         var awaiter = new EventAwaiter();
@@ -127,7 +125,8 @@ public static class Arcor2ObjectExtensions {
         return awaiter;
     }
 
-    public static EventAwaiter<PackageStateEventArgs> GetPackageStateAwaiter(this PackageManager manager, PackageState state) {
+    public static EventAwaiter<PackageStateEventArgs> GetPackageStateAwaiter(this PackageManager manager,
+        PackageState state) {
         var awaiter = new EventAwaiter<PackageStateEventArgs>(p => p.State == state);
         manager.StateChanged += (o, args) => awaiter.EventHandler(o, args);
         return awaiter;

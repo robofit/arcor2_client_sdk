@@ -15,14 +15,14 @@ public static class ReflectionHelper {
     };
 
     /// <summary>
-    /// Recursively pretty-prints the object properties.
+    ///     Recursively pretty-prints the object properties.
     /// </summary>
     /// <param name="obj">The object to be printed.</param>
     /// <param name="indentLevel">The base level of indentation.</param>
     /// <param name="objectName">Custom object name to be prefixed.</param>
     /// <returns></returns>
     public static string FormatObjectProperties(object? obj, int indentLevel = 0, string? objectName = null) {
-        if (obj == null) {
+        if(obj == null) {
             return "[null]";
         }
 
@@ -31,7 +31,6 @@ public static class ReflectionHelper {
         var properties = obj.GetType().GetProperties()
             .Where(property => property.GetIndexParameters().Length == 0) // Skip indexed properties
             .ToList();
-
 
         var braceColor = BraceColors[indentLevel % BraceColors.Length];
 
@@ -51,22 +50,22 @@ public static class ReflectionHelper {
     }
 
     private static string FormatValue(object? value, int indentLevel) {
-        if (value == null) {
+        if(value == null) {
             return "null";
         }
 
-        if (value is string) {
+        if(value is string) {
             return $"\"{value}\"";
         }
 
-        if (value is IEnumerable enumerable && !(value is string)) {
+        if(value is IEnumerable enumerable && !(value is string)) {
             var items = enumerable.Cast<object>()
                 .Select(item => {
-                    if (item == null) {
+                    if(item == null) {
                         return "null";
                     }
 
-                    if (item.GetType().IsPrimitive || item is string) {
+                    if(item.GetType().IsPrimitive || item is string) {
                         return item.ToString();
                     }
 
@@ -76,7 +75,7 @@ public static class ReflectionHelper {
 
             var braceColor = BraceColors[(indentLevel + 1) % BraceColors.Length];
 
-            if (items.Count == 0) {
+            if(items.Count == 0) {
                 return $"{braceColor}[]{ResetColor}";
             }
 
@@ -87,11 +86,10 @@ public static class ReflectionHelper {
                 $"{braceColor}[\n{indentTwo}{ResetColor}{string.Join(", ", items)}{braceColor}\n{indentOne}]{ResetColor}";
         }
 
-        if (value.GetType().IsClass && value.GetType() != typeof(object)) {
+        if(value.GetType().IsClass && value.GetType() != typeof(object)) {
             return FormatObjectProperties(value, indentLevel + 1);
         }
 
         return value.ToString() ?? "null (after string format)";
-
     }
 }
