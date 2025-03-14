@@ -119,7 +119,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             await LibraryLockAsync();
             var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId,
                 axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Position, mode.MapToOpenApiModeEnum(),
-                step, safe, null!, speed, linear, armId));
+                step, safe, null!, speed, linear, armId!));
             if(!response.Result) {
                 await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
@@ -175,7 +175,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             await LibraryLockAsync();
             var response = await Session.Client.StepRobotEndEffectorAsync(new StepRobotEefRequestArgs(Id, endEffectorId,
                 axis.MapToOpenApiAxisEnum(), StepRobotEefRequestArgs.WhatEnum.Orientation, mode.MapToOpenApiModeEnum(),
-                step, safe, null!, speed, linear, armId));
+                step, safe, null!, speed, linear, armId!));
             if(!response.Result) {
                 await TryLibraryUnlockAsync();
                 throw new Arcor2Exception($"Stepping robot {Id} failed.", response.Messages);
