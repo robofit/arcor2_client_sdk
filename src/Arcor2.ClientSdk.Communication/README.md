@@ -193,7 +193,7 @@ Event consumers of the library must use a similar synchronization method, as the
 
 ## Contributing
 
-This library is a simple typed and most importantly - **maintainable** - interface for the ARCOR2 protocol and all changes should reflect that. 
+This library is a simple, typed, and most importantly - **maintainable** - interface for the ARCOR2 protocol and all changes should reflect that. 
 Complex convenience features (such as a single method performing multiple RPC exchanges) should be implemented in different projects extending, subtyping, or wrapping the `Arcor2Client` class.
 
 ### Naming
@@ -219,11 +219,11 @@ Please note that the following rules should not be taken as a dogma. If it makes
 
 ### Implementing Protocol Updates
 
-Reflecting most changes to the ARCOR2 protocol in the library is straightforward and will only require modifications to the `Arcor2Client` class. In general, follow the standard C# conventions and conventions of the existing code which are briefly discussed below.
+Reflecting most changes to the ARCOR2 protocol in the library is straightforward and will only require modifications to the `Arcor2Client` class. In general, follow the standard C# conventions and conventions of the existing code which are briefly discussed here.
 
 #### Model properties changes
 
-Most changes to model properties (the JSON data) can be implemented by a simple regeneration of the OpenApi models in the `Arcor2.ClientSdk.Communication.OpenApi` project using the attached shell script `generate_models.sh`. 
+Most changes to model properties (the JSON data) can be implemented by a simple regeneration of the OpenApi models in the `Arcor2.ClientSdk.Communication.OpenApi` project using the included shell script `tools/generate_models.sh`. 
 Changes to integral properties (such as the root `id`, `result`, `event`, etc.) can require larger library updates.
 
 
