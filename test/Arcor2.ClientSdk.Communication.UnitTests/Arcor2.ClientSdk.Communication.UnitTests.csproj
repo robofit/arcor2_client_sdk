@@ -17,8 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Arcor2.ClientSdk.ClientServices\Arcor2.ClientSdk.ClientServices.csproj" />
-    <ProjectReference Include="..\Arcor2.ClientSdk.Communication.OpenApi\Arcor2.ClientSdk.Communication.OpenApi.csproj" />
+    <ProjectReference Include="..\..\src\Arcor2.ClientSdk.Communication\Arcor2.ClientSdk.Communication.csproj" />
   </ItemGroup>
 
   <ItemGroup>
