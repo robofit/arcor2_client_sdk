@@ -25,15 +25,15 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Restore dependencies
-      run: dotnet restore src/Arcor2.ClientSdk.sln
+      run: dotnet restore Arcor2.ClientSdk.sln
     
     - name: Build
-      run: dotnet build src/Arcor2.ClientSdk.sln --configuration Release --no-restore
+      run: dotnet build Arcor2.ClientSdk.sln --configuration Release --no-restore
     
     - name: Run Unit Tests
       run: |
-        dotnet test src/Arcor2.ClientSdk.Communication.UnitTests --configuration Release --no-build --verbosity normal
-        dotnet test src/Arcor2.ClientSdk.ClientServices.UnitTests --configuration Release --no-build --verbosity normal
+        dotnet test test/Arcor2.ClientSdk.Communication.UnitTests --configuration Release --no-build --verbosity normal
+        dotnet test test/Arcor2.ClientSdk.ClientServices.UnitTests --configuration Release --no-build --verbosity normal
     
     - name: Setup Docker for Integration Tests
       if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-integration-tests') }}
@@ -103,7 +103,7 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-   # TODO: Setup secret 
+   # TODO: Setup secret and uncomment this
    # - name: Publish NuGet packages
    #   run: |
    #     for package in packages/*.nupkg; do
