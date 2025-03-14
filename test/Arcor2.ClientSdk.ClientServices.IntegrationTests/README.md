@@ -2,7 +2,7 @@
 
 The `Arcor2.ClientSdk.ClientServices.IntegrationTests` project contains integration tests for the `Arcor2.ClientSdk.ClientServices` library, implemented using xUnit.
 
-The tests utilize the ARCOR2 server from the FIT demo (version 1.3.1), which includes Dobot robots.
+The tests utilize the ARCOR2 server from the FIT demo (version 1.3.1), which uses Dobot robots.
 
 ## Requirements
 - Docker
@@ -14,13 +14,13 @@ The ARCOR2 server Docker containers used for testing are automatically created a
 The original `docker-compose.yml` file from the demo was faithfully adapted to work with the `Testcontainers` fluent definition process. 
 To support parallel test execution, both container names and ports are randomized.
 
-A major issue is balancing test isolation with the resource overhead of recreating the server for each test (which takes around a minute on a moderately powered machine). 
+A major issue we encountered was balancing test isolation with the resource overhead of recreating the server for each test (which takes around a minute on a moderately powered machine). 
 The chosen approach reuses server instances across tests within the same class, with each test class receiving its server instance.
 However, care must be taken to ensure proper cleanup after each test, as leftover objects could interfere with subsequent tests and cascade issues.
 
-Nevertheless, **the current configuration uses one server instance per one test due to server bugs**.
+**Nevertheless, the current configuration still uses one server instance per one test due to server bugs**.
 If the future state of the server allows it, 
-the test setup can be easily modified to initialize the server per test class by replacing direct server initialization in the constructor for `IClassFixture<Arcor2ServerFixture>` within the test setup.
+the test setup can be easily modified to initialize the server per test class by replacing direct server initialization in the constructor for `IClassFixture<Arcor2ServerFixture>` interface implementation within `TestBase` class.
 
 ## What to Test
 
@@ -69,7 +69,7 @@ public async Task UnitOrUseCases_ParametersOrState_ExpectedBehavior() {
 }
 ```
 
-Note that RPC method invocations do not immediately change the inner state of the library, as it updates its state only when the server broadcasts an event. 
+Note that RPC method invocations do not immediately change the inner state of the library, as it only updates when the server broadcasts the resulting event to everyone. 
 It is strongly recommended to use the existing `EventAwaiter` and `CollectionChangedAwaiter` classes to ensure events are raised before proceeding.
 
 ```

@@ -5,7 +5,7 @@ The `Arcor2.ClientSdk.Communication` is a stand-alone communication library desi
 ## Introduction
 
 The ARCOR2 server implements an event-driven API using WebSockets for real-time bidirectional communication between clients and the server. This can make associating request-response messages and generating clients difficult.
-The `Arcor2.ClientSdk.Communication` library provides a strongly typed client interface in C# for seamless interaction with ARCOR2 API. 
+The `Arcor2.ClientSdk.Communication` library provides a strongly typed C# client interface for seamless interaction with the ARCOR2 API. 
 
 The library transforms RPCs (request-response exchanges) into Task-based asynchronous methods, providing native support for C# exception handling and integration with .NET's modern TPL library. Events are handled through .NET's event system.
 
@@ -38,8 +38,8 @@ The `GetUnderlyingWebSocket()` method can be used to retrieve the used WebSocket
 
 ### RPC methods
 
-RPC methods abstract the event-driven nature of ARCOR2 RPCs (request-response exchanges) as an asynchronous Task-based method by using the `TaskCompletionSource`.
-RPC methods generally follow a pattern:
+RPC methods abstract the event-driven nature of ARCOR2 RPCs (request-response exchanges) to plain asynchronous methods using the `TaskCompletionSource`.
+RPC method singatures generally follow a pattern:
 ```
 public Task<FooResult> GetFooAsync(GetFooRequestArgs args, isDryRun = false);
 ```
@@ -70,6 +70,7 @@ The resulting task will be faulted if the client fails to receive a response fro
 ### Events
 
 Server events are mapped to .NET events. When the client decodes an event message from the server, the appropriate event will be raised with the corresponding data and, if applicable, parent ID.
+The meaning of parent ID is context-dependent, but usually deductible (e.g, the parent action point ID for the ActionAdded event).
 
 The library provides special handling for messages containing the `change_type` field, which have up to four mapped C# events depending on the possible change types (`Added`, `Updated`, `BaseUpdated`, and `Removed`).
 
@@ -82,6 +83,9 @@ arcorClient.SceneBaseUpdated += (sender, args) => UpdateScene(args);
 arcorClient.SceneRemove += (sender, args) => RemoveScene(args);
 
 ```
+
+> **NOTE - Duplicating scenes and projects**  
+> Be aware that duplicating scenes and projects will not trigger their `Added` events. Instead, it will unexpectedly produce the `BaseUpdated` event.
 
 ### WebSocket Implementations
 
@@ -109,9 +113,9 @@ For earlier Unity versions (2018+), the library will not work out of the box unl
 If needed, the retargeting process is practically feasible and will involve removing or refactoring certain C# features that rely on .NET Standard 2.1, 
 such as nullable reference types or read-only members.
 
-The library leverages .NET's Task Parallel Library (TPL) for asynchronous programming, which is supported in Unity with some important caveats discussed below.
+The library leverages .NET's Task Parallel Library (TPL) for asynchronous programming, which is supported in Unity with some important caveats.
 
-Unity APIs (e.g. GameObject, Transform, Debug.Log) are not thread-safe and must be accessed only from the main thread. 
+Unity APIs (e.g. `GameObject`, `Transform`, `Debug.Log`) are not thread-safe and must be accessed only from the main thread. 
 Consider the following method, which results in an `InvalidOperationException`. Exception handling logic is omitted for conciseness.
 
 ```
@@ -199,15 +203,15 @@ Complex convenience features (such as a single method performing multiple RPC ex
 ### Naming
 
 The ARCOR2 protocol currently lacks consistency in naming conventions across its RPCs and models.
-This consistency is particularly important for developers using statically-typed languages like C#, where code completion is a crucial tool to discover or recall method names by keywords.
+This consistency is particularly important for developers using statically-typed languages like C#, where code completion is an important tool to discover or recall method names by keywords.
 
 While the RPC method names are often identical to their corresponding RPCs, we apply specific rules to improve consistency and usability.
 Note that these adjustments are limited to method and event names only. 
 We deliberately **exclude generated models** from these changes to avoid exponentially increasing maintenance overhead when regenerating OpenAPI models.
 
-Please note that the following rules should not be taken as a dogma. If it makes sense, break them or change them.
+The following rules should not be taken as a dogma. If it makes sense, break them or change them.
 
-- Expand shorthands (e.g. `AddApUsingRobot` => `AddActionPointUsingRobot`, `OnRobotEefUpdated` => `OnRobotEndEffectorUpdated`)
+- Expand shorthands (e.g. `AddApUsingRobot` => `AddActionPointUsingRobot`, `RobotEefUpdated` => `RobotEndEffectorUpdated`)
 - Correct non-specific, inaccurate, or confusing ARCOR2 terminology (e.g. `ProjectException` => `PackageException`, `GetSceneObjectUsage` => `GetSceneActionObjectUsage`)
 - Prefer `Duplicate` over `Copy` and other synonyms (e.g. `CopyProject` => `DuplicateProject`)
 - Prefer `Remove` over `Delete` and other synonyms (e.g. `DeleteProject` => `RemoveProject`)
@@ -249,8 +253,8 @@ Each event message is mapped to a public C# event. If the event message utilizes
 
 ```
 // The SceneChanged events
-public event EventHandler<BareSceneEventArgs>? OnSceneRemoved;
-public event EventHandler<BareSceneEventArgs>? OnSceneBaseUpdated;
+public event EventHandler<BareSceneEventArgs>? SceneRemoved;
+public event EventHandler<BareSceneEventArgs>? SceneBaseUpdated;
 ```
 
 Every event message has to have a handler method, that will deserialize the JSON string and raise the corresponding event.
@@ -263,12 +267,12 @@ private void HandleSceneChanged(string data) {
         case SceneChanged.ChangeTypeEnum.Add:
             throw new NotImplementedException("Scene add should never occur.");
         case SceneChanged.ChangeTypeEnum.Remove:
-            OnSceneRemoved?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
+            SceneRemoved?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
             break;
         case SceneChanged.ChangeTypeEnum.Update:
             throw new NotImplementedException("Scene update should never occur.");
         case SceneChanged.ChangeTypeEnum.UpdateBase:
-            OnSceneBaseUpdated?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
+            SceneBaseUpdated?.Invoke(this, new BareSceneEventArgs(sceneChangedEvent.Data));
             break;
         default:
             throw new NotImplementedException("Unknown change type.");
@@ -278,7 +282,7 @@ private void HandleSceneChanged(string data) {
 // Another example
 private void HandleRobotMoveToJoints(string data) {
     var robotMoveToJoints = JsonConvert.DeserializeObject<RobotMoveToJoints>(data)!;
-    OnRobotMoveToJoints?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
+    RobotMoveToJoints?.Invoke(this, new RobotMoveToJointsEventArgs(robotMoveToJoints.Data));
 }
 ```
 
@@ -287,14 +291,14 @@ They should be defined in the `Arcor2EventArgs.cs` file and have the following s
 
 ```
 public class BareSceneEventArgs : EventArgs {
-    public BareScene Scene { get; set; }
+    public BareScene Data { get; set; }
 
     public BareSceneEventArgs(BareScene scene) {
-        Scene = scene;
+        Data = scene;
     }
 }
 ```
 
 If the `parentId` is set and relevant to the specific message type (for example on change type `Add` of messages `OrientationChanges`, where the parent ID corresponds to the parent action point), it should be implemented by inheriting from the `ParentIdEventArgs` instead.
 
-Make sure to not forget to map the `event` string name to the handler in the `OnMessage` method.
+Make sure to not forget to actually map the `event` string name to the handler in the `OnMessage` method.

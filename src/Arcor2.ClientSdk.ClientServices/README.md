@@ -5,7 +5,7 @@ fully holds the client state and offers a wide range of helper methods.
 
 ## Basic Architecture
 
-The library is contrived as a tree of manager objects representing and managing some resource. 
+The library is contrived as a tree of manager objects representing and managing the internal state of some resource (e.g., scene, action point, ...). 
 The root element is the `Arcor2Session` class, which offers connection methods, general and utility RPCs, and maintains a collection of scenes, projects, object types, and packages.
 Scene is then represented by the `SceneManager` class and offers scene-related RPCs, and maintains a collection of its action objects. A similar pattern continues until you get to the leaf elements.
 
@@ -24,7 +24,7 @@ await session.CloseAsync();
 Each manager object represents and holds some data (e.g., for a scene, it is the scene metadata) in its `Data` property. 
 When that data is updated in any form, the manager object will always raise a notification in the form of an `Updated` event. Please note that this only applies to the data in the `Data` property.
 Changes concerning the manager object's existence as a whole (removal and addition) are communicated by the `ReadOnlyObservableCollection` that holds them.
-Each manager will raise a `Removing` event shortly before deleting itself.
+Each manager will also raise a `Removing` event shortly before deleting itself.
 
 >  **NOTE -- Subscribing to collections**  
 > To subscribe to the `CollectionChangedEvent` of `ReadOnlyObservableCollection`, you need to directly cast it into the `INotifyCollectionChanged` interface.
@@ -35,8 +35,9 @@ unique identification `Id` and locking capabilities, namely the `Locked` and `Un
 
 ```
 var scene = session.Scenes.First();
-scene.ActionObjects(object => {
-	object.Locked += MakeUninteractable
+scene.ActionObjects(actionObject => {
+	object.Locked += actionObject.MakeUninteractable
+	object.Unlocks += actionObject.MakeInteractable
 });
 ```
 
@@ -54,27 +55,27 @@ await sceneManager.RenameAsync("ExampleScene");
 
 The managers form the following hierarchy, similar to the ownership hierarchy in the ARCOR2 system:
 ```
-Arcor2Session MANAGES SceneManager, ProjectManager, PackageManager, ObjectTypeManager
-SceneManager MANAGES ActionObjectManager
-ProjectManager MANAGES ActionPointManager, ProjectParameterManager, ProjectOverrideManager, LogicItemManager
-ActionPointManager MANAGES ActionManager, JointsManager, OrientationManager
+Arcor2Session HOLDS SceneManager, ProjectManager, PackageManager, ObjectTypeManager
+SceneManager HOLDS ActionObjectManager
+ProjectManager HOLDS ActionPointManager, ProjectParameterManager, ProjectOverrideManager, LogicItemManager
+ActionPointManager HOLDS ActionManager, JointsManager, OrientationManager
 ```
 
 ## RPCs
-The session object and managers offer a wide range of different RPCs. 
-The library generally does not offer client-side checks on the parameters 
+The session and manager objects offer a wide range of different RPCs. 
+The library generally does not do client-side checks on the parameters 
 but offers a commentary about the requirements in the form of XAML comments.
 
 Each RPC can thus fail with two exceptions:
-- `Arcor2ConnectionException` - When a connection-related error occurs. This should be handled high in the call stack.
+- `Arcor2ConnectionException` - When any connection-related errors occur, such as a response timeout, connection dropping, or a protocol violation. This should be handled high in the call stack.
 - `Arcor2Exception` - When the server denies the request. This represents a wide range of errors. The ARCOR2 server currently only offers human-readable error messages, but no concrete error codes. 
 
 Also, note that any changes by the RPCs take a while to be reflected. The server needs to accept and process the request and send an event to each client (see `Updated` event).
 
 ## Locking
-The library automatically manages locks, except during the object aiming process, 
-where users must manually acquire and release them. 
-This is because a lock has to be held across multiple RPC exchanges, and to allow retries without unlocking. 
+A portion of RPCs require the client to lock a set of resources and objects first. The library automatically manages these locks, except during the object aiming process, 
+where users must manually acquire and release them themselves. 
+This is because a lock has to be held across multiple object aiming process RPC exchanges, and to allow the client code to perform retries without unlocking. 
 Locks are held only as long as necessary — typically for a single operation — and are released if an operation fails.
 
 If you wish to manage locks manually, you can disable automatic locking by setting `LockingMode` to `LockingMode.NoLocks` in `Arcor2SessionSettings` when initializing the session.
@@ -105,7 +106,7 @@ objectManager.PauseAutoLock = false;
 
 ## Practical Usage
 >  **NOTE - Existing example**  
-> See `Arcor2.ClientSdk.ClientServices.ConsoleTestApp` project for trivial implementation of CLI client.
+> See `Arcor2.ClientSdk.ClientServices.ConsoleTestApp` project for trivial implementation of a CLI client.
 
 Developing a client application using this package largely consists of creating a presentation layer and correctly connecting it with the library.
 
@@ -116,7 +117,8 @@ To learn more about different members, use IntelliSense or generate documentatio
 A basic knowledge of the ARCOR2 system is assumed.
 ### Initialization
 
-The `Arcor2Session` is a single-use object and a new one must be created for each connection.
+The `Arcor2Session` class represents the connection itself. It is a single-use object and a new one must be created for each connection.
+
 To ease debugging, it is recommended to inject an instance of `IArcor2Logger` into the `Arcor2Session` on initialization.
 No implementation of the interface is provided by the package, but creating your own is straightforward. You need to implement
 three methods: `LogInfo`, `LogWarn`, and `LogError`. The first captures general information, most notably all sent and received messages and connection events.
@@ -132,7 +134,7 @@ The `Dispose` method functions identically to `CloseAsync`, but is idempotent, t
 
 A `ConnectionOpened` event is raised upon a successful connection, and `ConnectionClosed` whenever the connection is closed.
 The client is tolerant towards non-graceful disconnections from the server but marks them with a `ProtocolViolation` closing code.
-A `ConnectionException` event is also available and is raised whenever a connection-related error occurs. Its arguments contain the exception and may or may not be followed by the `ConnectionClosed` event. 
+A `ConnectionException` event is also available and is raised whenever a connection-related error occurs. Its arguments contain the exception and it may or may not be followed by the `ConnectionClosed` event. 
 The current state of the connection is listed in the `ConnectionState` property (with added `Initialized` and `Registered` states).
 
 
@@ -154,7 +156,7 @@ await session.RegisterAndSubscribeAsync("user");
 await session.CloseAsync();
 ```
 
-Right after connecting, there already may be an open scene, project, or package (from now on collectively referred to as a *workplace**).
+Right after connecting, there already may be an open scene, project, or package (from now on collectively referred to as a *workplace*).
 Interacting with the workplace at that point is unsafe. You must first invoke the `InitializeAsync` method to load the required information, specifically:
 - Object types and their actions
 - Metadata of all scenes, projects, and packages
@@ -173,7 +175,7 @@ This method will also register you for robot joint and end effector pose updates
 
 >  **NOTE - Locked robots and event updates**  
 > If a robot is locked during registration, the library will be unable to subscribe to its joints and end effector pose events.
-> It will schedule an automatic subscription after its unlock. 
+> It will schedule an automatic resubscription after its unlock. 
 
 ### Navigation and Session Members
 Apart from object types, the `Arcor2Session` class maintains a collection of scenes, projects, and packages.  
@@ -224,7 +226,7 @@ Notably, the available RPCs provide the creation of workplaces and object types,
 The session manages all available object types through the `ObjectTypeManager` class, along with their associated actions.
 Robot metadata is automatically loaded if the object type inherits from the `Robot` class.
 
-In addition to standard CRUD RPCs, the library provides helper methods for easier type handling. The `Parent` property stores a reference to the direct ancestor, reaching `null` at the most generic base type, `Generic`. The `IsTypeOf` method checks whether an object type is derived from another type.
+In addition to the standard CRUD RPCs, the library provides helper methods for easier type handling. The `Parent` property stores a reference to the direct ancestor, reaching `null` at the most generic base type, `Generic`. The `IsTypeOf` and `IsSubtypeOf` methods checks whether an object type is type of or derived from another type.
 Convenience methods for built-in types are also available (`IsRobot`, `IsCamera`, etc.).
 
 Each object maintains a reference to the required scene action object parent type in the `SceneParent` property.
@@ -327,8 +329,7 @@ Packages are represented by the `PackageManager` class.
 Whenever the running state of the package changes, the `StateChanged` event is raised. The last known state is stored in the `State` property and is, by default, `Undefined`.
 A `ExceptionOccured` event is raised on package exception (such as invalid breakpoint ID).
 
-## Help and Development
-
+## Missing Features
 
 If, in the future, the package is missing new RPCs, events, or features you need, you can use the `Arcor2Session.GetUnderlyingClient` method to access the underlying `Arcor2Client`. 
 This client provides a more lightweight interface for library communication and will likely have a more up-to-date set of features compared to this package.
