@@ -66,7 +66,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : TestBase {
         await Client.ConnectAsync(ValidUri);
         var args = new RegisterUserRequestArgs("John");
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await Client.RegisterUserAsync(args));
+        await Assert.ThrowsAsync<Arcor2ConnectionException>(async () => await Client.RegisterUserAsync(args));
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : TestBase {
         var response = JsonConvert.SerializeObject(new RegisterUserResponse(request.Id + 1, "RegisterUser", true, []));
         WebSocket.ReceiveMockMessage(response);
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await registerUserTask);
+        await Assert.ThrowsAsync<Arcor2ConnectionException>(async () => await registerUserTask);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : TestBase {
 
         WebSocket.ReceiveMockMessage(response);
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await registerUserTask);
+        await Assert.ThrowsAsync<Arcor2ConnectionException>(async () => await registerUserTask);
         Assert.Equal(WebSocketState.Open, WebSocket.State);
         Assert.False(ConnectionClosedEventRaised);
     }
@@ -143,7 +143,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : TestBase {
         var registerUserTask = Client.RegisterUserAsync(args);
         WebSocket.ReceiveMockMessage("{}");
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await registerUserTask);
+        await Assert.ThrowsAsync<Arcor2ConnectionException>(async () => await registerUserTask);
         Assert.Equal(WebSocketState.Open, WebSocket.State);
         Assert.False(ConnectionClosedEventRaised);
     }
@@ -156,7 +156,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : TestBase {
         var registerUserTask = Client.RegisterUserAsync(args);
         WebSocket.ReceiveMockMessage("");
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await registerUserTask);
+        await Assert.ThrowsAsync<Arcor2ConnectionException>(async () => await registerUserTask);
         Assert.Equal(WebSocketState.Open, WebSocket.State);
         Assert.False(ConnectionClosedEventRaised);
     }
@@ -170,7 +170,7 @@ public class Arcor2ClientBasicRpcFunctionalityTests : TestBase {
 
         WebSocket.ReceiveMockMessage($"{{\"id\": {registerUserTask.Id}}}");
 
-        await Assert.ThrowsAsync<TimeoutException>(async () => await registerUserTask);
+        await Assert.ThrowsAsync<Arcor2ConnectionException>(async () => await registerUserTask);
         Assert.Equal(WebSocketState.Open, WebSocket.State);
         Assert.False(ConnectionClosedEventRaised);
     }
