@@ -16,6 +16,9 @@ For detailed information see the `README` included in each project directory.
 
 ## Building, Releasing, and CI/CD Pipeline
 
-The CI/CD pipeline automatically runs unit tests and builds the libraries into .NET Standard 2.1 assemblies and NuGet packages whenever the `main` branch is updated or a pull request is created.  The packaged NuGet packages are also automatically released.
+The CI/CD pipeline automatically performs DevOps operations on pull requests or commits to the `main` branch. It runs unit tests, builds the libraries into .NET Standard 2.1 assemblies, and releases created NuGet packages. 
+
+To automatically release NuGet packages, make sure the `Publish NuGet packages` task is uncommented and the `NUGET_API_KEY` secret set.
+Package configuration is configured within the project files. Make sure to bump the version up according to [Semantic versioning](https://learn.microsoft.com/en-us/dotnet/csharp/versioning) in .NET.
 
 Integration tests are executed only for pull requests labeled `run-integration-tests`. Currently, each test instance regenerates the ARCOR2 server, leading to excessive resource consumption (approximately 4 hours of pipeline time). Although tests are written to clean up after themselves, bugs with the ARCOR2 server cause cascading failures. It is recommended to run the integration tests locally. See the `README` of the integration test project for more information.
