@@ -10,22 +10,13 @@ public class MockLockWebSocket : IWebSocket {
     public uint WriteLockCalled;
     public uint WriteUnlockCalled;
     public WebSocketState State { get; private set; } = WebSocketState.None;
-    public event EventHandler<WebSocketMessageEventArgs>? OnMessage {
-        add => throw new NotImplementedException();
-        remove => throw new NotImplementedException();
-    }
-    public event EventHandler<WebSocketCloseEventArgs>? OnClose {
-        add => throw new NotImplementedException();
-        remove => throw new NotImplementedException();
-    }
-    public event EventHandler<WebSocketErrorEventArgs>? OnError {
-        add => throw new NotImplementedException();
-        remove => throw new NotImplementedException();
-    }
-    public event EventHandler? OnOpen {
-        add => throw new NotImplementedException();
-        remove => throw new NotImplementedException();
-    }
+    public event EventHandler<WebSocketMessageEventArgs>? OnMessage;
+
+    public event EventHandler<WebSocketCloseEventArgs>? OnClose;
+
+    public event EventHandler<WebSocketErrorEventArgs>? OnError;
+
+    public event EventHandler? OnOpen;
 
     public async Task ConnectAsync(Uri url) => State = WebSocketState.Open;
 
