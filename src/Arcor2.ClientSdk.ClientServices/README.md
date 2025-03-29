@@ -329,10 +329,54 @@ Packages are represented by the `PackageManager` class.
 Whenever the running state of the package changes, the `StateChanged` event is raised. The last known state is stored in the `State` property and is, by default, `Undefined`.
 A `ExceptionOccured` event is raised on package exception (such as invalid breakpoint ID).
 
-## Missing Features
+## Accounting for Missing Features
 
 If, in the future, the package is missing new RPCs, events, or features you need, you can use the `Arcor2Session.GetUnderlyingClient` method to access the underlying `Arcor2Client`. 
 This client provides a more lightweight interface for library communication and will likely have a more up-to-date set of features compared to this package.
 However, when using this feature, you are responsible for managing the data returned by the client yourself.
 For even more low-level access, you can use the `Arcor2Client.GetUnderlyingWebSocket` method to directly access the used `IWebSocket`.
 See the README of the `Arcor2.ClientSdk.Communication` project for more information.
+
+
+## Updating the Library for Newer ARCOR2 Server Versions
+
+Updating the library due to additions, renames, and removals of nonintegral JSON properties within RPC or event messages should be trivial.
+Often a simple regeneration of models from a new OpenAPI specification within the `Arcor2.ClientSdk.Communication.OpenApi` project should be enough.
+If the library does not directly expose the data model to the client code, but rather maps it to a new more user-friendly data model, you may need to update its properties too.
+
+The addition of new RPCs and events is often also rather simple. 
+Declare them and in the case of events don't forget to properly register them and unregister them. 
+
+Updating existing RPCs and events can be tricky, as a degree of compatibility should be implemented if possible.
+It is recommended to add a new server version to the `Arcor2ServerVersion` enum and, if needed, update the parsing logic. 
+You may then create an alternative branch for the older server versions (`Session.Settings.ServerVersion`) within the RPC method or event body.
+Removal of RPCs and Events should be reflected by adding an `Obsolete` attribute and stating the version of removal.
+You may need to move some generated data models from the `Arcor2.ClientSdk.Communication.OpenApi` project `Models` folder to another folder (e.g., `LegacyModels`) so they are not removed on model regeneration, and also make similar updates to the underlying `Communication` library.
+
+```
+// This is an example fictional scenario showcasing two approaches for ARCOR2 compatibility solutions:
+
+// ----- Deprecation of an old RPC -----
+[Obsolete("This RPC has been deprecated in ARCOR2 server version 1.4.0. Use GetSceneInformation for newer versions. ")]
+public async Task<List<ActionObject>> GetSceneActionObjects() { 
+	#pragma warning disable 0618
+	return await client.GetSceneActionObjects();
+	#pragma warning restore 0618
+}
+
+public async Task<Scene> GetSceneInformation() {
+	return await client.GetSceneInformation();
+}
+
+// ----- Alternative branch that simulates functionality for older server versions -----
+public async Task<Scene> GetSceneInformation() { 
+	if(Session.Settings.ServerVersion == 1.3.1) {
+		var ao = await client.GetSceneActionObjects();
+		var meta = await client.GetSceneMeta();
+		return SceneExtensions.CreateSceneFromMetaAndActionObjects(meta, ao);
+	}
+	else {
+		return await client.GetSceneInformation();
+	}
+}
+```

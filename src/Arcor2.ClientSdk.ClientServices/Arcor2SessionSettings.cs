@@ -20,5 +20,10 @@ namespace Arcor2.ClientSdk.ClientServices {
         ///     RPC response timeout in milliseconds. By default, <c>10,000</c>ms.
         /// </summary>
         public uint RpcTimeout { get; set; } = 10_000;
+
+        /// <summary>
+        ///     The target ARCOR2 server version. Changing this to a specific version may disable automatic configuration 
+        /// </summary>
+        public Arcor2ServerVersion ServerVersion = Arcor2ServerVersion.Automatic;
     }
 }

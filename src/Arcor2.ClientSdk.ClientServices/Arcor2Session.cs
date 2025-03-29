@@ -291,6 +291,10 @@ namespace Arcor2.ClientSdk.ClientServices {
 
             ConnectionState = Arcor2SessionState.Initialized;
 
+            if(Settings.ServerVersion == Arcor2ServerVersion.Automatic) {
+                Settings.ServerVersion = Arcor2ServerVersionExtensions.ParseVersion(systemInfoResult.Data.VarVersion);
+            }
+
             if(Settings.LoadData) {
                 await ReloadObjectTypesAsync();
                 await ReloadScenesAsync();

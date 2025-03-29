@@ -83,6 +83,21 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         public event EventHandler<ActionFinishedEventArgs>? Finished;
 
         /// <summary>
+        /// Gets a representation of a link for this action.
+        /// </summary>
+        /// <param name="flow">The flow name. By default, <c>"default"</c>.</param>
+        /// <param name="resultIndex">The result index. By default, <c>0</c>.</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public string GetLink(string flow = "default", uint resultIndex = 0) {
+            if(ActionType.Returns.Count <= resultIndex) {
+                throw new InvalidOperationException($"Can not get a link for result #{resultIndex} for action {ActionType.Name} that only returns {ActionType.Returns.Count} values.");
+            }
+
+            return $"{Id}/{flow}/{resultIndex}";
+        }
+
+        /// <summary>
         ///     Updates the action.
         /// </summary>
         /// <param name="parameters">Updated list of parameters.</param>
@@ -109,6 +124,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     Updates the action parameters.
         /// </summary>
+        /// <remarks>
+        ///     The action parameter type can be `project_parameter` supplied with the parameter name when using project parameter
+        ///     and `link` supplied with the link in format "{action_id}/{flow}/{result_index}" when using output of other action.
+        /// </remarks>
         /// <param name="parameters">Updated list of parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task UpdateParametersAsync(List<ActionParameter> parameters) =>

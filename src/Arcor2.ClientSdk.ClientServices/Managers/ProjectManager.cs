@@ -510,6 +510,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         ///     time.
         ///     Start and end actions should be different. If an action has multiple start connections (logic item), they should
         ///     have conditions.
+        ///     The condition tests for equality of a link and a value, where link is in format "{action_id}/{flow}/{result_index}".
         /// </remarks>
         /// <param name="startId">The starting action ID, alternatively, "START" for the first action.</param>
         /// <param name="endId">The ending action ID, alternatively, "END" for the last action.</param>

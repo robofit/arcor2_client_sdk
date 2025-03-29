@@ -48,6 +48,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     Updates the logic item.
         /// </summary>
+        /// <remarks>
+        ///     The condition tests for equality of a link and a value, where 
+        ///     link is in format "{action_id}/{flow}/{result_index}".
+        /// </remarks>
         /// <param name="startId">The starting action ID, alternatively, "START" for the first action.</param>
         /// <param name="endId">The ending action ID, alternatively, "END" for the last action.</param>
         /// <param name="condition">The condition, <c>null</c> if not applicable.</param>

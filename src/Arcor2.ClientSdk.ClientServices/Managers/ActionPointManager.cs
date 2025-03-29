@@ -262,17 +262,21 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <returns></returns>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddActionAsync(string name, ActionObjectManager actionObject, ObjectAction action,
-            List<ActionParameter>? parameters = null) {
+            List<ActionParameter> parameters) {
             var type = $"{actionObject.Id}/{action.Name}";
 
             await AddActionAsync(name, type,
                 new List<Flow> { new Flow(Flow.TypeEnum.Default, new List<string>()) },
-                parameters ?? new List<ActionParameter>());
+                parameters);
         }
 
         /// <summary>
         ///     Adds a new action with the default flow and no parameters.
         /// </summary>
+        /// <remarks>
+        ///     The action parameter type can be `project_parameter` supplied with the parameter name when using project parameter
+        ///     and `link` supplied with the result ID in format "{action_id}/{flow}/{result_index}" when using output of other action.
+        /// </remarks>
         /// <param name="name">The name of the action.</param>
         /// <param name="actionObject">The action object.</param>
         /// <param name="action">The action itself (listed in <see cref="ObjectTypeManager" />)</param>
