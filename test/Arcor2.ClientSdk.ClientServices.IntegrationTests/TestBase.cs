@@ -8,8 +8,8 @@ using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests;
 
-public class TestBase(ITestOutputHelper output) : IAsyncLifetime {
-    private Arcor2ServerFixture server = null!;
+public class TestBase(Arcor2ServerFixture fixture, ITestOutputHelper output) : IAsyncLifetime, IClassFixture<Arcor2ServerFixture> {
+    private Arcor2ServerFixture server = fixture!;
     protected Arcor2Session Session { get; private set; } = null!;
     protected IArcor2Logger Logger { get; private set; } = null!;
     protected Uri Uri => server.Uri;
@@ -19,12 +19,12 @@ public class TestBase(ITestOutputHelper output) : IAsyncLifetime {
     public async Task InitializeAsync() {
         Logger = new TestLogger(output);
         Session = new Arcor2Session(logger: Logger);
-        server = new Arcor2ServerFixture();
-        await server.InitializeAsync();
         await Task.CompletedTask;
     }
 
-    public async Task DisposeAsync() => await server.DisposeAsync();
+    public async Task DisposeAsync() {
+
+    }
 
     protected string RandomName() => "rname_" + Guid.NewGuid().ToString()[..4];
 

@@ -1,3 +1,4 @@
+using Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -6,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionObjectTypeTests(ITestOutputHelper output) : TestBase(output) {
+public class Arcor2SessionObjectTypeTests(Arcor2ServerFixture fixture, ITestOutputHelper output) : TestBase(fixture, output) {
     [Fact]
     public async Task InitializedObjectTypes_ExpectedTypes_AreThere() {
         await Setup();

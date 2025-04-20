@@ -14,7 +14,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     The parent project.
         /// </summary>
-        internal ProjectManager Project;
+        public ProjectManager Project;
 
         /// <summary>
         ///     Initializes a new instance of <see cref="ProjectOverrideManager" /> class.

@@ -24,7 +24,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     The parent action point.
         /// </summary>
-        internal ActionPointManager ActionPoint { get; }
+        public ActionPointManager ActionPoint { get; }
 
         /// <summary>
         ///     Updates the joints.

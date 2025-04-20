@@ -1,6 +1,7 @@
 ﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
 using Arcor2.ClientSdk.ClientServices.Extensions;
+using Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using System.Collections.Specialized;
@@ -9,7 +10,7 @@ using Joint = Arcor2.ClientSdk.ClientServices.Models.Joint;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionActionObjectTests(ITestOutputHelper output) : TestBase(output) {
+public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOutputHelper output) : TestBase(fixture, output) {
     [Fact]
     public async Task Create_Dobot_Success() {
         await Setup();

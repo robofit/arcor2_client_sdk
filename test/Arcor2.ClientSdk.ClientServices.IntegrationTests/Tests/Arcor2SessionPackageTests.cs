@@ -1,11 +1,12 @@
 using Arcor2.ClientSdk.ClientServices.Enums;
+using Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using System.Collections.Specialized;
 using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionPackageTests(ITestOutputHelper output) : TestBase(output) {
+public class Arcor2SessionPackageTests(Arcor2ServerFixture fixture, ITestOutputHelper output) : TestBase(fixture, output) {
     [Fact]
     public async Task BuildIntoPackage_Valid_BuildsPackage() {
         await Setup();

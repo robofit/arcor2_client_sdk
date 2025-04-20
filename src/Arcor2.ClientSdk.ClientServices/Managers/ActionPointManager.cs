@@ -56,7 +56,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     The parent project.
         /// </summary>
-        internal ProjectManager Project { get; }
+        public ProjectManager Project { get; }
 
         internal ObservableCollection<ActionManager> actions { get; }
 

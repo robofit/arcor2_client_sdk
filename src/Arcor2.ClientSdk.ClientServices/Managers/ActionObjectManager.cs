@@ -32,7 +32,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     The parent scene.
         /// </summary>
-        internal SceneManager Scene { get; }
+        public SceneManager Scene { get; }
 
         /// <summary>
         ///     The type of action object.

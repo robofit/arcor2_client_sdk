@@ -13,6 +13,8 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
     ///     Manages lifetime of an action.
     /// </summary>
     public class ActionManager : LockableArcor2ObjectManager<Action> {
+        private ActionObjectManager? cachedActionObject;
+
         /// <summary>
         ///     Initializes a new instance of <see cref="ActionManager" /> class.
         /// </summary>
@@ -38,7 +40,18 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     The parent action point.
         /// </summary>
-        internal ActionPointManager ActionPoint { get; }
+        public ActionPointManager ActionPoint { get; }
+
+        /// <summary>
+        ///     The target action object of this action.
+        /// </summary>
+        public ActionObjectManager ActionObject =>
+            cachedActionObject ??= Session.Projects.FirstOrDefault(p =>
+                p.ActionPoints!.SelectMany(ap => ap.Actions, (ap, a) => a)
+                    .Contains(this)
+            )!.Scene.ActionObjects!.FirstOrDefault(
+                ao => ao.Id == Data.Type.Split('/').First())!;
+
 
         /// <summary>
         ///     Is the action currently executing?

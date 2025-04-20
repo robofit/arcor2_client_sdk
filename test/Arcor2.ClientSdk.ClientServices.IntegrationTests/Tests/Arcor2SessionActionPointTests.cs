@@ -1,4 +1,5 @@
 using Arcor2.ClientSdk.ClientServices.Extensions;
+using Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using System.Collections.Specialized;
@@ -6,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionProjectActionPointTests(ITestOutputHelper output) : TestBase(output) {
+public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, ITestOutputHelper output) : TestBase(fixture, output) {
     [Fact]
     public async Task CreateActionPoint_Valid_Creates() {
         await Setup();

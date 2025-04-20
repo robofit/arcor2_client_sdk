@@ -1,4 +1,5 @@
 ﻿using Arcor2.ClientSdk.ClientServices.Enums;
+using Arcor2.ClientSdk.ClientServices.IntegrationTests.Fixtures;
 using Arcor2.ClientSdk.ClientServices.IntegrationTests.Helpers;
 using Arcor2.ClientSdk.Communication;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -7,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace Arcor2.ClientSdk.ClientServices.IntegrationTests.Tests;
 
-public class Arcor2SessionInitTests(ITestOutputHelper output) : TestBase(output) {
+public class Arcor2SessionInitTests(Arcor2ServerFixture fixture, ITestOutputHelper output) : TestBase(fixture, output) {
     [Fact]
     public async Task ConnectionSequence_Valid_CorrectState() {
         var openedAwaiterEvent = new EventAwaiter();
