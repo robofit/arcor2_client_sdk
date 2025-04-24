@@ -6,7 +6,7 @@ The tests utilize the ARCOR2 server from the FIT demo (version 1.3.1), which use
 
 ## Requirements
 - Docker
-	- Ensure that your Docker daemon is configured with sufficient address pools for `N` networks, each requiring around 30 IP addresses. `N` is the number of test classes present in this project.
+	- Ensure that your Docker daemon is configured with sufficient address pools for 8*`N` networks, each requiring around 16 IP addresses. `N` is the number of test classes present in this project.
 	- Make sure the Docker daemon is up and running.
 
 ## Server
