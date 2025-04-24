@@ -104,7 +104,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// </remarks>
         /// <exception cref="Arcor2Exception"></exception>
         /// <exception cref="InvalidOperationException">When invoked with AutoLock mode enabled.</exception>
-        internal async Task UnlockAsync() {
+        public async Task UnlockAsync() {
             if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
                 throw new InvalidOperationException(
                     $"Can't use locking methods on object {Id} without disabling or pausing AutoLock mode.");
@@ -137,7 +137,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         ///     <see cref="Arcor2SessionSettings" />.
         /// </remarks>
         /// <exception cref="InvalidOperationException">When invoked with AutoLock mode enabled.</exception>
-        internal async Task TryUnlockAsync() {
+        public async Task TryUnlockAsync() {
             if(Session.Settings.LockingMode == LockingMode.AutoLock && !PauseAutoLock) {
                 throw new InvalidOperationException(
                     $"Can't use locking methods on object {Id} without disabling or pausing AutoLock mode.");
