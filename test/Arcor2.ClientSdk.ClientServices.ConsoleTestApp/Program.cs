@@ -1,6 +1,7 @@
 ﻿using Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Models;
 using Arcor2.ClientSdk.ClientServices.ConsoleTestApp.Output;
 using Arcor2.ClientSdk.ClientServices.Enums;
+using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.Managers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
@@ -646,23 +647,20 @@ internal class Program {
     /// </summary>
     private static SceneManager GetCurrentScene() =>
         Session.NavigationState switch {
-            NavigationState.Scene => Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!,
-            NavigationState.Project => Session.Projects.FirstOrDefault(s => s.Id == Session.NavigationId)!.Scene,
-            NavigationState.Package => Session.Packages.FirstOrDefault(s => s.Id == Session.NavigationId)!.Project
-                .Scene,
+            NavigationState.Scene => Session.Scenes[Session.NavigationId!],
+            NavigationState.Project => Session.Projects[Session.NavigationId!].Scene,
+            NavigationState.Package => Session.Packages[Session.NavigationId!].Project.Scene,
             _ => throw new Exception("Invalid navigation state.")
         };
 
     /// <summary>
     ///     Gets action objects for the current scene or project.
     /// </summary>
-    private static ReadOnlyObservableCollection<ActionObjectManager> GetActionObjects() =>
+    private static IndexableReadOnlyObservableCollection<ActionObjectManager> GetActionObjects() =>
         (Session.NavigationState switch {
-            NavigationState.Scene => Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!.ActionObjects,
-            NavigationState.Project => Session.Projects.FirstOrDefault(s => s.Id == Session.NavigationId)!.Scene
-                .ActionObjects,
-            NavigationState.Package => Session.Packages.FirstOrDefault(s => s.Id == Session.NavigationId)!.Project.Scene
-                .ActionObjects,
+            NavigationState.Scene => Session.Scenes[Session.NavigationId!].ActionObjects,
+            NavigationState.Project => Session.Projects[Session.NavigationId!].Scene.ActionObjects,
+            NavigationState.Package => Session.Packages[Session.NavigationId!].Project.Scene.ActionObjects,
             _ => throw new Exception("Invalid navigation state.")
         })!;
 
@@ -670,7 +668,7 @@ internal class Program {
     ///     Gets the current project.
     /// </summary>
     private static ProjectManager GetCurrentProject() =>
-        Session.Projects.FirstOrDefault(s => s.Id == Session.NavigationId)!;
+        Session.Projects[Session.NavigationId!]!;
 
     /// <summary>
     ///     Creates a Position from command arguments.
@@ -925,21 +923,21 @@ internal class Program {
 
     private static void DisplayActions(string[] args) {
         foreach(var action in GetCurrentProject().ActionPoints!
-                    .FirstOrDefault(a => a.Id == args[0])!.Actions) {
+                    [args[0]].Actions) {
             Console.WriteLine(ReflectionHelper.FormatObjectProperties(action));
         }
     }
 
     private static void DisplayOrientations(string[] args) {
         foreach(var orientation in GetCurrentProject().ActionPoints!
-                    .FirstOrDefault(a => a.Id == args[0])!.Orientations) {
+                    [args[0]].Orientations) {
             Console.WriteLine(ReflectionHelper.FormatObjectProperties(orientation));
         }
     }
 
     private static void DisplayJoints(string[] args) {
         foreach(var joint in GetCurrentProject().ActionPoints!
-                    .FirstOrDefault(a => a.Id == args[0])!.Joints) {
+                    [args[0]].Joints) {
             Console.WriteLine(ReflectionHelper.FormatObjectProperties(joint));
         }
     }
@@ -960,10 +958,10 @@ internal class Program {
         await Session.CreateObjectTypeAsync(args[0], args[1], args[2]);
 
     private static async Task RemoveObjectTypeAsync(string[] args) =>
-        await Session.ObjectTypes.FirstOrDefault(s => s.Id == args[0])!.DeleteAsync();
+        await Session.ObjectTypes[args[0]].DeleteAsync();
 
     private static async Task UpdateObjectModelBoxAsync(string[] args) =>
-        await Session.ObjectTypes.FirstOrDefault(s => s.Id == args[0])!.UpdateObjectModel(
+        await Session.ObjectTypes[args[0]].UpdateObjectModel(
             new BoxCollisionModel(
                 Convert.ToDecimal(args[1]),
                 Convert.ToDecimal(args[2]),
@@ -974,38 +972,38 @@ internal class Program {
     private static async Task ReloadScenesAsync() => await Session.ReloadScenesAsync();
 
     private static async Task UpdateSceneDescriptionAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == args[0])!.UpdateDescriptionAsync(args[1]);
+        await Session.Scenes[args[0]].UpdateDescriptionAsync(args[1]);
 
     private static async Task RenameSceneAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == args[0])!.RenameAsync(args[1]);
+        await Session.Scenes[args[0]].RenameAsync(args[1]);
 
     private static async Task DuplicateSceneAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == args[0])!.DuplicateAsync(args[1]);
+        await Session.Scenes[args[0]].DuplicateAsync(args[1]);
 
     private static async Task CreateSceneAsync(string[] args) =>
         await Session.CreateSceneAsync(args[0], args.Length > 1 ? args[1] : string.Empty);
 
     private static async Task RemoveSceneAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
+        await Session.Scenes[args[0]].RemoveAsync();
 
     private static async Task OpenSceneAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == args[0])!.OpenAsync();
+        await Session.Scenes[args[0]].OpenAsync();
 
     private static async Task LoadSceneAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == args[0])!.LoadAsync();
+        await Session.Scenes[args[0]].LoadAsync();
 
     private static async Task CloseSceneAsync(string[] args) =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!.CloseAsync(
+        await Session.Scenes[Session.NavigationId!].CloseAsync(
             args.Length > 0 && args[0] == "force");
 
     private static async Task SaveSceneAsync() =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!.SaveAsync();
+        await Session.Scenes[Session.NavigationId!].SaveAsync();
 
     private static async Task StartSceneAsync() =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!.StartAsync();
+        await Session.Scenes[Session.NavigationId!].StartAsync();
 
     private static async Task StopSceneAsync() =>
-        await Session.Scenes.FirstOrDefault(s => s.Id == Session.NavigationId)!.StopAsync();
+        await Session.Scenes[Session.NavigationId!].StopAsync();
 
     private static async Task AddActionObjectAsync(string[] args) {
         var scene = GetCurrentScene();
@@ -1025,7 +1023,7 @@ internal class Program {
 
     private static async Task RemoveActionObjectAsync(string[] args) =>
         await GetCurrentScene().ActionObjects!
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .RemoveAsync(args.Length > 1 && args[1] == "force");
 
     private static async Task AddVirtualBoxAsync(string[] args) =>
@@ -1057,25 +1055,22 @@ internal class Program {
         );
 
     private static async Task UpdateActionObjectPoseAsync(string[] args) =>
-        await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+        await GetActionObjects()[args[0]]
             .UpdatePoseAsync(ParsePose(args, 1));
 
     private static async Task RenameActionObjectAsync(string[] args) =>
-        await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+        await GetActionObjects()[args[0]]
             .RenameAsync(args[1]);
 
     private static async Task UpdateActionObjectParametersAsync(string[] args) =>
-        await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+        await GetActionObjects()[args[0]]
             .UpdateParametersAsync(
                 JsonConvert.DeserializeObject<List<Parameter>>(string.Join(' ', args.Skip(1)))!);
 
     private static async Task MoveToPoseAsync(string[] args) {
         if(args.Length > 11) {
             await GetActionObjects()
-                .FirstOrDefault(o => o.Id == args[0])!
+                [args[0]]
                 .MoveToPoseAsync(
                     args[0],
                     ParsePose(args, 2),
@@ -1086,7 +1081,7 @@ internal class Program {
         }
         else {
             await GetActionObjects()
-                .FirstOrDefault(o => o.Id == args[0])!
+                [args[0]]
                 .MoveToPoseAsync(
                     ParsePose(args, 1),
                     safe: Convert.ToBoolean(args[8]),
@@ -1097,7 +1092,7 @@ internal class Program {
 
     private static async Task MoveToJointsAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .MoveToActionPointJointsAsync(
                 args[1],
                 safe: Convert.ToBoolean(args[2]),
@@ -1108,7 +1103,7 @@ internal class Program {
 
     private static async Task MoveToOrientationAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.MoveToActionPointOrientationAsync(
+            [args[0]].MoveToActionPointOrientationAsync(
                 args[1],
                 safe: Convert.ToBoolean(args[2]),
                 linear: Convert.ToBoolean(args[3]),
@@ -1119,35 +1114,35 @@ internal class Program {
     private static async Task UploadPackage(string[] args) => await Session.UploadPackageAsync(args[0], args[1]);
 
     private static async Task StepPackageAsync() =>
-        await Session.Packages.FirstOrDefault(s => s.Id == Session.NavigationId)!.StepAsync();
+        await Session.Packages[Session.NavigationId!].StepAsync();
 
     private static async Task PausePackageAsync() =>
-        await Session.Packages.FirstOrDefault(s => s.Id == Session.NavigationId)!.PauseAsync();
+        await Session.Packages[Session.NavigationId!].PauseAsync();
 
     private static async Task ResumePackageAsync() =>
-        await Session.Packages.FirstOrDefault(s => s.Id == Session.NavigationId)!.ResumeAsync();
+        await Session.Packages[Session.NavigationId!].ResumeAsync();
 
     private static async Task StopPackageAsync() =>
-        await Session.Packages.FirstOrDefault(s => s.Id == Session.NavigationId)!.StopAsync();
+        await Session.Packages[Session.NavigationId!].StopAsync();
 
     private static async Task RunPackageAsync(string[] args) =>
-        await Session.Packages.FirstOrDefault(s => s.Id == args[0])!
+        await Session.Packages[args[0]]
             .RunAsync(args.Skip(2).ToList(), Convert.ToBoolean(args[1]));
 
     private static async Task RemovePackageAsync(string[] args) =>
-        await Session.Packages.FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
+        await Session.Packages[args[0]].RemoveAsync();
 
     private static async Task RenamePackageAsync(string[] args) =>
-        await Session.Packages.FirstOrDefault(s => s.Id == args[0])!.RenameAsync(args[1]);
+        await Session.Packages[args[0]].RenameAsync(args[1]);
 
     private static async Task RemoveLogicItemAsync(string[] args) =>
         await GetCurrentProject().LogicItems!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .RemoveAsync();
 
     private static async Task UpdateLogicItemAsync(string[] args) =>
         await GetCurrentProject().LogicItems!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .UpdateAsync(
                 args[1],
                 args[2],
@@ -1161,32 +1156,32 @@ internal class Program {
 
     private static async Task RemoveJointsAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Joints
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Joints
+            [args[1]]
             .RemoveAsync();
 
     private static async Task RenameJointsAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Joints
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Joints
+            [args[1]]
             .RenameAsync(args[2]);
 
     private static async Task UpdateJointsUsingRobotAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Joints
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Joints
+            [args[1]]
             .UpdateUsingRobotAsync();
 
     private static async Task UpdateJointsAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Joints
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Joints
+            [args[1]]
             .UpdateAsync(
                 JsonConvert.DeserializeObject<List<Joint>>(string.Join("", args.Skip(2)))!);
 
     private static async Task AddJointsUsingRobotAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!
+            [args[0]]
             .AddJointsUsingRobotAsync(
                 args[1],
                 args.Length > 3 ? args[3] : "default",
@@ -1195,20 +1190,20 @@ internal class Program {
 
     private static async Task RemoveOrientationAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Orientations
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Orientations
+            [args[1]]
             .RemoveAsync();
 
     private static async Task RenameOrientationAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Orientations
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Orientations
+            [args[1]]
             .RenameAsync(args[2]);
 
     private static async Task UpdateOrientationUsingRobotAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Orientations
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Orientations
+            [args[1]]
             .UpdateUsingRobotAsync(
                 args[2],
                 args.Length > 3 ? args[3] : "default",
@@ -1216,13 +1211,13 @@ internal class Program {
 
     private static async Task UpdateOrientationAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Orientations
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Orientations
+            [args[1]]
             .UpdateAsync(ParseOrientation(args, 2));
 
     private static async Task AddOrientationUsingRobotAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!
+            [args[0]]
             .AddOrientationUsingRobotAsync(
                 args[1],
                 args.Length > 3 ? args[3] : "default",
@@ -1231,52 +1226,52 @@ internal class Program {
 
     private static async Task AddOrientationAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!
+            [args[0]]
             .AddOrientationAsync(
                 ParseOrientation(args, 1),
                 args[5]);
 
     private static async Task CancelActionAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Actions
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Actions
+            [args[1]]
             .CancelAsync();
 
     private static async Task ExecuteActionAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Actions
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Actions
+            [args[1]]
             .ExecuteAsync();
 
     private static async Task RemoveActionAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Actions
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Actions
+            [args[1]]
             .RemoveAsync();
 
     private static async Task RenameActionAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Actions
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Actions
+            [args[1]]
             .RenameAsync(args[2]);
 
     private static async Task UpdateActionFlowsAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Actions
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Actions
+            [args[1]]
             .UpdateFlowsAsync(
                 JsonConvert.DeserializeObject<List<Flow>>(string.Join(' ', args.Skip(2)))!);
 
     private static async Task UpdateActionParametersAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!.Actions
-            .FirstOrDefault(a => a.Id == args[1])!
+            [args[0]].Actions
+            [args[1]]
             .UpdateParametersAsync(
                 JsonConvert.DeserializeObject<List<ActionParameter>>(string.Join(' ', args.Skip(2)))!);
 
     private static async Task AddActionAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(a => a.Id == args[0])!
+            [args[0]]
             .AddActionAsync(
                 args[1],
                 args[2],
@@ -1285,7 +1280,7 @@ internal class Program {
 
     private static async Task UpdateActionPointUsingRobotAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .UpdateUsingRobotAsync(
                 args[1],
                 args.Length > 2 ? args[2] : "default",
@@ -1293,27 +1288,27 @@ internal class Program {
 
     private static async Task RemoveActionPointAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .RemoveAsync();
 
     private static async Task UpdateActionPointPositionAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .UpdatePositionAsync(ParsePosition(args, 1));
 
     private static async Task UpdateActionPointParentAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .UpdateParentAsync(args[1]);
 
     private static async Task RenameActionPointAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .RenameAsync(args[1]);
 
     private static async Task DuplicateActionPointAsync(string[] args) =>
         await GetCurrentProject().ActionPoints!
-            .FirstOrDefault(s => s.Id == args[0])!
+            [args[0]]
             .DuplicateAsync(ParsePosition(args, 1));
 
     private static async Task AddActionPointUsingRobotAsync(string[] args) =>
@@ -1354,15 +1349,15 @@ internal class Program {
 
     private static async Task RemoveProjectParameterAsync(string[] args) =>
         await GetCurrentProject().Parameters!
-            .FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
+            [args[0]].RemoveAsync();
 
     private static async Task UpdateProjectParameterNameAsync(string[] args) =>
         await GetCurrentProject().Parameters!
-            .FirstOrDefault(s => s.Id == args[0])!.UpdateNameAsync(args[1]);
+            [args[0]].UpdateNameAsync(args[1]);
 
     private static async Task UpdateProjectParameterValueAsync(string[] args) =>
         await GetCurrentProject().Parameters!
-            .FirstOrDefault(s => s.Id == args[0])!.UpdateValueAsync(args[1]);
+            [args[0]].UpdateValueAsync(args[1]);
 
     private static async Task AddProjectParameterAsync(string[] args) =>
         await GetCurrentProject().AddProjectParameterAsync(args[0], args[1], args[2]);
@@ -1371,10 +1366,10 @@ internal class Program {
         .BuildIntoTemporaryPackageAndRunAsync(args.Skip(1).ToList(), Convert.ToBoolean(args[0]));
 
     private static async Task BuildProjectAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.BuildIntoPackageAsync(args[1]);
+        await Session.Projects[args[0]].BuildIntoPackageAsync(args[1]);
 
     private static async Task SetProjectHasLogicAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.SetHasLogicAsync(Convert.ToBoolean(args[1]));
+        await Session.Projects[args[0]].SetHasLogicAsync(Convert.ToBoolean(args[1]));
 
     private static async Task StopProjectAsync() => await GetCurrentProject().Scene.StopAsync();
 
@@ -1386,22 +1381,22 @@ internal class Program {
         await GetCurrentProject().CloseAsync(args.Length > 0 && args[0] == "force");
 
     private static async Task LoadProjectAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.LoadAsync();
+        await Session.Projects[args[0]].LoadAsync();
 
     private static async Task OpenProjectAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.OpenAsync();
+        await Session.Projects[args[0]].OpenAsync();
 
     private static async Task RemoveProjectAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.RemoveAsync();
+        await Session.Projects[args[0]].RemoveAsync();
 
     private static async Task DuplicateProjectAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.DuplicateAsync(args[1]);
+        await Session.Projects[args[0]].DuplicateAsync(args[1]);
 
     private static async Task RenameProjectAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.RenameAsync(args[1]);
+        await Session.Projects[args[0]].RenameAsync(args[1]);
 
     private static async Task UpdateProjectDescriptionAsync(string[] args) =>
-        await Session.Projects.FirstOrDefault(s => s.Id == args[0])!.UpdateDescriptionAsync(args[1]);
+        await Session.Projects[args[0]].UpdateDescriptionAsync(args[1]);
 
     private static async Task CreateProjectAsync(string[] args) =>
         await Session.CreateProjectAsync(
@@ -1414,60 +1409,60 @@ internal class Program {
 
     private static async Task AddPointForObjectAimingAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .AddPointForObjectAimingAsync(Convert.ToInt32(args[1]));
 
     private static async Task FinishObjectAimingAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .FinishObjectAimingAsync();
 
     private static async Task CancelObjectAimingAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .CancelObjectAimingAsync();
 
     private static async Task StartObjectAimingAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .StartObjectAimingAsync(args[1]);
 
     private static async Task UpdatePoseUsingRobotAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .UpdatePoseUsingRobotAsync(args[1]);
 
     private static async Task GetActionObjectParameterValuesAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!
+            [args[0]]
             .GetParameterValuesAsync(args[1]);
 
     private static async Task StopRobotAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.StopAsync();
+            [args[0]].StopAsync();
 
     private static async Task GetCameraColorParametersAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.GetCameraColorParametersAsync();
+            [args[0]].GetCameraColorParametersAsync();
 
     private static async Task GetCameraColorImageAsync(string[] args) {
 #pragma warning disable CS0618 // Type or member is obsolete
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.GetCameraColorImageAsync();
+            [args[0]].GetCameraColorImageAsync();
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
     private static async Task CalibrateCameraAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.CalibrateCameraAsync();
+            [args[0]].CalibrateCameraAsync();
 
     private static async Task CalibrateRobotAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.CalibrateRobotAsync(args[1], Convert.ToBoolean(args[2]));
+            [args[0]].CalibrateRobotAsync(args[1], Convert.ToBoolean(args[2]));
 
     private static async Task GetInverseKinematicsAsync(string[] args) {
         var inverseKinematics = await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.GetInverseKinematicsAsync();
+            [args[0]].GetInverseKinematicsAsync();
         foreach(var inverseKinematic in inverseKinematics) {
             Console.WriteLine(ReflectionHelper.FormatObjectProperties(inverseKinematic));
         }
@@ -1475,21 +1470,21 @@ internal class Program {
 
     private static async Task GetForwardKinematicsAsync(string[] args) {
         var forwardKinematics = await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.GetForwardKinematicsAsync();
+            [args[0]].GetForwardKinematicsAsync();
         Console.WriteLine(ReflectionHelper.FormatObjectProperties(forwardKinematics));
     }
 
     private static async Task SetHandTeachingModeAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.SetHandTeachingModeAsync(Convert.ToBoolean(args[1]));
+            [args[0]].SetHandTeachingModeAsync(Convert.ToBoolean(args[1]));
 
     private static async Task SetEndEffectorPerpendicularToWorldAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.SetEndEffectorPerpendicularToWorldAsync();
+            [args[0]].SetEndEffectorPerpendicularToWorldAsync();
 
     private static async Task StepOrientationAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.StepOrientationAsync(
+            [args[0]].StepOrientationAsync(
                 Enum.Parse<Axis>(args[1]),
                 Convert.ToDecimal(args[2]),
                 safe: Convert.ToBoolean(args[3]),
@@ -1500,7 +1495,7 @@ internal class Program {
 
     private static async Task StepPositionAsync(string[] args) =>
         await GetActionObjects()
-            .FirstOrDefault(o => o.Id == args[0])!.StepPositionAsync(
+            [args[0]].StepPositionAsync(
                 Enum.Parse<Axis>(args[1]),
                 Convert.ToDecimal(args[2]),
                 safe: Convert.ToBoolean(args[3]),

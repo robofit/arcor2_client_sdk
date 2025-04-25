@@ -41,7 +41,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             actionObjects =
                 new ObservableCollection<ActionObjectManager>(scene.Objects.Select(o =>
                     new ActionObjectManager(session, this, o)));
-            ActionObjects = new ReadOnlyObservableCollection<ActionObjectManager>(actionObjects);
+            ActionObjects = new Arcor2IndexableReadOnlyObservableCollection<ActionObjectManager>(actionObjects);
         }
 
         internal ObservableCollection<ActionObjectManager>? actionObjects { get; }
@@ -52,7 +52,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <value>
         ///     A list of <see cref="ActionObjectManager" />, <c>null</c> if not loaded.
         /// </value>
-        public ReadOnlyObservableCollection<ActionObjectManager>? ActionObjects { get; }
+        public IndexableReadOnlyObservableCollection<ActionObjectManager>? ActionObjects { get; }
 
         /// <summary>
         ///     Gets if the scene is open.
@@ -200,7 +200,6 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="sphere">The sphere parameters.</param>
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddVirtualCollisionSphereAsync(string name, Pose pose, SphereCollisionModel sphere) {
-            ;
             var response = await Session.Client.AddVirtualCollisionObjectToSceneAsync(
                 new AddVirtualCollisionObjectToSceneRequestArgs(name, pose, sphere.ToObjectModel(name)));
             if(!response.Result) {
