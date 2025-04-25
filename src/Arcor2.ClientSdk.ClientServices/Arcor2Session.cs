@@ -60,10 +60,10 @@ namespace Arcor2.ClientSdk.ClientServices {
             Client.ConnectionError += ConnectionError;
             RegisterHandlers();
 
-            ObjectTypes = new ReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
-            Scenes = new ReadOnlyObservableCollection<SceneManager>(scenes);
-            Projects = new ReadOnlyObservableCollection<ProjectManager>(projects);
-            Packages = new ReadOnlyObservableCollection<PackageManager>(packages);
+            ObjectTypes = new Arcor2IndexableReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
+            Scenes = new Arcor2IndexableReadOnlyObservableCollection<SceneManager>(scenes);
+            Projects = new Arcor2IndexableReadOnlyObservableCollection<ProjectManager>(projects);
+            Packages = new Arcor2IndexableReadOnlyObservableCollection<PackageManager>(packages);
         }
 
         /// <summary>
@@ -97,10 +97,10 @@ namespace Arcor2.ClientSdk.ClientServices {
             };
             Client.ConnectionError += ConnectionError;
 
-            ObjectTypes = new ReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
-            Scenes = new ReadOnlyObservableCollection<SceneManager>(scenes);
-            Projects = new ReadOnlyObservableCollection<ProjectManager>(projects);
-            Packages = new ReadOnlyObservableCollection<PackageManager>(packages);
+            ObjectTypes = new Arcor2IndexableReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
+            Scenes = new Arcor2IndexableReadOnlyObservableCollection<SceneManager>(scenes);
+            Projects = new Arcor2IndexableReadOnlyObservableCollection<ProjectManager>(projects);
+            Packages = new Arcor2IndexableReadOnlyObservableCollection<PackageManager>(packages);
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         ///     Collection of available object types.
         /// </summary>
         /// <remarks>Loaded on initialization and automatically maintained.</remarks>
-        public ReadOnlyObservableCollection<ObjectTypeManager> ObjectTypes { get; }
+        public IndexableReadOnlyObservableCollection<ObjectTypeManager> ObjectTypes { get; }
 
         internal ObservableCollection<SceneManager> scenes { get; } = new ObservableCollection<SceneManager>();
 
@@ -145,7 +145,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         ///     Furthermore, users may also invoke <see cref="SceneManager.LoadAsync" /> on the specific instance to load the
         ///     action objects without opening it.
         /// </remarks>
-        public ReadOnlyObservableCollection<SceneManager> Scenes { get; }
+        public IndexableReadOnlyObservableCollection<SceneManager> Scenes { get; }
 
         internal ObservableCollection<ProjectManager> projects { get; } = new ObservableCollection<ProjectManager>();
 
@@ -156,14 +156,14 @@ namespace Arcor2.ClientSdk.ClientServices {
         ///     If the server opens a project, that project (and corresponding scene) will get fully initialized and added
         ///     automatically (regardless of the current state).
         /// </remarks>
-        public ReadOnlyObservableCollection<ProjectManager> Projects { get; }
+        public IndexableReadOnlyObservableCollection<ProjectManager> Projects { get; }
 
         internal ObservableCollection<PackageManager> packages { get; } = new ObservableCollection<PackageManager>();
 
         /// <summary>
         ///     Collection of available packages.
         /// </summary>
-        public ReadOnlyObservableCollection<PackageManager> Packages { get; }
+        public IndexableReadOnlyObservableCollection<PackageManager> Packages { get; }
 
         /// <summary>
         ///     Disposes the object and if needed, closes the connection to ARCOR2 server.

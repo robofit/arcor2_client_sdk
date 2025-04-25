@@ -46,10 +46,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
                 new ObservableCollection<LogicItemManager>(project.LogicItems.Select(l =>
                     new LogicItemManager(Session, this, l)));
             // Project functions are not really needed atm...
-            Parameters = new ReadOnlyObservableCollection<ProjectParameterManager>(parameters);
-            ActionPoints = new ReadOnlyObservableCollection<ActionPointManager>(actionPoints);
-            Overrides = new ReadOnlyObservableCollection<ProjectOverrideManager>(overrides);
-            LogicItems = new ReadOnlyObservableCollection<LogicItemManager>(logicItems);
+            Parameters = new Arcor2IndexableReadOnlyObservableCollection<ProjectParameterManager>(parameters);
+            ActionPoints = new Arcor2IndexableReadOnlyObservableCollection<ActionPointManager>(actionPoints);
+            LogicItems = new Arcor2IndexableReadOnlyObservableCollection<LogicItemManager>(logicItems);
+            Overrides = new IndexableReadOnlyObservableCollection<ProjectOverrideManager>(overrides, s => $"{s.Data.ActionObjectId}/{s.Data.Parameter.Name}");
         }
 
         internal ObservableCollection<ProjectParameterManager>? parameters { get; }
@@ -57,28 +57,28 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     A collection of project parameters.
         /// </summary>
-        public ReadOnlyObservableCollection<ProjectParameterManager>? Parameters { get; }
+        public IndexableReadOnlyObservableCollection<ProjectParameterManager>? Parameters { get; }
 
         internal ObservableCollection<ActionPointManager>? actionPoints { get; }
 
         /// <summary>
         ///     A collection of action points.
         /// </summary>
-        public ReadOnlyObservableCollection<ActionPointManager>? ActionPoints { get; }
+        public IndexableReadOnlyObservableCollection<ActionPointManager>? ActionPoints { get; }
 
         internal ObservableCollection<ProjectOverrideManager>? overrides { get; }
 
         /// <summary>
-        ///     A collection of project overrides.
+        ///     A collection of project overrides. Indexed using $"{ActionObjectId}/{ParameterName}" string.
         /// </summary>
-        public ReadOnlyObservableCollection<ProjectOverrideManager>? Overrides { get; }
+        public IndexableReadOnlyObservableCollection<ProjectOverrideManager>? Overrides { get; }
 
         internal ObservableCollection<LogicItemManager>? logicItems { get; }
 
         /// <summary>
         ///     A collection of logic items.
         /// </summary>
-        public ReadOnlyObservableCollection<LogicItemManager>? LogicItems { get; }
+        public IndexableReadOnlyObservableCollection<LogicItemManager>? LogicItems { get; }
 
         /// <summary>
         ///     Gets if the project is open.

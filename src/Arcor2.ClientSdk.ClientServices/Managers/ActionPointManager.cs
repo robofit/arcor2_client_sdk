@@ -27,9 +27,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
             actions = new ObservableCollection<ActionManager>();
             orientations = new ObservableCollection<OrientationManager>();
             joints = new ObservableCollection<JointsManager>();
-            Actions = new ReadOnlyObservableCollection<ActionManager>(actions);
-            Orientations = new ReadOnlyObservableCollection<OrientationManager>(orientations);
-            Joints = new ReadOnlyObservableCollection<JointsManager>(joints);
+            Actions = new Arcor2IndexableReadOnlyObservableCollection<ActionManager>(actions);
+            Orientations = new Arcor2IndexableReadOnlyObservableCollection<OrientationManager>(orientations);
+            Joints = new Arcor2IndexableReadOnlyObservableCollection<JointsManager>(joints);
         }
 
         /// <summary>
@@ -48,9 +48,9 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
                     actionPoint.Orientations.Select(o => new OrientationManager(Session, this, o)));
             joints = new ObservableCollection<JointsManager>(
                 actionPoint.RobotJoints.Select(j => new JointsManager(Session, this, j)));
-            Actions = new ReadOnlyObservableCollection<ActionManager>(actions);
-            Orientations = new ReadOnlyObservableCollection<OrientationManager>(orientations);
-            Joints = new ReadOnlyObservableCollection<JointsManager>(joints);
+            Actions = new Arcor2IndexableReadOnlyObservableCollection<ActionManager>(actions);
+            Orientations = new Arcor2IndexableReadOnlyObservableCollection<OrientationManager>(orientations);
+            Joints = new Arcor2IndexableReadOnlyObservableCollection<JointsManager>(joints);
         }
 
         /// <summary>
@@ -63,21 +63,21 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     A collection of actions.
         /// </summary>
-        public ReadOnlyObservableCollection<ActionManager> Actions { get; }
+        public IndexableReadOnlyObservableCollection<ActionManager> Actions { get; }
 
         internal ObservableCollection<OrientationManager> orientations { get; }
 
         /// <summary>
         ///     A collection of orientations.
         /// </summary>
-        public ReadOnlyObservableCollection<OrientationManager> Orientations { get; }
+        public IndexableReadOnlyObservableCollection<OrientationManager> Orientations { get; }
 
         internal ObservableCollection<JointsManager> joints { get; }
 
         /// <summary>
         ///     A collection of joints.
         /// </summary>
-        public ReadOnlyObservableCollection<JointsManager> Joints { get; }
+        public IndexableReadOnlyObservableCollection<JointsManager> Joints { get; }
 
         /// <summary>
         ///     Returns the parent if the parent is set and of the action object type.
@@ -425,7 +425,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <exception cref="Arcor2Exception"></exception>
         public async Task AddOrientationUsingRobotAsync(ActionObjectManager actionObject, EndEffector endEffector,
             string name = "default") => await AddOrientationUsingRobotAsync(actionObject.Id,
-            endEffector?.Id ?? "default", endEffector?.ArmId, name);
+            endEffector.Id ?? "default", endEffector?.ArmId, name);
 
         /// <summary>
         ///     Adds new joints using a robot.
