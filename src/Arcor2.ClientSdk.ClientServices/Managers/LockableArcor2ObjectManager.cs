@@ -14,7 +14,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
     ///     <see cref="Arcor2ObjectManager{TData}" />.
     /// </remarks>
     /// <typeparam name="TData">The data type managed by this instance. Notifications will be raised on its change.</typeparam>
-    public abstract class LockableArcor2ObjectManager<TData> : Arcor2ObjectManager<TData> {
+    public abstract class LockableArcor2ObjectManager<TData> : Arcor2ObjectManager<TData>, IArcor2Identity {
         /// <summary>
         ///     Initializes a new instance of the <see cref="LockableArcor2ObjectManager{TData}" /> class.
         /// </summary>

@@ -1,5 +1,6 @@
 ﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.ClientServices.EventArguments;
+using Arcor2.ClientSdk.ClientServices.Extensions;
 using Arcor2.ClientSdk.ClientServices.Managers;
 using Arcor2.ClientSdk.ClientServices.Models;
 using Arcor2.ClientSdk.Communication;
@@ -21,12 +22,13 @@ namespace Arcor2.ClientSdk.ClientServices {
     public class Arcor2Session : IDisposable {
         internal readonly Arcor2Client Client;
         internal readonly IArcor2Logger? Logger;
-
         internal readonly Arcor2SessionSettings Settings;
 
         // For storing the package state, because we receive PackageState before PackageInfo, and thus must store it. 
         private readonly Stack<PackageStateData> unopenedPackageStates = new Stack<PackageStateData>();
         private bool disposed;
+        // The collection must not keep objects alive! Otherwise, garbage collection issues could get bad.
+        private readonly WeakDictionary<string, IArcor2Identity> searchCache = new WeakDictionary<string, IArcor2Identity>();
 
         /// <summary>
         ///     The ID of a highlighted object or object needed for client view that is expected by the server
@@ -219,6 +221,200 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// </summary>
         /// <returns></returns>
         public Arcor2Client GetUnderlyingArcor2Client() => Client;
+
+        /// <summary>
+        ///     Finds a given object manager within this session by its ID. Prefers objects from open scenes and projects.
+        /// </summary>
+        /// <remarks>
+        ///     Utilizes ID prefixes to speed up search and the results are cached for subsequent lookups.
+        /// </remarks>
+        /// <param name="id">The ID of the object.</param>
+        /// <returns>The object managers as <see cref="IArcor2Identity"/>, <c>null</c> otherwise.</returns>
+        /// <example>
+        ///     var action = FindById(targetActionId) as ActionManager;
+        /// </example>
+        public IArcor2Identity? FindById(string id) {
+            // Sync if called with these arguments.
+            return FindByIdAsync(id).GetAwaiter().GetResult();
+        }
+
+        /// <summary>
+        ///     Finds a given object manager within this session by its ID. Prefers objects from open scenes and projects.
+        /// </summary>
+        /// <remarks>
+        ///     Utilizes ID prefixes to speed up search and the results are cached for subsequent lookups.
+        /// </remarks>
+        /// <param name="id">The ID of the object.</param>
+        /// <param name="searchEverything">If the object is not found within the currently loaded scenes, projects, or packages, the session will load everything and try again.
+        ///     This method does not reload scene, project, and package lists as their collections are always maintained after the session is initialized.</param>
+        /// <returns>The object managers as <see cref="IArcor2Identity"/>, <c>null</c> otherwise.</returns>
+        public async Task<IArcor2Identity?> FindByIdAsync(string id, bool searchEverything = false) {
+            // Check cache first
+            if(searchCache.TryGetValue(id, out var cachedObject)) {
+                return cachedObject;
+            }
+
+            IArcor2Identity? result = null;
+
+            // Least expensive to the most expensive searches.
+            // Try to search before invoking loading RPCs, as the user will most likely for something that exists.
+
+            // Scenes
+            if(id.StartsWith("scn_")) {
+                result = Scenes.FirstOrDefault(s => s.Id == id);
+            }
+            // Projects
+            else if(id.StartsWith("pro_")) {
+                result = Projects.FirstOrDefault(s => s.Id == id);
+            }
+            // Packages
+            else if(id.StartsWith("pkg_")) {
+                result = Packages.FirstOrDefault(s => s.Id == id);
+            }
+            // Action Objects
+            else if(id.StartsWith("obj_")) {
+                var actionObject = Scenes.Where(s => s.ActionObjects != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(s => s.ActionObjects, (s, ao) => ao)
+                    .FirstOrDefault(s => s.Id == id);
+                if(actionObject == null && searchEverything) {
+                    var loadTasks = Scenes.Where(s => s.ActionObjects == null)
+                        .Select(s => s.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Scenes.SelectMany(s => s.ActionObjects, (s, ao) => ao)
+                        .FirstOrDefault(s => s.Id == id);
+                }
+                else {
+                    result = actionObject;
+                }
+            }
+            // Logic Items
+            else if(id.StartsWith("lit_")) {
+                var logicItem = Projects.Where(p => p.LogicItems != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(p => p.LogicItems, (p, lt) => lt)
+                    .FirstOrDefault(p => p.Id == id);
+                if(logicItem == null && searchEverything) {
+                    var loadTasks = Projects.Where(p => p.LogicItems == null)
+                        .Select(p => p.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Projects.SelectMany(p => p.LogicItems, (p, lt) => lt)
+                        .FirstOrDefault(lt => lt.Id == id);
+                }
+                else {
+                    result = logicItem;
+                }
+            }
+            // Project Parameters
+            else if(id.StartsWith("pco_")) {
+                var projectParameter = Projects.Where(p => p.Parameters != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(p => p.Parameters, (p, param) => param)
+                    .FirstOrDefault(p => p.Id == id);
+                if(projectParameter == null && searchEverything) {
+                    var loadTasks = Projects.Where(p => p.LogicItems == null)
+                        .Select(p => p.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Projects.SelectMany(p => p.Parameters, (p, param) => param)
+                        .FirstOrDefault(p => p.Id == id);
+                }
+                else {
+                    result = projectParameter;
+                }
+            }
+            // Action Points
+            else if(id.StartsWith("acp_")) {
+                var actionPoint = Projects.Where(p => p.ActionPoints != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                    .FirstOrDefault(p => p.Id == id);
+                if(actionPoint == null && searchEverything) {
+                    var loadTasks = Projects.Where(p => p.LogicItems == null)
+                        .Select(p => p.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Projects.SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                        .FirstOrDefault(ap => ap.Id == id);
+                }
+                else {
+                    result = actionPoint;
+                }
+            }
+            // Orientations
+            else if(id.StartsWith("ori_")) {
+                var orientation = Projects.Where(p => p.ActionPoints != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                    .SelectMany(ap => ap.Orientations, (ap, o) => o)
+                    .FirstOrDefault(o => o.Id == id);
+                if(orientation == null && searchEverything) {
+                    var loadTasks = Projects.Where(p => p.LogicItems == null)
+                        .Select(p => p.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Projects.SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                        .SelectMany(ap => ap.Orientations, (ap, o) => o)
+                        .FirstOrDefault(o => o.Id == id);
+                }
+                else {
+                    result = orientation;
+                }
+            }
+            // Joints
+            else if(id.StartsWith("joi_")) {
+                var joints = Projects.Where(p => p.ActionPoints != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                    .SelectMany(ap => ap.Joints, (ap, j) => j)
+                    .FirstOrDefault(j => j.Id == id);
+                if(joints == null && searchEverything) {
+                    var loadTasks = Projects.Where(p => p.LogicItems == null)
+                        .Select(p => p.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Projects.SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                        .SelectMany(ap => ap.Joints, (ap, j) => j)
+                        .FirstOrDefault(j => j.Id == id);
+                }
+                else {
+                    result = joints;
+                }
+            }
+            // Actions
+            else if(id.StartsWith("act_")) {
+                var action = Projects.Where(p => p.ActionPoints != null)
+                    .OrderByDescending(s => s.IsOpen)
+                    .SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                    .SelectMany(ap => ap.Actions, (ap, a) => a)
+                    .FirstOrDefault(a => a.Id == id);
+                if(action == null && searchEverything) {
+                    var loadTasks = Projects.Where(p => p.LogicItems == null)
+                        .Select(p => p.LoadAsync());
+                    await Task.WhenAll(loadTasks);
+
+                    result = Projects.SelectMany(p => p.ActionPoints, (p, ap) => ap)
+                        .SelectMany(ap => ap.Actions, (ap, a) => a)
+                        .FirstOrDefault(a => a.Id == id);
+                }
+                else {
+                    result = action;
+                }
+            }
+            // Object Types, no name prefix
+            else {
+                result = ObjectTypes.FirstOrDefault(s => s.Id == id);
+            }
+
+            // Cache the result if found
+            if(result != null) {
+                searchCache.Add(id, result);
+            }
+
+            return result;
+        }
 
         /// <summary>
         ///     Establishes a connection to ARCOR2 server.

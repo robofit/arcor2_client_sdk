@@ -11,7 +11,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
     ///     communication with the server.
     /// </summary>
     /// <typeparam name="TData">The data type managed by this instance. Notifications will be raised on its change.</typeparam>
-    public abstract class Arcor2ObjectManager<TData> : IDisposable {
+    public abstract class Arcor2ObjectManager<TData> : IArcor2ObjectManager<TData> {
         private bool disposed;
 
         /// <summary>
