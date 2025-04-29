@@ -404,9 +404,9 @@ namespace Arcor2.ClientSdk.ClientServices {
                 }
             }
             // Object Types, no name prefix
-            else {
-                result = ObjectTypes.FirstOrDefault(s => s.Id == id);
-            }
+            // Someone can theoretically use another object ID as an object type identifier...
+            // But they would be breaking this on purpose at that point.
+            result = ObjectTypes.FirstOrDefault(s => s.Id == id) ?? result;
 
             // Cache the result if found
             if(result != null) {

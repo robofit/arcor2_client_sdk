@@ -7,15 +7,24 @@
     <PackageId>Arcor2.ClientSdk.Communication</PackageId>
     <OutputType>Library</OutputType>
     <Authors>Michael Janeček</Authors>
-    <Company>Robofit</Company>
+    <Company>Robo@FIT</Company>
     <AssemblyTitle>ARCOR2 Communication library</AssemblyTitle>
-    <Description>A lightweight communication library for ARCOR2 client development.</Description>
+    <Description>A lightweight communication library for ARCOR2 client application development.</Description>
     <Copyright>GNU Lesser General Public License v3.0</Copyright>
     <RootNamespace>Arcor2.ClientSdk.Communication</RootNamespace>
     <Version>1.0.0</Version>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <Title>Arcor2.ClientSdk.Communication</Title>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/robofit/arcor2_client_sdk</RepositoryUrl>
+    <PackageTags>arcor2;robot;client;communication</PackageTags>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <AnalysisLevel>none</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +34,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Arcor2.ClientSdk.Communication.OpenApi\Arcor2.ClientSdk.Communication.OpenApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
