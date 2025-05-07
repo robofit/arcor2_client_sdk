@@ -14,7 +14,7 @@ namespace Arcor2.ClientSdk.Communication {
     /// <summary>
     ///     Client for communication with ARCOR2 servers.
     /// </summary>
-    public class Arcor2Client {
+    public class Arcor2Client : IArcor2Client {
         /// <summary>
         ///     Current settings of the client.
         /// </summary>

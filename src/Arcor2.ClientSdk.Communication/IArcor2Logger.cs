@@ -1,6 +1,6 @@
 namespace Arcor2.ClientSdk.Communication {
     /// <summary>
-    ///     An interface for <see cref="Arcor2Client" /> loggers.
+    ///     An interface for <see cref="IArcor2Client" /> loggers.
     /// </summary>
     /// <remarks>
     ///     There is currently no public implementation.

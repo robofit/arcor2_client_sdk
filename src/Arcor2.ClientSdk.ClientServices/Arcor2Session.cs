@@ -20,7 +20,7 @@ namespace Arcor2.ClientSdk.ClientServices {
     ///     This class mostly offers actions you could do from the main screen.
     /// </summary>
     public class Arcor2Session : IDisposable {
-        internal readonly Arcor2Client Client;
+        internal readonly IArcor2Client Client;
         internal readonly IArcor2Logger? Logger;
         internal readonly Arcor2SessionSettings Settings;
 
@@ -86,6 +86,42 @@ namespace Arcor2.ClientSdk.ClientServices {
             Settings = settings ?? new Arcor2SessionSettings();
             Client = new Arcor2Client(websocket,
                 new Arcor2ClientSettings { RpcTimeout = settings?.RpcTimeout ?? 10_000 }, Logger);
+
+            Client.ConnectionOpened += (sender, args) => {
+                ConnectionState = Arcor2SessionState.Open;
+                ConnectionOpened?.Invoke(this, EventArgs.Empty);
+            };
+            Client.ConnectionClosed += (sender, args) => {
+                ConnectionState = Arcor2SessionState.Closed;
+                ConnectionClosed?.Invoke(this, EventArgs.Empty);
+            };
+            Client.ConnectionError += ConnectionError;
+
+            ObjectTypes = new Arcor2IndexableReadOnlyObservableCollection<ObjectTypeManager>(objectTypes);
+            Scenes = new Arcor2IndexableReadOnlyObservableCollection<SceneManager>(scenes);
+            Projects = new Arcor2IndexableReadOnlyObservableCollection<ProjectManager>(projects);
+            Packages = new Arcor2IndexableReadOnlyObservableCollection<PackageManager>(packages);
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of <see cref="Arcor2Session" /> class.
+        /// </summary>
+        /// <param name="settings">The session settings.</param>
+        /// <param name="client">A ARCOR2 client object implementing the <see cref="IArcor2Client" /> interface.</param>
+        /// <param name="logger">A logger instance. May be identical instance as in <see cref="IArcor2Client"/>.</param>
+        /// <exception cref="InvalidOperationException">
+        ///     If the provided <see cref="IArcor2Client"/> instance is not in the
+        ///     <see cref="WebSocketState.None" /> state.
+        /// </exception>
+        public Arcor2Session(IArcor2Client client, Arcor2SessionSettings? settings = null,
+            IArcor2Logger? logger = null) {
+            if(client.ConnectionState != WebSocketState.None) {
+                throw new InvalidOperationException("The ARCOR2 client instance must be in the 'None' state.");
+            }
+
+            Logger = logger;
+            Settings = settings ?? new Arcor2SessionSettings();
+            Client = client;
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
@@ -217,10 +253,10 @@ namespace Arcor2.ClientSdk.ClientServices {
         public event EventHandler? ConnectionOpened;
 
         /// <summary>
-        ///     Retrieves the underlying <see cref="Arcor2Client" /> instance.
+        ///     Retrieves the underlying <see cref="IArcor2Client" /> instance.
         /// </summary>
         /// <returns></returns>
-        public Arcor2Client GetUnderlyingArcor2Client() => Client;
+        public IArcor2Client GetUnderlyingArcor2Client() => Client;
 
         /// <summary>
         ///     Finds a given object manager within this session by its ID. Prefers objects from open scenes and projects.

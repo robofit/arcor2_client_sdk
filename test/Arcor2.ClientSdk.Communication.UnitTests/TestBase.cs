@@ -7,7 +7,7 @@ public class TestBase : IDisposable {
     private const int Timeout = 100;
     protected readonly Uri ValidUri = new("wss://www.random_ws_uri.com:80");
 
-    protected Arcor2Client Client = new(new MockWebSocket(), new Arcor2ClientSettings { RpcTimeout = Timeout });
+    protected IArcor2Client Client = new Arcor2Client(new MockWebSocket(), new Arcor2ClientSettings { RpcTimeout = Timeout });
 
     protected bool ConnectionClosedEventRaised;
 
