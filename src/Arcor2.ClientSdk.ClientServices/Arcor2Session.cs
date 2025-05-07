@@ -37,7 +37,18 @@ namespace Arcor2.ClientSdk.ClientServices {
         /// <value>
         ///     The ID of an object, <c>null</c> if not applicable.
         /// </value>
-        public string? NavigationId;
+        public string? NavigationId { get; internal set; }
+
+        /// <summary>
+        /// The session identifier. 
+        /// </summary>
+        /// <remarks>
+        /// This session identifier is not part of the ARCOR2 framework API. It is purely used for client-side tracking of sessions.
+        /// </remarks>
+        /// <value>
+        ///     The ID of the session, <c>null</c> if not connected.
+        /// </value>
+        public Guid? SessionId { get; internal set; }
 
         /// <summary>
         ///     Initializes a new instance of <see cref="Arcor2Session" /> class.
@@ -205,11 +216,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         ///     Disposes the object and if needed, closes the connection to ARCOR2 server.
         /// </summary>
         /// <remarks>
-        ///     Practically idempotent version of <see cref="CloseAsync" />.
+        ///     Practically idempotent version of <see cref="CloseAsync" />. Using <see cref="CloseAsync" /> is preferable in frameworks like WPF or WinForms, where this method can cause deadlocks due to main thread marshaling.
         /// </remarks>
         public void Dispose() {
             if(ConnectionState != Arcor2SessionState.Closed && ConnectionState != Arcor2SessionState.None) {
-                Client.CloseAsync().GetAwaiter().GetResult();
+                Client.CloseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
             UnregisterHandlers();
@@ -466,6 +477,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
 
             await Client.ConnectAsync(domain, port);
+            SessionId = Guid.NewGuid();
         }
 
         /// <summary>
@@ -482,6 +494,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             }
 
             await Client.ConnectAsync(uri);
+            SessionId = Guid.NewGuid();
         }
 
         /// <summary>
