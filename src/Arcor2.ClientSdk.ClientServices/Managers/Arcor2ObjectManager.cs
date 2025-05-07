@@ -1,6 +1,9 @@
 ﻿using Arcor2.ClientSdk.ClientServices.Enums;
 using Arcor2.ClientSdk.Communication.OpenApi.Models;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Arcor2.ClientSdk.ClientServices.Managers {
@@ -13,6 +16,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
     /// <typeparam name="TData">The data type managed by this instance. Notifications will be raised on its change.</typeparam>
     public abstract class Arcor2ObjectManager<TData> : IArcor2ObjectManager<TData> {
         private bool disposed;
+        private TData data;
 
         /// <summary>
         ///     The session used for communication with the server.
@@ -37,7 +41,10 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <summary>
         ///     The data managed by this instance.
         /// </summary>
-        public TData Data { get; protected set; }
+        public TData Data {
+            get => data;
+            protected set => SetProperty(ref data, value);
+        }
 
         /// <summary>
         ///     Disposes the manager and unregisters any event handlers.
@@ -48,14 +55,14 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         }
 
         /// <summary>
-        ///     Event raised when the data managed by this instance is updated.
-        /// </summary>
-        public event EventHandler? Updated;
-
-        /// <summary>
         ///     Event raised when before the instance id deleted.
         /// </summary>
         public event EventHandler? Removing;
+
+        /// <summary>
+        ///     Event raised when the data managed by this instance is updated. Identical semantics like <see cref="Updated"/> event.
+        /// </summary>
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         ~Arcor2ObjectManager() {
             Dispose(false);
@@ -121,13 +128,12 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         /// <param name="data">The new data.</param>
         protected virtual void UpdateData(TData data) {
             Data = data;
-            OnUpdated();
         }
 
         /// <summary>
-        ///     Raises the DataUpdated event.
+        ///     Raises the property changed notification event.
         /// </summary>
-        protected virtual void OnUpdated() => Updated?.Invoke(this, EventArgs.Empty);
+        protected virtual void OnUpdated() => SetProperty(ref data, Data, nameof(Data));
 
         /// <summary>
         ///     Raises the DataUpdated event.
@@ -145,5 +151,31 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
         ///     specific handlers and invoke the base method.
         /// </summary>
         protected virtual void UnregisterHandlers() { }
+
+        /// <summary>
+        ///     Sets the property to the specified value and raises the PropertyChanged event if the value has changed.
+        /// </summary>
+        /// <typeparam name="T">Type of the property.</typeparam>
+        /// <param name="field">Reference to the backing field of the property.</param>
+        /// <param name="value">New value for the property.</param>
+        /// <param name="propertyName">Name of the property. This parameter is optional and can be provided automatically when invoked from compilers that support <see cref="CallerMemberNameAttribute"/>.</param>
+        /// <returns>True if the value was changed, false if the existing value matched the desired value.</returns>
+        protected virtual bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null) {
+            if(EqualityComparer<T>.Default.Equals(field, value)) {
+                return false;
+            }
+
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+
+        /// <summary>
+        ///     Raises the PropertyChanged event for the specified property.
+        /// </summary>
+        /// <param name="propertyName">Name of the property. This parameter is optional and can be provided automatically when invoked from compilers that support <see cref="CallerMemberNameAttribute"/>.</param>
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

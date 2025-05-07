@@ -22,7 +22,7 @@ await session.CloseAsync();
 ```
 
 Each manager object represents and holds some data (e.g., for a scene, it is the scene metadata) in its `Data` property. 
-When that data is updated in any form, the manager object will always raise a notification in the form of an `Updated` event. Please note that this only applies to the data in the `Data` property.
+When that data is updated in any form, the manager object will always raise a notification in the form of an `PropertyChanged` event. This event is provided by the `INotifyPropertyChanged` and such are automatically supported by WPF and similar binding mechanisms.  Please note that this only applies to the data in the `Data` property.
 Changes concerning the manager object's existence as a whole (removal and addition) are communicated by the `ReadOnlyObservableCollection` that holds them.
 Each manager will also raise a `Removing` event shortly before deleting itself.
 
