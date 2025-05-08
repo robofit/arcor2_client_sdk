@@ -387,7 +387,7 @@ namespace Arcor2.ClientSdk.ClientServices.Managers {
 
             UpdateData(scene.MapToBareScene());
 
-            ActionObjects.UpdateListOfLockableArcor2Objects<ActionObjectManager, SceneObject, ActionObject>(
+            actionObjects.UpdateListOfLockableArcor2Objects<ActionObjectManager, SceneObject, ActionObject>(
                 scene.Objects,
                 o => o.Id,
                 (manager, o) => manager.UpdateAccordingToNewObject(o),
