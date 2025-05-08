@@ -39,7 +39,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <ui:Card
-                        Width="280"
+                        Width="340"
                         Height="180"
                         Margin="8"
                         Padding="10"
@@ -83,27 +83,43 @@
                                 VerticalAlignment="Bottom" />
 
                                 <Grid
-                                Grid.Row="3">
+                                Grid.Row="3"
+                                HorizontalAlignment="Center">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
                                     <ui:Button 
                                     Grid.Column="0"
                                     Content="Open" 
-                                    Margin="15,0,0,0"
+                                    Margin="3,0"
                                     IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.IsInMenu}"
                                     Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.OpenSceneDetailCommand}"
                                     CommandParameter="{Binding}"/>
-                                    <ui:Button
+                                    <ui:Button 
+                                    Grid.Column="1"
+                                    Content="Delete" 
+                                    Margin="3,0"
+                                    IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.IsInMenu}"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.DeleteSceneCommand}"
+                                    CommandParameter="{Binding}"/>
+                                    <ui:Button 
                                     Grid.Column="2"
+                                    Content="Duplicate" 
+                                    Margin="3,0"
+                                    IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.IsInMenu}"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.DuplicateSceneCommand}"
+                                    CommandParameter="{Binding}"/>
+                                    <ui:Button
+                                    Grid.Column="3"
                                     Content="Close"
+                                    Margin="3,0"
                                     IsEnabled="{Binding IsOpen}"
                                     Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Page}}, Path= ViewModel.CloseSceneDetailCommand}"
-                                    CommandParameter="{Binding}"
-                                    Margin="0,0,15,0" />
+                                    CommandParameter="{Binding}"/>
                                 </Grid>
 
                                 <TextBlock

@@ -4,11 +4,12 @@ using Arcor2.ClientSdk.ClientServices.WpfUiTestApp.Services;
 using Arcor2.ClientSdk.ClientServices.WpfUiTestApp.ViewModels.Windows;
 using Arcor2.ClientSdk.ClientServices.WpfUiTestApp.Views.Windows;
 using System.Collections.ObjectModel;
+using Wpf.Ui;
 using Wpf.Ui.Controls;
 
 namespace Arcor2.ClientSdk.ClientServices.WpfUiTestApp.ViewModels.Pages;
 
-public partial class ScenesViewModel(Arcor2Service arcor2Service) : ObservableObject, INavigationAware {
+public partial class ScenesViewModel(Arcor2Service arcor2Service, ISnackbarService snackbar) : ObservableObject, INavigationAware {
     private FluentWindow? _sceneWindow;
     private bool _isInitialized = false;
 
@@ -34,9 +35,6 @@ public partial class ScenesViewModel(Arcor2Service arcor2Service) : ObservableOb
         IsInMenu = arcor2Service.Session.NavigationState.IsInMenu();
         arcor2Service.Session!.NavigationStateChanged += (_, args) => {
             IsInMenu = args.State.IsInMenu();
-
-            // For now, just re-init the collection
-            // Better solution would be exposing an ID with proper convertor directly for the buttons
             Scenes = new ReadOnlyObservableCollection<SceneManager>(new ObservableCollection<SceneManager>(arcor2Service.Session!.Scenes));
         };
 
@@ -59,4 +57,10 @@ public partial class ScenesViewModel(Arcor2Service arcor2Service) : ObservableOb
         await sceneManager.CloseAsync();
         _sceneWindow?.Close();
     }
+
+    [RelayCommand]
+    private async Task DeleteScene(SceneManager sceneManager) => await sceneManager.RemoveAsync();
+
+    [RelayCommand]
+    private async Task DuplicateScene(SceneManager sceneManager) => await sceneManager.DuplicateAsync($"Copy of {sceneManager.Data.Name}");
 }
