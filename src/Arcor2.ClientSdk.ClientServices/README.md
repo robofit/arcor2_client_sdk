@@ -129,6 +129,18 @@ Upon a successful connection, a long-running `Task` is spawned to listen for mes
 Since this listening process runs within a `Task` 
 (and may execute on a non-main thread), modifying the UI in most frameworks (Unity, WPF, WinForms, etc.) is inherently unsafe, requiring a suitable synchronization method. 
 
+You may inject synchronization action using `Arcor2SessionSettings`. This action will be executed as soon as message arrives with argument action being the rest of the pipeline
+This is useful as most frameworks offer global dispatcher objects which can easily make the whole library safe to use within UI context.
+```
+Session = new Arcor2Session(
+	new Arcor2SessionSettings {
+		SynchronizationAction = @continue => {
+			Application.Current.Dispatcher.BeginInvoke(
+				DispatcherPriority.Background,
+				@continue);
+		}
+	});
+```
 Closing the connection automatically releases all resources associated with the session.  
 The `Dispose` method functions identically to `CloseAsync`, but is idempotent, thus ensuring it does not throw exceptions when called multiple times or in an invalid state.  
 

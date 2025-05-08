@@ -30,6 +30,11 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         private readonly IArcor2Logger? logger;
 
+        /// <summary>
+        ///     Synchronization mechanism from client-code.
+        /// </summary>
+        private readonly Action<System.Action>? synchronizator;
+
         private ConcurrentDictionary<int, PendingRequest> pendingRequests =
             new ConcurrentDictionary<int, PendingRequest>();
 
@@ -45,10 +50,12 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="settings">The client settings.</param>
         /// <param name="logger">An instance of <see cref="IArcor2Logger" />.</param>
-        public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) {
+        /// <param name="synchronizator">All events are raised from background threads. You may pass an action that will synchronize the execution on message receive.</param>
+        public Arcor2Client(Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null, Action<System.Action>? synchronizator = null) {
             webSocket = new SystemNetWebSocket();
             clientSettings = settings ?? new Arcor2ClientSettings();
             jsonSettings = clientSettings.ParseJsonSerializerSettings();
+            this.synchronizator = synchronizator;
             this.logger = logger ?? null;
 
             webSocket.OnError += (_, args) => {
@@ -74,11 +81,12 @@ namespace Arcor2.ClientSdk.Communication {
         /// <param name="websocket">A WebSocket object implementing the <see cref="IWebSocket" /> interface.</param>
         /// <param name="settings">The client settings.</param>
         /// <param name="logger">An instance of <see cref="IArcor2Logger" />.</param>
+        /// <param name="synchronizator">All events are raised from background threads. You may pass an action that will synchronize the execution on message receive.</param>
         /// <exception cref="InvalidOperationException">
         ///     If the provided WebSocket instance is not in the
         ///     <see cref="WebSocketState.None" /> state.
         /// </exception>
-        public Arcor2Client(IWebSocket websocket, Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null) {
+        public Arcor2Client(IWebSocket websocket, Arcor2ClientSettings? settings = null, IArcor2Logger? logger = null, Action<System.Action>? synchronizator = null) {
             if(websocket.State != WebSocketState.None) {
                 throw new InvalidOperationException("The socket instance must be in the 'None' state.");
             }
@@ -86,6 +94,7 @@ namespace Arcor2.ClientSdk.Communication {
             webSocket = websocket;
             clientSettings = settings ?? new Arcor2ClientSettings();
             jsonSettings = clientSettings.ParseJsonSerializerSettings();
+            this.synchronizator = synchronizator;
             this.logger = logger ?? null;
 
             webSocket.OnError += (_, args) => {
@@ -183,7 +192,7 @@ namespace Arcor2.ClientSdk.Communication {
         /// <summary>
         ///     Gets the WebSocket used by the client.
         /// </summary>
-        /// <returns>The WebSocket used by the client.</returns>
+        /// <returns>The WebSocket used by twhe client.</returns>
         public IWebSocket GetUnderlyingWebSocket() => webSocket;
 
         /// <summary>
@@ -192,6 +201,15 @@ namespace Arcor2.ClientSdk.Communication {
         /// </summary>
         /// <param name="args"></param>
         private void OnMessage(WebSocketMessageEventArgs args) {
+            if(synchronizator != null) {
+                synchronizator(() => OnMessageSynced(args));
+            }
+            else {
+                OnMessageSynced(args);
+            }
+        }
+
+        private void OnMessageSynced(WebSocketMessageEventArgs args) {
             try {
                 var data = Encoding.Default.GetString(args.Data);
                 logger?.LogInfo($"Received a new ARCOR2 message:\n{data}");

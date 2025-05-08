@@ -58,7 +58,7 @@ namespace Arcor2.ClientSdk.ClientServices {
         public Arcor2Session(Arcor2SessionSettings? settings = null, IArcor2Logger? logger = null) {
             Logger = logger;
             Settings = settings ?? new Arcor2SessionSettings();
-            Client = new Arcor2Client(new Arcor2ClientSettings { RpcTimeout = settings?.RpcTimeout ?? 10_000 }, Logger);
+            Client = new Arcor2Client(new Arcor2ClientSettings { RpcTimeout = settings?.RpcTimeout ?? 10_000 }, Logger, Settings.SynchronizationAction);
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;
@@ -96,7 +96,7 @@ namespace Arcor2.ClientSdk.ClientServices {
             Logger = logger;
             Settings = settings ?? new Arcor2SessionSettings();
             Client = new Arcor2Client(websocket,
-                new Arcor2ClientSettings { RpcTimeout = settings?.RpcTimeout ?? 10_000 }, Logger);
+                new Arcor2ClientSettings { RpcTimeout = Settings?.RpcTimeout ?? 10_000 }, Logger, Settings!.SynchronizationAction);
 
             Client.ConnectionOpened += (sender, args) => {
                 ConnectionState = Arcor2SessionState.Open;

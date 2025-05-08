@@ -137,6 +137,8 @@ private void RegisterUser() {
 ```
 
 The issue is that the continuation `Task` accesses Unity APIs from a background thread. This can be generally fixed using any of the following approaches:
+- You may inject a synchronization action into the client that will be run before message processing pipeline.
+
 - The best approach is to convert the synchronous methods to asynchronous methods. The `await` automatically resumes on the main thread after the `Task` completes. Note that this may not always be a feasible approach, especially in large legacy code bases.
 ```
 private async void RegisterUser() {

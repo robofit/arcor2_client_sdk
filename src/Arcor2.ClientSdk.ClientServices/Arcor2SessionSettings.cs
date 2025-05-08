@@ -1,4 +1,6 @@
 ﻿using Arcor2.ClientSdk.ClientServices.Enums;
+using System;
+using Action = System.Action;
 
 namespace Arcor2.ClientSdk.ClientServices {
     public class Arcor2SessionSettings {
@@ -25,5 +27,11 @@ namespace Arcor2.ClientSdk.ClientServices {
         ///     The target ARCOR2 server version. Changing this to a specific version may disable automatic configuration 
         /// </summary>
         public Arcor2ServerVersion ServerVersion = Arcor2ServerVersion.Automatic;
+
+        /// <summary>
+        ///    All events are raised from background thread. This property represents an action, that gets invoked with internal message processing pipeline,
+        ///    so the client code may invoke some synchronization mechanism.
+        /// </summary>
+        public Action<Action>? SynchronizationAction = null;
     }
 }
