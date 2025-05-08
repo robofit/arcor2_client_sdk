@@ -22,6 +22,9 @@ public static class ReflectionHelper {
     /// <param name="objectName">Custom object name to be prefixed.</param>
     /// <returns></returns>
     public static string FormatObjectProperties(object? obj, int indentLevel = 0, string? objectName = null) {
+        if(indentLevel > 3) {
+            return "HIDDEN";
+        }
         if(obj == null) {
             return "[null]";
         }
