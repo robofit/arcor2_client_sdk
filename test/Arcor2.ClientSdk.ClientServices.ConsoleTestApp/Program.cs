@@ -110,18 +110,6 @@ internal class Program {
                     }
 
                     try {
-                        if(command == "!prepre") {
-                            try {
-                                await Session.Scenes.First().CloseAsync(true);
-                            }
-                            catch { }
-
-                            await Session.CreateSceneAsync("Sc\x2E\x2F0jhj", "ewa");
-                            await Task.Delay(200);
-                            await Session.Scenes.First().SaveAsync();
-                            continue;
-                        }
-
                         await ProcessCommandAsync(command);
                     }
                     catch(Arcor2Exception ex) {
