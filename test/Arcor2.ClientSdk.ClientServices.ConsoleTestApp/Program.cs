@@ -28,7 +28,9 @@ internal class Program {
 
         // Set up session with appropriate logging
         var logger = options.EnableConsoleLogger ? new ConsoleLogger() : null;
-        Session = new Arcor2Session(logger: logger);
+        Session = new Arcor2Session(logger: logger, settings: new Arcor2SessionSettings {
+            LockingMode = options.EnableLocking ? LockingMode.AutoLock : LockingMode.NoLocks
+        });
 
         try {
             await EstablishSessionAsync();
@@ -59,7 +61,18 @@ internal class Program {
         var enableLogger = response.ToLower().FirstOrDefault() is 'y';
         ConsoleEx.WriteLinePrefix($"Proceeding with logger {(enableLogger ? "enabled" : "disabled")}.");
 
-        return new Options { EnableConsoleLogger = enableLogger };
+        ConsoleEx.WriteLinePrefix("Enable auto-lock? (Y/N)");
+
+        // Use a timeout for the initial setup question
+        var responseAutoLock = await Task.Run(ConsoleEx.ReadLinePrefix);
+        if(responseAutoLock == null) {
+            return null;
+        }
+
+        var enableAutoLock = responseAutoLock.ToLower().FirstOrDefault() is 'y';
+        ConsoleEx.WriteLinePrefix($"Proceeding with auto-lock {(enableAutoLock ? "enabled" : "disabled")}.");
+
+        return new Options { EnableConsoleLogger = enableLogger, EnableLocking = enableAutoLock};
     }
 
     /// <summary>
@@ -110,18 +123,6 @@ internal class Program {
                     }
 
                     try {
-                        if(command == "!prepre") {
-                            try {
-                                await Session.Scenes.First().CloseAsync(true);
-                            }
-                            catch { }
-
-                            await Session.CreateSceneAsync("Sc\x2E\x2F0jhj", "ewa");
-                            await Task.Delay(200);
-                            await Session.Scenes.First().SaveAsync();
-                            continue;
-                        }
-
                         await ProcessCommandAsync(command);
                     }
                     catch(Arcor2Exception ex) {
@@ -175,7 +176,15 @@ internal class Program {
             case "!help":
                 DisplayHelp();
                 break;
-
+            case "!force_close":
+                Environment.FailFast("Forced crash.");
+                break;
+            case "!lock":
+                await LockAsync(args);
+                break;
+            case "!unlock":
+                await UnlockAsync(args);
+                break;
             // Navigation and information commands
             case "!ns" or "!navigation_state":
                 DisplayNavigationState();
@@ -724,6 +733,9 @@ internal class Program {
             !object_types - List all object types and their actions.
             !scenes - Lists all in-memory scenes.
             !projects - Lists all in-memory projects.
+            !force_close - Crashes this application.
+            !lock <ID> - Locks an object.
+            !unlock <ID> - Unlocks an object.
 
             - Object Type -
             !add_object_type <TYPE> <PARENT_TYPE> <DESC> - Adds a new object type.
@@ -979,6 +991,17 @@ internal class Program {
                 Convert.ToDecimal(args[3])
             )
         );
+
+    private static async Task LockAsync(string[] args) {
+        var obj = Session.FindById(args[0]);
+        await obj!.LockAsync();
+    }
+
+    private static async Task UnlockAsync(string[] args) {
+        var obj = Session.FindById(args[0]);
+        await obj!.UnlockAsync();
+    }
+
 
     private static async Task ReloadScenesAsync() => await Session.ReloadScenesAsync();
 

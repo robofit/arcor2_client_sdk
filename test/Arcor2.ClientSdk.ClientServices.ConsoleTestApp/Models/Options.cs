@@ -2,4 +2,5 @@
 
 public class Options {
     public bool EnableConsoleLogger { get; init; } = false;
+    public bool EnableLocking { get; init; } = true;
 }
