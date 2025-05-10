@@ -91,13 +91,13 @@ public class EventAwaiter {
 public static class Arcor2ObjectExtensions {
     public static EventAwaiter GetUpdatedAwaiter<T>(this Arcor2ObjectManager<T> manager) {
         var awaiter = new EventAwaiter();
-        manager.Updated += awaiter.EventHandler;
+        manager.PropertyChanged += awaiter.EventHandler;
         return awaiter;
     }
 
     public static Task GetUpdatedAwaiterAndWait<T>(this Arcor2ObjectManager<T> manager) {
         var awaiter = new EventAwaiter();
-        manager.Updated += awaiter.EventHandler;
+        manager.PropertyChanged += awaiter.EventHandler;
         return awaiter.WaitForEventAsync();
     }
 

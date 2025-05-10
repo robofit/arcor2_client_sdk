@@ -257,7 +257,7 @@ public class Arcor2SessionProjectTests(Arcor2ServerFixture fixture, ITestOutputH
         try {
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            project.Updated += changedAwaiterEvent.EventHandler;
+            project.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await project.SetHasLogicAsync(false);
@@ -370,7 +370,7 @@ public class Arcor2SessionProjectTests(Arcor2ServerFixture fixture, ITestOutputH
             var @override = project.Overrides!.FirstOrDefault(o => o.Data.Parameter.Name == parameter.Name);
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            @override!.Updated += changedAwaiterEvent.EventHandler;
+            @override!.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
             await @override.UpdateAsync(new Parameter(parameter.Name, parameter.Type, "\"newer_value\""));
             await changedAwaiter;
@@ -453,14 +453,14 @@ public class Arcor2SessionProjectTests(Arcor2ServerFixture fixture, ITestOutputH
 
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            parameter.Updated += changedAwaiterEvent.EventHandler;
+            parameter.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await parameter.UpdateNameAsync("new_name");
 
             await changedAwaiter;
             changedAwaiterEvent = new EventAwaiter();
-            parameter.Updated += changedAwaiterEvent.EventHandler;
+            parameter.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter2 = changedAwaiterEvent.WaitForEventAsync();
             await parameter.UpdateValueAsync("\"new_value\"");
 
@@ -532,7 +532,7 @@ public class Arcor2SessionProjectTests(Arcor2ServerFixture fixture, ITestOutputH
             await removeAwaiter;
 
             var updatedAwaiter = new EventAwaiter();
-            secondLogicItem.Updated += updatedAwaiter.EventHandler;
+            secondLogicItem.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             await secondLogicItem.UpdateAsync("START", action.Id); // Like the first logic item

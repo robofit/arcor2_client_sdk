@@ -91,7 +91,7 @@ public class Arcor2SessionPackageTests(Arcor2ServerFixture fixture, ITestOutputH
         try {
             // Act
             var updatedAwaiter = new EventAwaiter();
-            package.Updated += updatedAwaiter.EventHandler;
+            package.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             await package.RenameAsync(newName);

@@ -147,7 +147,7 @@ public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOu
             actionObject.MovingToPose += robotMoveToPoseAwaiter.EventHandler;
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
-            actionObject.Updated += updatedAwaiter.EventHandler;
+            actionObject.PropertyChanged += updatedAwaiter.EventHandler;
             var updatedTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
@@ -175,7 +175,7 @@ public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOu
             actionObject.MovingToPose += (sender, args) => robotMoveToPoseAwaiter.EventHandler(sender, args);
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
-            actionObject.Updated += updatedAwaiter.EventHandler;
+            actionObject.PropertyChanged += updatedAwaiter.EventHandler;
             var updatedTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
@@ -203,7 +203,7 @@ public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOu
             actionObject.MovingToJoints += robotMoveToPoseAwaiter.EventHandler;
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
-            actionObject.Updated += updatedAwaiter.EventHandler;
+            actionObject.PropertyChanged += updatedAwaiter.EventHandler;
             var updatedTask = updatedAwaiter.WaitForEventAsync();
 
             var modifiedJoint = actionObject.Data.Joints!.First();
@@ -236,7 +236,7 @@ public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOu
             //actionObject.MovingToActionPointJoints += robotMoveToPoseAwaiter.EventHandler;
             //var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
-            actionObject.Updated += updatedAwaiter.EventHandler;
+            actionObject.PropertyChanged += updatedAwaiter.EventHandler;
             var updatedTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
@@ -266,7 +266,7 @@ public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOu
             actionObject.MovingToActionPointOrientation += robotMoveToPoseAwaiter.EventHandler;
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
-            actionObject.Updated += updatedAwaiter.EventHandler;
+            actionObject.PropertyChanged += updatedAwaiter.EventHandler;
             var updatedTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
@@ -294,7 +294,7 @@ public class Arcor2SessionActionObjectTests(Arcor2ServerFixture fixture, ITestOu
             actionObject.MovingToPose += (sender, args) => robotMoveToPoseAwaiter.EventHandler(sender, args);
             var robotMoveToPoseTask = robotMoveToPoseAwaiter.WaitForEventAsync();
             var updatedAwaiter = new EventAwaiter();
-            actionObject.Updated += updatedAwaiter.EventHandler;
+            actionObject.PropertyChanged += updatedAwaiter.EventHandler;
             var updatedTask = updatedAwaiter.WaitForEventAsync();
             var oldPose = actionObject.Data.Meta.Pose.Position;
 

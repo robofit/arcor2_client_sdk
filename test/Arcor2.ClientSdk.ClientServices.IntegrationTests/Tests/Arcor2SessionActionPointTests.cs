@@ -84,7 +84,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
             await project.Scene.GetStartedAwaiter().WaitForEventAsync();
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            actionPoint.Updated += changedAwaiterEvent.EventHandler;
+            actionPoint.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await actionPoint.UpdateUsingRobotAsync(project.Scene.ActionObjects!.First());
@@ -113,7 +113,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            actionPoint.Updated += changedAwaiterEvent.EventHandler;
+            actionPoint.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await actionPoint.UpdatePositionAsync(newPosition);
@@ -164,7 +164,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            actionPoint.Updated += changedAwaiterEvent.EventHandler;
+            actionPoint.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await actionPoint.RenameAsync(newName);
@@ -192,7 +192,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            actionPoint.Updated += changedAwaiterEvent.EventHandler;
+            actionPoint.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await actionPoint.UpdateParentAsync(parentActionPoint);
@@ -221,7 +221,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var changedAwaiterEvent = new EventAwaiter();
-            actionPoint.Updated += changedAwaiterEvent.EventHandler;
+            actionPoint.PropertyChanged += changedAwaiterEvent.EventHandler;
             var changedAwaiter = changedAwaiterEvent.WaitForEventAsync();
 
             await actionPoint.ClearParentAsync();
@@ -308,7 +308,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var updatedAwaiter = new EventAwaiter();
-            joints.Updated += updatedAwaiter.EventHandler;
+            joints.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             await joints.UpdateAsync(newJoints);
@@ -335,7 +335,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
         try {
             // Change
             var updatedAwaiterC = new EventAwaiter();
-            joints.Updated += updatedAwaiterC.EventHandler;
+            joints.PropertyChanged += updatedAwaiterC.EventHandler;
             var updateTaskC = updatedAwaiterC.WaitForEventAsync();
 
             var newJoints = new List<Joint>(joints.Data.Joints);
@@ -346,7 +346,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var updatedAwaiter = new EventAwaiter();
-            joints.Updated += updatedAwaiter.EventHandler;
+            joints.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             await joints.UpdateUsingRobotAsync();
@@ -374,7 +374,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
         try {
             // Arrange
             var updatedAwaiter = new EventAwaiter();
-            joints.Updated += updatedAwaiter.EventHandler;
+            joints.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
@@ -491,7 +491,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var updatedAwaiter = new EventAwaiter();
-            orientation.Updated += updatedAwaiter.EventHandler;
+            orientation.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             await orientation.UpdateAsync(newOrientation);
@@ -519,7 +519,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
         try {
             // Change
             var updatedAwaiterC = new EventAwaiter();
-            orientation.Updated += updatedAwaiterC.EventHandler;
+            orientation.PropertyChanged += updatedAwaiterC.EventHandler;
             var updateTaskC = updatedAwaiterC.WaitForEventAsync();
 
             var newOrientation = new Orientation(0.7071067811865475m, 0, 0, 0.7071067811865475m);
@@ -529,7 +529,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
 
             // Act
             var updatedAwaiter = new EventAwaiter();
-            orientation.Updated += updatedAwaiter.EventHandler;
+            orientation.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             await orientation.UpdateUsingRobotAsync(robot, "default");
@@ -557,7 +557,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
         try {
             // Arrange
             var updatedAwaiter = new EventAwaiter();
-            orientation.Updated += updatedAwaiter.EventHandler;
+            orientation.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
@@ -645,7 +645,7 @@ public class Arcor2SessionProjectActionPointTests(Arcor2ServerFixture fixture, I
         try {
             // Arrange
             var updatedAwaiter = new EventAwaiter();
-            action.Updated += updatedAwaiter.EventHandler;
+            action.PropertyChanged += updatedAwaiter.EventHandler;
             var updateTask = updatedAwaiter.WaitForEventAsync();
 
             // Act
